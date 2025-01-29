@@ -1,0 +1,117 @@
+<div align="center">
+    <h1 style="margin: 0;">人工智能桌面宠物</h1>
+    <b><a href="README.md">English</a></b>
+    <b> | </b>
+    <b><a href="README_zh.md">简体中文</a></b>
+    <b> | </b>
+    <b><a href="README_ja.md">日本語</a></b>
+</div>
+
+# 简介
+
+这是一个利用人工智能与用户互动的桌面宠物。
+
+> 开发者：**可能会有点 *无聊*...**？
+
+# 优点
+
+**我们有一些与其他桌面宠物*不同* 的地方。**
+
+### 人工智能
+
+- 人工智能交互
+
+> 您可以通过文本和语音进行对话。
+
+- 人工智能代理
+
+> 人工智能可以使用开发者编写的函数来操作您的电脑。
+>
+> 人工智能甚至可以捕获您的屏幕以查看您正在做的事情。
+
+### 资源加载器
+
+- Live2D模型
+
+> 我使用Live2D引擎展示并创建模型，以获得最佳体验。
+
+### 安全与定制
+
+- 定制
+
+> 您可以自定义模型、效果、声音、AI推理方式，甚至可以替换AI模型。
+
+# 模型替换
+
+## 步骤
+
+**您可以通过以下步骤替换模型：**
+
+1. *下载* 您喜欢的模型。
+2. *编辑* JSON文件如示例所示（Vanilla.json）
+3. *右键点击* 原始模型并选择 `更改角色` -> `<选择自己的模型>`
+4. *重新加载* 程序
+
+## Json 文件格式
+
+基础
+
+```textmate
+name        :         $ .string （显示名称及语音调用名称）
+voice_model :         $ .string （语音模型名称 (GSV)）
+default     :         $ .string （程序启动时首先加载的模型）
+```
+
+高级
+
+|               对象                |             值*              |  类型  | 使用说明         |
+|:-------------------------------:|:---------------------------:|:----:|--------------|
+|    model.\<YourModel>.adult     |        AdultContent         | dict | 判断模型是否支持成人内容 |
+|    model.\<YourModel>.adult     |      AdultLevelMinimum      | dict | 成人等级最低要求     |
+|    model.\<YourModel>.adult     |      AdultLevelMaximum      | dict | 成人等级最高要求     |
+|    model.\<YourModel>.adult     |        AdultDescribe        | dict | 成人描述         |
+| model.\<YourModel>.adult.action | Action\<DescribeEnglish>[1] | list | 可使用的成人动作     |
+| model.\<YourModel>.adult.voice  | Voice\<DescribeEnglish>[2]  | list | 想要播放的成人声音    |
+|    model.\<YourModel>.action    |        [TableAction]        | dict | 可用的通用动作      |
+|    model.\<YourModel>.voice     |        [TableVoice]         | dict | 想要播放的通用声音    |
+
+1. AdultDescribe English (这意味着你的描述必须包含英文)
+2. AdultDescribe English (这意味着你的描述必须包含英文)
+
+### 表格 动作
+
+|       动作        |   参数    |   类型    | 描述              |
+|:---------------:|:-------:|:-------:|:----------------|
+| ActionTouchHead |  param  | String  | Live2D参数调用      |
+| ActionTouchHead | reverse | Boolean | 检查是否需要以逆序执行拼接动画 |
+| ActionTouchHead |  play   | String  | VoiceTable键     |
+
+### 表格 声音
+
+|    声音    |  类型  | 描述              |
+|:--------:|:----:|:----------------|
+| coquetry | List | 撒娇的声音           |
+|  happy   | List | 快乐的声音           |
+|   sad    | List | 悲伤的声音           |
+|  stable  | List | 平稳的声音（常用）       |
+| welcome  | List | 用于欢迎用户的开始程序时的声音 |
+
+## Json 文件解释
+
+```json
+{
+  "settings.compatibility": "录屏兼容 Capture Compatibility",
+  "settings.disable": {
+    "rec": "语音识别 Speech Recognition",
+    "trans": "自动翻译 Auto Translate",
+    "online": "在线搜索 Search Online",
+    "media": "图片/视频理解 Picture/Video Understanding",
+    "voice": "AI TTS",
+    "gmpene": "全局鼠标穿透 Global Mouse Penetration"
+  },
+  "settings.penetration": {
+    "enable": "是否启用穿透",
+    "start": "穿透被禁用的时间"
+  }
+}
+```
