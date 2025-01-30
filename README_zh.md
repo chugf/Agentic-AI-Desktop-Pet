@@ -41,6 +41,23 @@
 
 > 您可以自定义模型、效果、声音、AI推理方式，甚至可以替换AI模型。
 
+### 本地模型推理要求
+
+> 注意: 如果你的电脑不能达到最低要求，您可以选择云推理模式
+>
+> 均需要输入阿里云API-key和讯飞云API-id, API-secret。您可以获得完整的体验。
+
+人工智能推理要求 *CUDA Runtime*
+
+|     模型      |      模型最低要求      |        模型最低GPU要求        |      模型推荐要求      |         模型推荐GPU要求         |                用途                |
+|:-----------:|:----------------:|:-----------------------:|:----------------:|:-------------------------:|:--------------------------------:|
+| Qwen-Turbo  | 16GB CUDA memory | NVIDIA GeForce RTX 3060 | 20GB CUDA memory |  NVIDIA GeForce RTX 3090  |   It is used to generate text    |
+| Qwen-VL-Max | 12GB CUDA memory |     NVIDIA RTX 2080     | 18GB CUDA memory | NVIDIA GeForce RTX 2080ti | It is used to understand picture |             |        1GB CUDA memory        |   NVIDIA GeForce GTX 650    | It is used to recognize speech |
+| GPT_SoVITS  | 4GB CUDA memory  | NVIDIA GeForce RTX 1060 | 6GB CUDA memory  |  NVIDIA GeForce RTX 2060  |       It is used to speak        |
+|   Whisper   |    Intel CPU     |           N/A           | 1GB CUDA memory  |  NVIDIA GeForce GTX 650   |  It is used to recognize speech  |
+
+> 开发者的显卡算力服务器拥有7张显卡
+
 # 模型替换
 
 ## 步骤

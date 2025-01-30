@@ -41,6 +41,35 @@ This is a desktop pet that uses artificial intelligence to interact with the use
 
 > You can customize the model, the effects, the voice, the AI inference way, and even can replace the AI model.
 
+# Artificial Intelligence Inference Replace
+
+**The AI inference way has 2 ways to infer**
+
+- local inference (This means your computer must run AI API)
+
+> The local inference way need your computer have at least 1 GPU to run AI
+>
+> According to the AI inventor, The GPU number at least 2.
+>
+
+### Local Inference requirements
+
+> Notice: If your computer can't touch the lowest requirements you can choose cloud inference mode.
+> 
+> Just input the Aliyun API-key and XunfeiYun API-id, API-key, API-secret. You can get the full experience just as the local inference mode.
+
+Artificial Intelligence inference require *CUDA Runtime*
+
+|    MODEL    | lowest  Model Requirements | lowest  GPU Requirements | Recommend  Model Requirements | Recommend  GPU Requirements |              usage               |
+|:-----------:|:--------------------------:|:------------------------:|:-----------------------------:|:---------------------------:|:--------------------------------:|
+| Qwen-Turbo  |      16GB CUDA memory      | NVIDIA GeForce RTX 3060  |       20GB CUDA memory        |   NVIDIA GeForce RTX 3090   |   It is used to generate text    |
+| Qwen-VL-Max |      12GB CUDA memory      |     NVIDIA RTX 2080      |       18GB CUDA memory        |  NVIDIA GeForce RTX 2080ti  | It is used to understand picture |             |        1GB CUDA memory        |   NVIDIA GeForce GTX 650    | It is used to recognize speech |
+| GPT_SoVITS  |      4GB CUDA memory       | NVIDIA GeForce RTX 1060  |        6GB CUDA memory        |   NVIDIA GeForce RTX 2060   |       It is used to speak        |
+|   Whisper   |         Intel CPU          |           N/A            |        1GB CUDA memory        |   NVIDIA GeForce GTX 650    |  It is used to recognize speech  |
+
+> The developer's GPU Calculations Server has 7 GPUs
+
+
 # Model Replacer
 
 ## Steps
