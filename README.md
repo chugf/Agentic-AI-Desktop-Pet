@@ -52,6 +52,8 @@ This is a desktop pet that uses artificial intelligence to interact with the use
 > According to the AI inventor, The GPU number at least 2.
 >
 
+- cloud inference (This means you need cloud API)
+
 ### Local Inference requirements
 
 > Notice: If your computer can't touch the lowest requirements you can choose cloud inference mode.
