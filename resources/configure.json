@@ -1,0 +1,87 @@
+{
+   "name": "香草",
+   "voice_model": "香草",
+   "default": "vanilla",
+   "adult_level": 0,
+   "settings": {
+      "compatibility": true,
+      "translate": "ai.tongyi",
+      "disable": [
+         "mcon",
+         "rec",
+         "gmpene"
+      ],
+      "penetration": {
+         "enable": false,
+         "start": "next"
+      },
+      "cloud": {
+         "aliyun": "",
+         "xunfei": {
+            "id": "",
+            "key": "",
+            "secret": ""
+         }
+      },
+      "local": {
+         "qwen": "http://{ip}:{year}",
+         "gsv": "http://{ip}:{year}",
+         "rec": "whisper"
+      },
+      "tts": "local",
+      "text": "cloud",
+      "rec": "cloud",
+      "understand": {
+         "min": 3600,
+         "max": 7200
+      }
+   },
+   "model": {
+      "vanilla": {
+         "adult": {
+            "AdultContent": true,
+            "AdultLevelMinimum": 1,
+            "AdultLevelMaximum": 5,
+            "AdultDescribe": {
+               "1": "裸露 Nudity",
+               "2": "娇喘 Gasp",
+               "3": "行为 Sex",
+               "4": "互动 Interact",
+               "5": "模拟 Simulate"
+            },
+            "action": {
+               "ActionSexing": []
+            },
+            "voice": {
+               "VoiceGasping": []
+            }
+         },
+         "action": {
+            "ActionTouchHead": {
+               "param": "EarDown",
+               "reverse": true,
+               "play": "coquetry"
+            }
+         },
+         "voice": {
+            "coquetry": [
+               "grunt.wav",
+               "master1.wav",
+               "meow1.wav"
+            ],
+            "happy": [],
+            "sad": [],
+            "stable": [
+               "meow1.wav"
+            ],
+            "welcome": [
+               "greet_morning.wav",
+               "greet_afternoon.wav",
+               "welcome1.wav",
+               "welcome2.wav",
+               "welcome3.wav"
+            ]
+         }
+      }
+   }
+}

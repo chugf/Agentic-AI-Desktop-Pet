@@ -1,0 +1,61 @@
+from . import text
+from . import recognition
+
+VoiceSwitch = True
+try:
+    from . import voice
+    from . import translate
+except ImportError:
+    VoiceSwitch = False
+MediaUnderstandSwitch = True
+try:
+    from . import media
+except ImportError:
+    MediaUnderstandSwitch = False
+
+ALI_API_KEY = ""
+XF_API_ID = ""
+XF_API_KEY = ""
+XF_API_SECRET = ""
+
+
+def media_understand(text_, image_path, is_search_online):
+    return media.PictureUnderstand(ALI_API_KEY).picture_understand(text_, image_path, is_search_online)
+
+
+def speech_recognition(success_func, error_func, close_func):
+    recognition.API_ID = XF_API_ID
+    recognition.API_KEY = XF_API_KEY
+    recognition.API_SECRET = XF_API_SECRET
+    return recognition.RealTimeSpeechRecognizer(success_func, error_func, close_func)
+
+
+def text_generator(prompt, is_search_online: bool):
+    a = text.TextGenerator(ALI_API_KEY).generate_text(prompt, is_search_online)
+    return a
+
+
+def gsv_voice_generator(texts, language, module_info, module_name, top_k=12, top_p=0.95, temperature=0.34, speed=1.0,
+                        batch_size=3, batch_threshold=0.75, seed=-1, parallel_infer=True, repetition_penalty=1.35,
+                        url=None):
+    if url is not None:
+        voice.base_url = url
+    return voice.take_a_tts(texts, language, module_info, module_name,
+                            top_k, top_p, temperature, speed, batch_size, batch_threshold,
+                            seed, parallel_infer, repetition_penalty)
+
+
+def ali_voice_generator(texts):
+    return voice.ali_tts(texts, ALI_API_KEY)
+
+
+def voice_change(name, modules):
+    return voice.change_module(name, modules)
+
+
+def machine_translate(prompt):
+    return translate.machine_translate(prompt)
+
+
+def tongyi_translate(words):
+    return translate.tongyi_translate(words, ALI_API_KEY)
