@@ -17,11 +17,11 @@
          "start": "next"
       },
       "cloud": {
-         "aliyun": "sk-95d641171ebf424a87e92afc943b8bb0",
+         "aliyun": "",
          "xunfei": {
-            "id": "e12d391a",
-            "key": "1acc9b855aa867f8a14f8d0d6fb5e700",
-            "secret": "YzgxYjQwNzg5NWEwNGUyNTE3Nzk3NjQ4"
+            "id": "",
+            "key": "",
+            "secret": ""
          }
       },
       "local": {
@@ -30,7 +30,7 @@
          "rec": "whisper"
       },
       "tts": {
-         "way": "local",
+         "way": "cloud",
          "top_k": 20,
          "top_p": 0.8,
          "temperature": 0.8,
