@@ -12,14 +12,14 @@
 			"Name": "角度 X"
 		},
 		{
-			"Id": "ParamBrowRForm",
-			"GroupId": "",
-			"Name": "右眉　変形"
-		},
-		{
 			"Id": "ParamAngleY",
 			"GroupId": "",
 			"Name": "角度 Y"
+		},
+		{
+			"Id": "ParamBrowRForm",
+			"GroupId": "",
+			"Name": "右眉　変形"
 		},
 		{
 			"Id": "ParamAngleZ",
@@ -177,9 +177,37 @@
 		{
 			"Id": "lower_part",
 			"Name": "下部分"
+		},
+		{
+			"Id": "left_eyebrow_part",
+			"Name": "左眉毛"
+		},
+		{
+			"Id": "left_eyeball_part",
+			"Name": "左眼珠"
+		},
+		{
+			"Id": "right_eyebrow_part",
+			"Name": "右眉毛"
+		},
+		{
+			"Id": "right_eyeball_part",
+			"Name": "右眼珠"
+		},
+		{
+			"Id": "right_ear_part",
+			"Name": "右耳"
+		},
+		{
+			"Id": "left_ear_part",
+			"Name": "左耳"
 		}
 	],
 	"CombinedParameters": [
+		[
+			"ParamAngleX",
+			"ParamAngleY"
+		],
 		[
 			"ParamEyeBallX",
 			"ParamEyeBallY"

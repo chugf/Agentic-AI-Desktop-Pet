@@ -23,11 +23,15 @@ def media_understand(text_, image_path, is_search_online):
     return media.PictureUnderstand(ALI_API_KEY).picture_understand(text_, image_path, is_search_online)
 
 
-def speech_recognition(success_func, error_func, close_func):
+def xf_speech_recognition(success_func, error_func, close_func):
     recognition.API_ID = XF_API_ID
     recognition.API_KEY = XF_API_KEY
     recognition.API_SECRET = XF_API_SECRET
-    return recognition.RealTimeSpeechRecognizer(success_func, error_func, close_func)
+    return recognition.XFRealTimeSpeechRecognizer(success_func, error_func, close_func)
+
+
+def whisper_speech_recognition(success_func, error_func, close_func):
+    return recognition.WhisperRealTimeSpeechRecognizer(success_func, error_func, close_func)
 
 
 def text_generator(prompt, is_search_online: bool):
@@ -35,12 +39,10 @@ def text_generator(prompt, is_search_online: bool):
     return a
 
 
-def gsv_voice_generator(texts, language, module_info, module_name, top_k=12, top_p=0.95, temperature=0.34, speed=1.0,
+def gsv_voice_generator(texts, language, module_name, module_info, top_k=12, top_p=0.95, temperature=0.34, speed=1.0,
                         batch_size=3, batch_threshold=0.75, seed=-1, parallel_infer=True, repetition_penalty=1.35,
                         url=None):
-    if url is not None:
-        voice.base_url = url
-    return voice.take_a_tts(texts, language, module_info, module_name,
+    return voice.take_a_tts(texts, language, module_name, module_info,
                             top_k, top_p, temperature, speed, batch_size, batch_threshold,
                             seed, parallel_infer, repetition_penalty)
 

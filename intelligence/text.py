@@ -1,7 +1,7 @@
 import json
 import re
-import markdown
 
+import markdown
 import dashscope
 
 memories = []

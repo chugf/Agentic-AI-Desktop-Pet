@@ -146,3 +146,17 @@ Advanced
   }
 }
 ```
+
+# Quote Open Sources Library
+
+![live2d](https://raw.githubusercontent.com/Arkueid/live2d-py/ba7fe4a70a77f62300e600ff56eaf59231cbb80f/docs/logo.svg)
+- [Live2D-Py](https://github.com/Arkueid/live2d-py)
+
+![PyOpenGL](https://ts1.cn.mm.bing.net/th/id/R-C.84b5fa1a7e2f46924f0a94c474476255?rik=lzp8Bgb3Sw5r8g&riu=http%3a%2f%2fcdn.wolfire.com%2fblog%2fprototype%2fopengl2.png&ehk=UETJyty3s3whP70x%2ff9WOe0dIcQ%2fbLzohetW%2fwEZqUc%3d&risl=&pid=ImgRaw&r=0)
+- [PyOpenGL](https://github.com/mcfletch/pyopengl.git)
+
+![Python](https://www.python.org/static/community_logos/python-logo-master-v3-TM.png)
+- [Python](https://github.com/python/cpython.git)
+
+- [PyQt5](https://github.com/PyQt5/PyQt.git)
+- [FFmpeg](https://github.com/FFmpeg/FFmpeg.git)

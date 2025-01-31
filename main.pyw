@@ -22,15 +22,14 @@ import logs
 # AI
 try:
     import intelligence
-    Client = intelligence.voice.Client()
-    MODULE_INFO = Client.command({"module_info": None})
+    MODULE_INFO = intelligence.voice.get_module_lists()
 
 except ImportError:
     intelligence.VoiceSwitch = False
     Client = intelligence = None
     MODULE_INFO = {}
 
-except ConnectionRefusedError:
+except __import__("requests").exceptions.ConnectionError:
     intelligence.VoiceSwitch = False
     Client = None
     MODULE_INFO = {}
@@ -49,7 +48,6 @@ import win32api
 
 # 引入live2d库 Import Live2D
 import live2d.v3 as live2d
-from live2d.v3.params import StandardParams
 
 # 界面库和OpenGL库 GUI
 import tkinter as tk
@@ -133,40 +131,6 @@ class IterateAddParameterValue(QThread):
             self.parent().maximum_param_counter = max([self.minimum + 1, self.maximum])
 
 
-class AutoBlinkEye(QThread):
-    """自动眨眼线程"""
-    def __init__(self, parent, param_dict):
-        super().__init__(parent)
-        self.param_dict = param_dict
-
-    def run(self):
-        def updater():
-            """更新眼睛的函数 Update the eyes function"""
-            live2d.clearBuffer()
-            self.parent().pet_model.SetParameterValue(StandardParams.ParamEyeLOpen, int(value) / 10, 1.)
-            self.parent().pet_model.Draw()
-            self.parent().pet_model.SetParameterValue(StandardParams.ParamEyeROpen, int(value) / 10, 1.)
-            self.parent().pet_model.Draw()
-            time.sleep(0.12 / int(maximum * 10))
-
-        minimum = self.param_dict[StandardParams.ParamEyeLOpen]['min']
-        maximum = (self.param_dict[StandardParams.ParamEyeROpen]['max'] +
-                   self.param_dict[StandardParams.ParamEyeLOpen]['max']) // 2
-        while True:
-            self.parent().is_playing_animation = True
-            self.parent().has_played_animation = True
-
-            for value in range(int(maximum * 10), int(minimum * 10) - 1, -1):
-                updater()
-            for value in range(int(minimum * 10), int(maximum * 10) + 1):
-                updater()
-
-            self.parent().is_playing_animation = False
-            self.parent().has_played_animation = False
-
-            time.sleep(random.uniform(4, 8))
-
-
 # 基本功能线程 Basic Function Thread
 class SpeakThread(QThread):
     """说话线程 Speak Thread"""
@@ -187,7 +151,7 @@ class SpeakThread(QThread):
             mode = "r"
 
         if self.parent().speaking_lists[self.current_speak_index - 1] and self.current_speak_index != 0:
-            self.parent().speaking_list[self.current_speak_index - 1] = False
+            self.parent().speaking_lists[self.current_speak_index - 1] = False
 
         with wave.open(wave_source, mode) as wf:
             p = pyaudio.PyAudio()
@@ -207,14 +171,32 @@ class SpeakThread(QThread):
 
 class RecognitionThread(QThread):
     """语音识别线程 Speech Recognition Thread"""
-    result = pyqtSignal(list)
+    result = pyqtSignal(str)
 
     def __init__(self, parent: QOpenGLWidget):
         super().__init__(parent)
 
     def run(self):
         global speech_rec
-        speech_rec = intelligence.speech_recognition(
+        if configure['settings']['rec'] == "cloud":
+            if intelligence.recognition.XunFei:
+                func = intelligence.xf_speech_recognition
+            else:
+                QMessageBox.critical(self.parent(), "错误 Error",
+                                     "云端配置依赖包未安装 Cloud configuration dependency package not installed")
+                self.parent().recognition_failure(None,
+                                                  "云端配置依赖包未安装 Cloud configuration dependency package not installed")
+                return
+        else:
+            if intelligence.recognition.Whisper:
+                func = intelligence.whisper_speech_recognition
+            else:
+                QMessageBox.critical(self.parent(), "错误 Error",
+                                     "本地配置依赖包未安装 Local configuration dependency package not installed")
+                self.parent().recognition_failure(None,
+                                                  "本地配置依赖包未安装 Local configuration dependency package not installed")
+                return
+        speech_rec = func(
             self.result.emit,
             self.parent().recognition_failure, self.parent().recognition_closure)
         speech_rec.start_recognition()
@@ -262,8 +244,8 @@ class TextGenerateThread(QThread):
         except Exception as e:
             logger(f"子应用 - AI剧情问答 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
-            self.result.emit([f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}",
-                              f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}"])
+            self.result.emit((f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}",
+                              f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}"))
             return
         logger(f"子应用 - AI剧情问答 调用成功\n"
                f"   Message: {answer}", logs.HISTORY_PATH)
@@ -287,7 +269,7 @@ class VoiceGenerateThread(QThread):
         text = re.sub(r'(【.*】)', '', text)
         # 翻译和语言 Translation and language
         language = "zh"
-        if configure['settings']['tts'] == "local":
+        if configure['settings']['tts']['way'] == "local":
             if "trans" not in configure['settings']['disable']:
                 if "spider" in configure_settings['translate']:
                     if "bing" in configure_settings['translate']:
@@ -300,7 +282,11 @@ class VoiceGenerateThread(QThread):
 
             intelligence.voice_change(configure['voice_model'], MODULE_INFO)
             wav_bytes = intelligence.gsv_voice_generator(
-                text, language, MODULE_INFO, configure['voice_model'],
+                text, language, configure['voice_model'], MODULE_INFO,
+                configure['settings']['tts']['top_k'], configure['settings']['tts']['top_p'],
+                configure['settings']['tts']['temperature'], configure['settings']['tts']['speed'],
+                configure['settings']['tts']['batch_size'], configure['settings']['tts']['batch_threshold'],
+                parallel_infer=configure['settings']['tts']['parallel'],
                 url=str(configure['settings']['local']['gsv']).format(
                     ip=__import__("socket").gethostbyname(__import__("socket").gethostname()),
                     year=time.strftime("%Y")))
@@ -384,12 +370,174 @@ class MouseListener:
             threading.Event().wait(0.01)
 
 
+class AdultEngine:
+    """成人内容加载引擎 Adult content loading engine"""
+    @staticmethod
+    def voice() -> tuple:
+        keywords = re.findall(r'\b[a-zA-Z]+\b', configure_adults['AdultDescribe'][str(configure['adult_level'])])
+        keywords = ''.join(keywords)
+        return keywords.lower(), configure_adults['voice'][f"Voice{keywords}"]
+
+
+class Balloon:
+    """
+    气泡 Balloon
+    """
+    def __init__(self,
+                 widget,
+                 text: str = "",
+                 fg="black",
+                 bg="white",
+                 justify: typing.Literal["left", "center", "right"] = "left",
+                 anchor: typing.Literal["nw", "n", "ne", "w", "center", "e", "sw", "s", "se"] = "center",
+                 x_offset: int = 0,
+                 y_offset: int = 0,
+                 show_width: int = 0,
+                 follow: bool = True,
+                 alpha: float = 0.95,
+                 delayed=250,
+                 topmost=True,
+                 *args,
+                 **kwargs):
+        self.text = text
+        self.fg = fg
+        self.bg = bg
+        self.width = show_width
+        self.justify = justify
+        self.anchor = anchor
+        self.args = args
+        self.kwargs = kwargs
+
+        self.top = None
+        self.id = None
+        self.follow = follow
+        self.widget = widget
+        self.alpha = alpha
+        self.delayed = delayed
+        self.topmost = topmost
+
+        self.x_offset = x_offset
+        self.y_offset = y_offset
+
+        self.widget.bind('<Enter>', lambda x: self.enter())
+        self.widget.bind("<ButtonPress>", lambda x: self.leave())
+        self.widget.bind('<Leave>', lambda x: self.leave())
+        if self.follow:  # 跟随显示
+            self.widget.bind("<Motion>", lambda x: self.move())
+
+    def balloon_show(self):
+        if self.top:
+            return
+
+        self.updata_width()
+
+        self.top = tk.Toplevel()
+        self.top.attributes("-alpha", self.alpha)
+        self.top.overrideredirect(True)
+        self.top.attributes("-topmost", self.topmost)
+        self.top.minsize(self.width, 30)
+
+        # 偏移量默认居中
+        x = self.widget.winfo_pointerx() + self.x_offset - self.width // 2
+        if self.y_offset + 15 < 15:
+            self.y_offset = 0
+        y = self.widget.winfo_pointery() + self.y_offset + 15
+        self.top.geometry(f"+{x}+{y}")
+
+        balloon = tk.Label(
+            self.top,
+            text=self.text,
+            fg=self.fg,
+            bg=self.bg,
+            justify=self.justify,
+            anchor=self.anchor,
+            wraplength=self.width - 20,
+            *self.args, **self.kwargs)
+        balloon.pack(fill="both", expand=1, ipadx=10, ipady=5)
+
+    def updata_width(self):
+        if not self.width:
+            test_long = len(self.text)
+            if test_long <= 30:
+                self.width = test_long * 12 + 20
+            elif test_long <= 90:
+                self.width = 300
+            elif 90 < test_long <= 250:
+                self.width = test_long + 200
+            else:
+                self.width = 450
+
+    def enter(self):
+        self.schedule()
+
+    def leave(self):
+        self.unschedule()
+        self.destroy_balloon()
+
+    def schedule(self):
+        self.unschedule()
+        self.id = self.widget.after(self.delayed, self.balloon_show)
+
+    def unschedule(self):
+        show_id = self.id
+        self.id = None
+        if show_id:
+            self.widget.after_cancel(show_id)
+
+    def move(self):
+        if self.top:
+            x = self.widget.winfo_pointerx() + self.x_offset - self.width // 2
+            if self.y_offset + 15 < 15:
+                self.y_offset = 0
+            y = self.widget.winfo_pointery() + self.y_offset + 15
+            self.top.geometry(f"+{x}+{y}")
+
+    def destroy_balloon(self):
+        if self.top:
+            self.top.destroy()
+            self.top = None
+
+    def updata_text(self, new_text, new_width=0):
+        self.text = new_text
+        self.width = new_width
+
+    def unballoon(self):
+        self.widget.unbind('<Enter>')
+        self.widget.unbind("<ButtonPress>")
+        self.widget.unbind('<Leave>')
+        if self.follow:
+            self.widget.unbind("<Motion>")
+        try:
+            del self.text
+            del self.fg
+            del self.bg
+            del self.justify
+            del self.anchor
+            del self.args
+            del self.kwargs
+
+            del self.top
+            del self.id
+            del self.follow
+            del self.widget
+            del self.width
+            del self.alpha
+            del self.delayed
+            del self.topmost
+
+            del self.x_offset
+            del self.y_offset
+            return True
+        except AttributeError:
+            return 1
+
+
 # 设置
 class Setting(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("AI-Agent  桌面宠物设置 | Desktop Pet Settings")
-        self.geometry("600x450")
+        self.geometry("600x460")
         self.attributes("-alpha", 0.9)
         self.attributes("-topmost", True)
 
@@ -447,6 +595,10 @@ class Setting(tk.Tk):
             self.adult_lists.current(configure['adult_level'] - 1)
         else:
             self.adult_lists.configure(state=tk.DISABLED)
+        self.adult_lists.bind(
+            "<<ComboboxSelected>>",
+            lambda event: self.change_configure(
+                list(configure_adults['AdultDescribe'].values()).index(self.adult_lists.get()) + 1, "adult_level"))
         self.adult_lists.place(x=200, y=70)
 
         tk.Label(self.general_frame, text="语音模型 Voice Module：").place(x=5, y=100)
@@ -577,6 +729,11 @@ class Setting(tk.Tk):
                 self.penetration_start_value.get(),
                 "settings.penetration.start"
             ))
+        Balloon(self.penetration_start_random,
+                "一旦启用就会有5 ~ 30分钟的时间无法操作。并且无法靠重启恢复！当软件关闭后会刷新计时器重新计时！\n"
+                "A random time between 5 ~ 30 minutes will be disabled. You can't recover it by restarting! "
+                "When the software is closed, the timer will be refreshed and restarted!",
+                fg="yellow", bg="red")
         self.penetration_start_random.place(x=380, y=55)
 
         self.penetration_start_left_click_bottom = ttk.Radiobutton(
@@ -637,7 +794,13 @@ class Setting(tk.Tk):
 
         self.note.add(self.intelligence_frame, text="人工智能 AI")
 
-        self.cloud_infer = tk.LabelFrame(self.intelligence_frame, text="云端推理 Cloud Infer", width=590, height=150)
+        self.intelligence_note = ttk.Notebook(self.intelligence_frame)
+
+        self.inference_frame = tk.Frame(self.intelligence_frame)
+        self.tts_parameter_frame = tk.Frame(self.intelligence_frame)
+        self.intelligence_note.add(self.inference_frame, text="推理 Inference")
+
+        self.cloud_infer = tk.LabelFrame(self.inference_frame, text="云端推理 Cloud Infer", width=590, height=150)
 
         tk.Label(self.cloud_infer, text="阿里云 API_KEY：").place(x=5, y=5)
         self.aliyun_apikey_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
@@ -661,7 +824,7 @@ class Setting(tk.Tk):
 
         self.cloud_infer.place(x=5, y=5)
 
-        self.local_infer = tk.LabelFrame(self.intelligence_frame, text="本地推理 Local Infer", width=590, height=160)
+        self.local_infer = tk.LabelFrame(self.inference_frame, text="本地推理 Local Infer", width=590, height=160)
 
         tk.Label(self.local_infer, text="通义千问 Tongyi").place(x=5, y=5)
         self.qwen_api_url = ttk.Entry(self.local_infer, width=50)
@@ -674,9 +837,9 @@ class Setting(tk.Tk):
         self.gsv_api_url.place(x=150, y=35)
 
         tk.Label(self.local_infer, text="语音识别 Recognition").place(x=5, y=65)
-        self.recognition_api_url = ttk.Entry(self.local_infer, width=50)
-        self.recognition_api_url.insert(0, configure_settings['local']['rec'])
-        self.recognition_api_url.place(x=150, y=65)
+        self.recognition_api_tool = ttk.Combobox(self.local_infer, width=50, values=['whisper'], state="readonly")
+        self.recognition_api_tool.set(configure_settings['local']['rec'])
+        self.recognition_api_tool.place(x=150, y=65)
 
         tk.Label(self.local_infer,
                  text="格式化说明：\n"
@@ -685,42 +848,112 @@ class Setting(tk.Tk):
 
         self.local_infer.place(x=5, y=160)
 
-        tk.Label(self.intelligence_frame, text="文本转语音 (TTS): ").place(x=5, y=320)
+        tk.Label(self.inference_frame, text="文本转语音 (TTS): ").place(x=5, y=320)
         self.tts_value = tk.StringVar(self)
-        self.tts_value.set(configure['settings']['tts'])
-        self.tts_cloud = ttk.Radiobutton(self.intelligence_frame, text="云端 Cloud",
+        self.tts_value.set(configure['settings']['tts']['way'])
+        self.tts_cloud = ttk.Radiobutton(self.inference_frame, text="云端 Cloud",
                                          variable=self.tts_value, value="cloud")
         self.tts_cloud.place(x=200, y=320)
 
-        self.tts_local = ttk.Radiobutton(self.intelligence_frame, text="本地 Local",
+        self.tts_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
                                          variable=self.tts_value, value="local")
         self.tts_local.place(x=300, y=320)
 
-        tk.Label(self.intelligence_frame, text="文本输出 (Text)：").place(x=5, y=350)
+        tk.Label(self.inference_frame, text="文本输出 (Text)：").place(x=5, y=350)
         self.text_value = tk.StringVar(self)
-        self.text_value.set(configure['settings']['text'])
-        self.text_cloud = ttk.Radiobutton(self.intelligence_frame, text="云端 Cloud",
+        self.text_value.set(configure['settings']['text']['way'])
+        self.text_cloud = ttk.Radiobutton(self.inference_frame, text="云端 Cloud",
                                           variable=self.text_value, value="cloud")
         self.text_cloud.place(x=200, y=350)
 
-        self.text_local = ttk.Radiobutton(self.intelligence_frame, text="本地 Local",
+        self.text_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
                                           variable=self.text_value, value="local")
         self.text_local.place(x=300, y=350)
 
-        tk.Label(self.intelligence_frame, text="语音识别 (Recognition)").place(x=5, y=380)
+        tk.Label(self.inference_frame, text="语音识别 (Recognition)").place(x=5, y=380)
         self.rec_value = tk.StringVar(self)
         self.rec_value.set(configure['settings']['rec'])
-        self.rec_cloud = ttk.Radiobutton(self.intelligence_frame, text="云端 Cloud",
+        self.rec_cloud = ttk.Radiobutton(self.inference_frame, text="云端 Cloud",
                                          variable=self.rec_value, value="cloud")
         self.rec_cloud.place(x=200, y=380)
 
-        self.rec_local = ttk.Radiobutton(self.intelligence_frame, text="本地 Local",
+        self.rec_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
                                          variable=self.rec_value, value="local")
         self.rec_local.place(x=300, y=380)
         ttk.Button(self.local_infer, text="保存设置 Save Settings", command=self.save_settings).place(x=430, y=100)
 
         # self.note.add(self.animation_frame, text="动画绑定 Animation Bind")
         # tk.Label(self.animation_frame, text="敬请期待 Coming Soon", font=("微软雅黑", 30)).pack()
+
+        self.intelligence_note.add(self.tts_parameter_frame, text="TTS 参数 Parameter")
+
+        tpk = tk.Label(self.tts_parameter_frame, text="top_k: ")
+        Balloon(tpk, "影响采样的概率(拉小复读机，拉大纯运气)\n"
+                     "influence the probability of sampling (pull down to repeat, pull up to pure luck)")
+        tpk.place(x=5, y=25)
+        self.top_k_scale = tk.Scale(self.tts_parameter_frame, from_=1, to=100, orient=tk.HORIZONTAL, length=300)
+        self.top_k_scale.set(configure['settings']['tts']['top_k'])
+        self.top_k_scale.place(x=100, y=5)
+
+        tpp = tk.Label(self.tts_parameter_frame, text="top_p: ")
+        Balloon(tpp, "影响音频多样性(拉小太死板，拉大更多样)\n"
+                     "influence the diversity of audio (pull down too stiff, pull up more variety)")
+        tpp.place(x=5, y=65)
+        self.top_p_scale = tk.Scale(self.tts_parameter_frame, from_=0.01, to=1.00,
+                                    orient=tk.HORIZONTAL, length=300, resolution=0.01)
+        self.top_p_scale.set(configure['settings']['tts']['top_p'])
+        self.top_p_scale.place(x=100, y=45)
+
+        tempt = tk.Label(self.tts_parameter_frame, text="temperature: ")
+        Balloon(tempt,
+                "影响音频随机性和变化度(拉小更固定，拉大更多变)\n"
+                "influence the randomness and variation of audio (pull down more fixed, pull up more variation)")
+        tempt.place(x=5, y=105)
+        self.temperature_scale = tk.Scale(self.tts_parameter_frame, from_=0.01, to=1.00,
+                                          orient=tk.HORIZONTAL, length=300, resolution=0.01)
+        self.temperature_scale.set(configure['settings']['tts']['temperature'])
+        self.temperature_scale.place(x=100, y=85)
+
+        sp = tk.Label(self.tts_parameter_frame, text="speed: ")
+        sp.place(x=5, y=145)
+        Balloon(sp,
+                "影响音频速度(拉小变慢，拉大变快)\n"
+                "influence the speed of audio (pull down to slow, pull up to fast)")
+        self.speed_scale = tk.Scale(self.tts_parameter_frame, from_=0.01, to=3.00,
+                                    orient=tk.HORIZONTAL, length=300, resolution=0.01)
+        self.speed_scale.set(configure['settings']['tts']['speed'])
+        self.speed_scale.place(x=100, y=125)
+
+        batch_size = tk.Label(self.tts_parameter_frame, text="Batch Size: ")
+        batch_size.place(x=5, y=205)
+        Balloon(batch_size,
+                "影响推理速度(拉低减少GPU负荷，拉高增加GPU负荷)\n"
+                "influence the speed of inference(pull down to reduce GPU load, pull up to increase GPU load)")
+        self.batch_size_scale = tk.Scale(self.tts_parameter_frame, from_=1, to=50, orient=tk.HORIZONTAL, length=300)
+        self.batch_size_scale.set(configure['settings']['tts']['batch_size'])
+        self.batch_size_scale.place(x=100, y=185)
+
+        bt = tk.Label(self.tts_parameter_frame, text="Batch Threshold: ")
+        Balloon(bt, "性能优化阈值(拉低吃性能，拉高时间短)\n"
+                    "performance optimization threshold (pull down to power performance, pull up to time short)")
+        bt.place(x=5, y=245)
+        self.batch_threshold_scale = tk.Scale(self.tts_parameter_frame,
+                                              from_=0.01, to=1, orient=tk.HORIZONTAL, length=300, resolution=0.01)
+        self.batch_threshold_scale.set(configure['settings']['tts']['batch_threshold'])
+        self.batch_threshold_scale.place(x=100, y=225)
+
+        self.parallel = tk.BooleanVar(self.tts_parameter_frame)
+        self.parallel.set(configure['settings']['tts']['parallel'])
+        self.parallel_check = ttk.Checkbutton(self.tts_parameter_frame, text="并行推理 Parallel Inference",
+                                              variable=self.parallel)
+        Balloon(self.parallel_check,
+                "影响推理速度(开启更快消耗高，关闭更慢消耗少)\n"
+                "influence the speed of inference (open faster consume high, close slower consume less)")
+        self.parallel_check.place(x=5, y=350)
+
+        ttk.Button(self.tts_parameter_frame, text="保存设置 Save Settings", command=self.save_settings).place(x=430, y=350)
+
+        self.intelligence_note.pack(fill=tk.BOTH, expand=True)
 
         self.note.add(self.character_frame, text="角色设定 Character Sets")
 
@@ -755,8 +988,8 @@ class Setting(tk.Tk):
         self.quote_pyqt5 = tk.Label(self.use_open_sources, text='PyQt5(LGPL v3.0)', fg="blue", font=('微软雅黑', 13))
         self.quote_pyqt5.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/PyQt5/PyQt.git"))
         self.quote_pyqt5.place(x=180, y=0)
-        self.quote_opengl = tk.Label(self.use_open_sources, text='OpenGL(Apache 2.0)', fg="blue", font=('微软雅黑', 13))
-        self.quote_opengl.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/McNopper/OpenGL.git"))
+        self.quote_opengl = tk.Label(self.use_open_sources, text='PyOpenGL', fg="blue", font=('微软雅黑', 13))
+        self.quote_opengl.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/mcfletch/pyopengl"))
         self.quote_opengl.place(x=365, y=0)
         self.quote_python = tk.Label(self.use_open_sources, text='Python(PSF)', fg="blue", font=('微软雅黑', 13))
         self.quote_python.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/python/cpython.git"))
@@ -764,7 +997,8 @@ class Setting(tk.Tk):
         self.quote_ffmpeg = tk.Label(self.use_open_sources, text='FFmpeg(LGPL v2.1+)', fg="blue", font=('微软雅黑', 13))
         self.quote_ffmpeg.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/FFmpeg/FFmpeg.git"))
         self.quote_ffmpeg.place(x=180, y=30)
-        self.quote_self = tk.Label(self.use_open_sources, text='AI Desktop Pet(LGPL v3.0)', fg="blue", font=('微软雅黑', 13))
+        self.quote_self = tk.Label(self.use_open_sources,
+                                   text='AI Desktop Pet(LGPL v3.0)', fg="blue", font=('微软雅黑', 13))
         self.quote_self.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/grass-tech/aidesktoppet.git"))
         self.quote_self.place(x=365, y=30)
         self.use_open_sources.place(x=5, y=50)
@@ -860,8 +1094,7 @@ class Setting(tk.Tk):
             sf.close()
 
     def change_refer_text(self, event):
-        refer_text = Client.command(
-            {"get_refer_text": self.voice_model_lists.get()})[self.voice_model_lists.get()]
+        refer_text = MODULE_INFO[self.voice_model_lists.get()][3]
         self.voice_text_entry.delete(0, tk.END)
         self.voice_text_entry.insert(0, refer_text)
         configure['voice_model'] = self.voice_model_lists.get()
@@ -876,7 +1109,7 @@ class Setting(tk.Tk):
                 return
             lang, t = self.voice_text_entry.get().split(":")
             intelligence.voice_change(self.voice_model_lists.get(), MODULE_INFO)
-            audio_bytes = intelligence.gsv_voice_generator(t, lang, MODULE_INFO, self.voice_model_lists.get())
+            audio_bytes = intelligence.gsv_voice_generator(t, lang, self.voice_model_lists.get(), MODULE_INFO)
         else:
             audio_bytes, duration = intelligence.ali_voice_generator(self.voice_text_entry.get())
 
@@ -893,12 +1126,20 @@ class Setting(tk.Tk):
             p.terminate()
 
     def save_settings(self):
-        configure['settings']['tts'] = self.tts_value.get()
-        configure['settings']['text'] = self.text_value.get()
+        configure['settings']['tts']['way'] = self.tts_value.get()
+        configure['settings']['tts']['top_k'] = self.top_k_scale.get()
+        configure['settings']['tts']['top_p'] = self.top_p_scale.get()
+        configure['settings']['tts']['temperature'] = self.temperature_scale.get()
+        configure['settings']['tts']['speed'] = self.speed_scale.get()
+        configure['settings']['tts']['batch_size'] = self.batch_size_scale.get()
+        configure['settings']['tts']['batch_threshold'] = self.batch_threshold_scale.get()
+        configure['settings']['tts']['parallel'] = self.parallel.get()
+
+        configure['settings']['text']['way'] = self.text_value.get()
         configure['settings']['rec'] = self.rec_value.get()
         configure['settings']['local']['qwen'] = self.qwen_api_url.get()
         configure['settings']['local']['gsv'] = self.gsv_api_url.get()
-        configure['settings']['local']['rec'] = self.recognition_api_url.get()
+        configure['settings']['local']['rec'] = self.recognition_api_tool.get()
         configure['settings']['cloud']['aliyun'] = self.aliyun_apikey_entry.get()
         configure['settings']['cloud']['xunfei']['id'] = self.xunfei_apiid_entry.get()
         configure['settings']['cloud']['xunfei']['key'] = self.xunfei_apikey_entry.get()
@@ -995,7 +1236,7 @@ class DesktopTop(QOpenGLWidget):
         self.speaking_lists: list[bool] = []
         self.maximum_param_counter = self.turn_count = self.among = 0
         self.click_in_area = self.click_x = self.click_y = -1
-        self.is_penetration = self.has_played_animation = self.is_playing_animation = self.is_movement = False
+        self.is_penetration = self.is_playing_animation = self.is_movement = False
         self.stop_playing_animation: list[bool | str] = [False, ""]
         self.enter_position = self.drag_position = None
         self.random_cancel_penetration = self.resources_image = self.direction = self.last_pos = None
@@ -1142,19 +1383,10 @@ class DesktopTop(QOpenGLWidget):
             self.recognize_thread.wait()
         self.recognize_thread.start()
 
-    def recognition_success(self, result: list[dict]):
+    def recognition_success(self, result: str):
         speech_rec.statued()
 
-        chars = ""
-        for data in result:
-            for w in data['cw']:
-                if str(w['w']).strip():
-                    symbol_pattern = r'^[!"#$%&\'()*+,\-./:;<=>?@[\\\]^_`{|}~]|[\u3000-\u303F\uFF00-\uFFEF]'
-                    if re.match(symbol_pattern, w['w'][0]):
-                        chars += w['w'][1:]
-                    else:
-                        chars += w['w']
-        if configure['name'] in chars or configure_default in chars:
+        if configure['name'] in result or configure_default in result:
             # 临时对话不启用一些界面 Temporary dialog does not enable some interfaces
             self.conversation_entry.setVisible(False)
             self.conversation_button.setVisible(False)
@@ -1162,10 +1394,10 @@ class DesktopTop(QOpenGLWidget):
             self.clear_memories_button.setVisible(False)
             self.chat_box.setVisible(True)
 
-            self.have_conversation(chars, True)
+            self.have_conversation(result, True)
         logger(f"子应用 - 语音识别 语音呼唤成功\n"
-               f"Sub-Application - Voice Recognition Success: {chars}\n"
-               f"  Message: {chars}\n\n"
+               f"Sub-Application - Voice Recognition Success: {result}\n"
+               f"  Message: {result}\n\n"
                f"  Origin: {json.dumps(result, indent=3, ensure_ascii=False)}", logs.API_PATH)
 
     @staticmethod
@@ -1461,6 +1693,10 @@ class DesktopTop(QOpenGLWidget):
         if configure['adult_level']:
             content_menu.addMenu(adult_content_menu)
 
+        exit_menu = QAction("退出 Exit", self)
+        exit_menu.triggered.connect(self.exit_program)
+        content_menu.addAction(exit_menu)
+
         content_menu.exec_(self.mapToGlobal(event.pos()))
 
     # 过滤器事件 Filter events
@@ -1508,8 +1744,8 @@ class DesktopTop(QOpenGLWidget):
             # 清除缓存 Clear empty cache
             self.speaking_lists.clear()
 
-        # 自动眨眼 Auto Blink
-        if not self.has_played_animation:
+        # 跟随鼠标 Follow the mouse
+        if not self.is_playing_animation:
             x, y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
             self.pet_model.Update()
             self.pet_model.Drag(x, y)
@@ -1680,7 +1916,10 @@ class DesktopTop(QOpenGLWidget):
             if self.click_in_area and not self.is_movement:
                 # 摸头互动 Touch interaction
                 if checker(129, 202, 0, 50, 4):
-                    self.has_played_animation = self.is_playing_animation = True
+                    SpeakThread(self,
+                                f"./resources/voice/{configure['default']}/coquetry/"
+                                f"{random.choice(configure_voices['coquetry'])}").start()
+                    self.is_playing_animation = True
                     self.click_in_area = False
 
                     # 播放正向动画 Play the forward animation
@@ -1699,7 +1938,17 @@ class DesktopTop(QOpenGLWidget):
 
         click_x, click_y = event.globalPos().x() - self.x(), event.globalPos().y() - self.y()
         if event.button() == Qt.LeftButton and self.click_in_area:
-            print("meet the requirements")
+            print(f"meet the requirements. CLICK pos: {click_x, click_y}")
+            if checker(159, 217, 143, 172):
+                if configure['adult_level'] > 0:
+                    dir_, voice_list = AdultEngine.voice()
+                    SpeakThread(self,
+                                f"./resources/adult/{configure['default']}/voice/{dir_}/"
+                                f"{random.choice(voice_list)}").start()
+                else:
+                    SpeakThread(self,
+                                f"./resources/voice/{configure['default']}/angry/"
+                                f"{random.choice(configure_voices['angry'])}").start()
             event.accept()
         self.is_movement = False
 
@@ -1723,7 +1972,6 @@ class DesktopTop(QOpenGLWidget):
         for i in range(self.pet_model.GetParameterCount()):
             param = self.pet_model.GetParameter(i)
             self.param_dict.update({param.id: {"value": param.value, "max": param.max, "min": param.min}})
-        AutoBlinkEye(self, self.param_dict).start()
         self.startTimer(int(1000 / 900))
 
     def resizeGL(self, width, height):
@@ -1735,10 +1983,16 @@ class DesktopTop(QOpenGLWidget):
         # 加载模型 Load Model
         self.pet_model.Draw()
 
+    def exit_program(self):
+        self.close()
+        logger("程序退出 Program exit", logs.HISTORY_PATH)
+        os.kill(os.getpid(), __import__("signal").SIGINT)
+
 
 live2d.setLogEnable(False)
 live2d.init()
 MouseListener = MouseListener()
+AdultEngine = AdultEngine()
 logger("桌宠初始化完成 Live2D初始化完成\n"
        "DesktopPet initialized successfully, Live2D initialized successfully.\n", logs.HISTORY_PATH)
 if __name__ == '__main__':

@@ -1,0 +1,1135 @@
+{
+	[2025-01-31 12:04:48] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:04:54] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用失败
+   Message: 'NoneType' object has no attribute 'text'
+}
+{
+	[2025-01-31 12:05:01] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:05:07] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用失败
+   Message: 'NoneType' object has no attribute 'text'
+}
+{
+	[2025-01-31 12:05:51] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:05:56] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用失败
+   Message: 'NoneType' object has no attribute 'text'
+}
+{
+	[2025-01-31 12:06:43] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:06:48] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用失败
+   Message: 'NoneType' object has no attribute 'text'
+}
+{
+	[2025-01-31 12:08:02] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:08:06] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻点头）主人好【声音轻柔】喵~', '<p>（轻轻点头）主人好【声音轻柔】喵~</p>')
+}
+{
+	[2025-01-31 12:09:15] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:09:21] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻点头）主人好 【尾巴微微摆动，心情平静】喵~', '<p>（轻轻点头）主人好 【尾巴微微摆动，心情平静】喵~</p>')
+}
+{
+	[2025-01-31 12:12:11] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:12:16] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:12:20] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻点头）主人好 【尾巴微微摆动】喵～', '<p>（轻轻点头）主人好 【尾巴微微摆动】喵～</p>')
+}
+{
+	[2025-01-31 12:12:23] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 2340
+
+}
+{
+	[2025-01-31 12:12:32] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:14:10] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:14:29] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻点头）主人好 【尾巴微微摆动】喵~', '<p>（轻轻点头）主人好 【尾巴微微摆动】喵~</p>')
+}
+{
+	[2025-01-31 12:14:32] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 2420
+
+}
+{
+	[2025-01-31 12:16:38] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:17:05] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻歪头）主人好呢 【尾巴微微摆动】喵～', '<p>（轻轻歪头）主人好呢 【尾巴微微摆动】喵～</p>')
+}
+{
+	[2025-01-31 12:17:08] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 3660
+
+}
+{
+	[2025-01-31 12:28:57] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:30:31] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:33:53] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:35:09] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:35:34] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:40:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:46:51] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:47:11] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:47:31] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:47:52] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻摇晃尾巴）主人好 【耳朵微微抖动】 喵～', '<p>（轻轻摇晃尾巴）主人好 【耳朵微微抖动】 喵～</p>')
+}
+{
+	[2025-01-31 12:47:57] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 2460
+
+}
+{
+	[2025-01-31 12:49:10] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:49:46] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:50:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:53:27] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:54:01] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:54:48] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（歪着头）蘑菇？主人是在问关于蘑菇的事情吗？【疑惑】不过，如果是做甜点的话，蘑菇好像不是常用的食材呢喵。', '<p>（歪着头）蘑菇？主人是在问关于蘑菇的事情吗？【疑惑】不过，如果是做甜点的话，蘑菇好像不是常用的食材呢喵。</p>')
+}
+{
+	[2025-01-31 12:54:54] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 12620
+
+}
+{
+	[2025-01-31 12:55:22] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻摇晃着尾巴）萝卜的话，看起来和我的名字很搭呢喵。【微笑】不过主人，萝卜是做菜的食材，和甜点好像不太一样喵。要是主人喜欢的话，我倒是可以试着研究一下怎么把萝卜做成特别的甜点喵。', '<p>（轻轻摇晃着尾巴）萝卜的话，看起来和我的名字很搭呢喵。【微笑】不过主人，萝卜是做菜的食材，和甜点好像不太一样喵。要是主人喜欢的话，我倒是可以试着研究一下怎么把萝卜做成特别的甜点喵。</p>')
+}
+{
+	[2025-01-31 12:55:31] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 26100
+
+}
+{
+	[2025-01-31 12:56:57] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:57:26] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:57:55] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 12:58:16] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻歪头）主人好 【尾巴微微摆动】 喵～', '<p>（轻轻歪头）主人好 【尾巴微微摆动】 喵～</p>')
+}
+{
+	[2025-01-31 12:58:18] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 2460
+
+}
+{
+	[2025-01-31 13:00:26] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:01:45] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:02:09] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:04:49] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:09:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:09:52] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:10:24] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:11:01] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:11:52] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:12:36] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:13:36] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:14:33] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:15:03] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:17:17] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:19:18] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:19:38] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:19:53] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:22:15] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:23:15] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:25:55] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:27:31] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:27:49] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻歪头）主人，你好呢 【尾巴微微摆动】喵～', '<p>（轻轻歪头）主人，你好呢 【尾巴微微摆动】喵～</p>')
+}
+{
+	[2025-01-31 13:27:51] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 2500
+
+}
+{
+	[2025-01-31 13:28:03] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（安静地坐着，尾巴轻轻晃动）主人，你来啦 【微微低头】喵～', '<p>（安静地坐着，尾巴轻轻晃动）主人，你来啦 【微微低头】喵～</p>')
+}
+{
+	[2025-01-31 13:28:06] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 1120
+
+}
+{
+	[2025-01-31 13:28:20] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（抬起头，眼睛闪烁）主人，欢迎回来呢 【尾巴轻轻摇摆】喵～', '<p>（抬起头，眼睛闪烁）主人，欢迎回来呢 【尾巴轻轻摇摆】喵～</p>')
+}
+{
+	[2025-01-31 13:28:23] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 3380
+
+}
+{
+	[2025-01-31 13:33:21] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:34:02] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:34:49] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:36:07] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:48:56] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 13:50:54] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:42:43] 
+ [LOGGING]: 
+子应用 - AI图文理解 调用成功 Sub Application - AI Media Understand Call Success
+   Message: ['这张图片展示了一个桌面宠物程序的界面，界面中有一个可爱的猫娘角色。以下是对这张图片的评价：\n\n1. **界面设计**：界面设计简洁明了，功能分区清晰。左侧是项目文件树，右侧是代码编辑区，中间是设置窗口。整体布局合理，便于用户操作。\n\n2. **角色设计**：猫娘角色设计可爱，符合Galgame中的常见风格。角色的表情和姿态都很生动，给人一种活泼的感觉。\n\n3. **功能设置**：设置窗口中有多个参数可以调整，包括推理、TTS参数等，显示了这个程序具有一定的可定制性和灵活性。\n\n4. **用户体验**：从界面来看，这个程序应该能够提供一个有趣的互动体验，特别是对于喜欢Galgame和猫娘角色的用户来说。\n\n总体来说，这是一个设计精良、功能丰富的桌面宠物程序，适合喜欢这类角色的用户使用。', '<p>这张图片展示了一个桌面宠物程序的界面，界面中有一个可爱的猫娘角色。以下是对这张图片的评价：</p>\n<ol>\n<li>\n<p><strong>界面设计</strong>：界面设计简洁明了，功能分区清晰。左侧是项目文件树，右侧是代码编辑区，中间是设置窗口。整体布局合理，便于用户操作。</p>\n</li>\n<li>\n<p><strong>角色设计</strong>：猫娘角色设计可爱，符合Galgame中的常见风格。角色的表情和姿态都很生动，给人一种活泼的感觉。</p>\n</li>\n<li>\n<p><strong>功能设置</strong>：设置窗口中有多个参数可以调整，包括推理、TTS参数等，显示了这个程序具有一定的可定制性和灵活性。</p>\n</li>\n<li>\n<p><strong>用户体验</strong>：从界面来看，这个程序应该能够提供一个有趣的互动体验，特别是对于喜欢Galgame和猫娘角色的用户来说。</p>\n</li>\n</ol>\n<p>总体来说，这是一个设计精良、功能丰富的桌面宠物程序，适合喜欢这类角色的用户使用。</p>']
+}
+{
+	[2025-01-31 14:43:04] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 100240
+
+}
+{
+	[2025-01-31 14:46:46] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:47:10] 
+ [LOGGING]: 
+子应用 - AI图文理解 调用成功 Sub Application - AI Media Understand Call Success
+   Message: ['你好喵~有什么可以帮到你的吗？', '<p>你好喵~有什么可以帮到你的吗？</p>']
+}
+{
+	[2025-01-31 14:47:13] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 3860
+
+}
+{
+	[2025-01-31 14:47:23] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:47:39] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻歪头）主人，你好喵~ 【尾巴愉快地晃动】', '<p>（轻轻歪头）主人，你好喵~ 【尾巴愉快地晃动】</p>')
+}
+{
+	[2025-01-31 14:47:42] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 2460
+
+}
+{
+	[2025-01-31 14:47:50] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:48:00] 
+ [LOGGING]: 
+子应用 - AI图文理解 调用成功 Sub Application - AI Media Understand Call Success
+   Message: ['（摇尾巴）看起来你正在使用PyCharm编辑器编写Python代码，似乎是在开发一个桌面宠物项目喵~【开心】', '<p>（摇尾巴）看起来你正在使用PyCharm编辑器编写Python代码，似乎是在开发一个桌面宠物项目喵~【开心】</p>']
+}
+{
+	[2025-01-31 14:48:05] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+   Duration 10980
+
+}
+{
+	[2025-01-31 14:48:41] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:53:13] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:55:34] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:57:22] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:57:45] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 14:58:30] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:04:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:07:19] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:23:07] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:23:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:25:21] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:27:00] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:27:32] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:27:49] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:28:31] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:29:11] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:30:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:33:09] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:34:29] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:35:05] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:35:51] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:37:03] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:45:46] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:47:05] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:49:01] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:49:48] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 15:50:13] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:03:13] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:03:27] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:03:52] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:04:51] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:36:19] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:45:22] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:47:56] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:48:56] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:49:43] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:50:23] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:51:19] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:52:18] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 16:57:30] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:01:17] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:12:54] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:13:11] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:16:12] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:16:28] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:17:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:18:34] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:18:56] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:23:14] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:23:30] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:24:01] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:24:38] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:25:25] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:25:59] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:26:47] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:27:13] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:27:54] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:28:32] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:29:15] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:32:54] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:33:21] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:34:40] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:36:36] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:40:56] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 17:46:29] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: ('（轻轻摇晃着尾巴，低着头）主人好，我是香草... 【声音很小，带着些许羞涩】 \n\n（抬眼偷偷看了主人一眼，又迅速低下头）虽然不太擅长言辞，但我会努力让主人满意的... 【脸微微泛红】\n\n（小声地补充）我平时喜欢看小说，也很喜欢被主人摸头... 【尾巴愉快地晃动了一下】 \n\n（突然想到什么，声音更小了）希望有一天能成为主人的骄傲...喵。', '<p>（轻轻摇晃着尾巴，低着头）主人好，我是香草... 【声音很小，带着些许羞涩】 </p>\n<p>（抬眼偷偷看了主人一眼，又迅速低下头）虽然不太擅长言辞，但我会努力让主人满意的... 【脸微微泛红】</p>\n<p>（小声地补充）我平时喜欢看小说，也很喜欢被主人摸头... 【尾巴愉快地晃动了一下】 </p>\n<p>（突然想到什么，声音更小了）希望有一天能成为主人的骄傲...喵。</p>')
+}
+{
+	[2025-01-31 20:42:41] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 21:17:47] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 21:42:27] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 21:42:29] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-01-31 21:43:02] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 21:43:06] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-01-31 21:43:21] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 21:43:39] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-01-31 21:43:40] 
+ [LOGGING]: 
+程序退出 Program exit
+}

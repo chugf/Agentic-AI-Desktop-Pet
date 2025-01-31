@@ -1,2 +1,2 @@
 HISTORY_PATH = './logs/history'
-API_PATH = './logs/api'
+API_PATH = './logs/rec'
