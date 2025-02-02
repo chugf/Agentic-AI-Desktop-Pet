@@ -6,8 +6,6 @@ dashscope
 markdown
 
 requests
-whisper
-sounddevice
 pyaudio
 numpy
 

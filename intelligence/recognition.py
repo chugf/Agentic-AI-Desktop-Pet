@@ -1,38 +1,28 @@
 import time
+from urllib.parse import urlencode
+import datetime
+import hashlib
+import json
+from datetime import datetime
+from time import mktime
+import base64
 
-Whisper = XunFei = False
-try:
-    import sounddevice as sd
-    import whisper
-    import numpy as np
-    Whisper = True
-except ImportError:
-    Whisper = False
-finally:
-    try:
-        from urllib.parse import urlencode
-        import datetime
-        import hashlib
-        import json
-        from datetime import datetime
-        from time import mktime
-        import base64
+import threading
 
-        import _thread as thread
+import hmac
+import ssl
+from wsgiref.handlers import format_date_time
 
-        import hmac
-        import ssl
-        from wsgiref.handlers import format_date_time
-        import websocket
-        import pyaudio
-        XunFei = True
-    except ImportError:
-        Whisper = XunFei = False
-        raise ImportError()
+import numpy
+import websocket
+import pyaudio
 
 STATUS_FIRST_FRAME = 0
 STATUS_CONTINUE_FRAME = 1
 STATUS_LAST_FRAME = 2
+CHANNELS = 1
+RATE = 16000
+CHUNK = 1024
 
 API_ID = ""
 API_KEY = ""
@@ -40,52 +30,79 @@ API_SECRET = ""
 
 
 class WhisperRealTimeSpeechRecognizer:
-    def __init__(self, success_func, error_func, close_func,
-                 model: str = "base", silent_time: float = 0.7, silent_threshold: float = 0.02):
+    """
+    此API有严重问题
+    This API has serious problems
+    """
+    def __init__(self, ws_url, success_func, failure_func, close_func):
+        self.is_continue = True
+        self.ws_url = ws_url
         self.success_func = success_func
-        self.error_func = error_func
+        self.failure_func = failure_func
         self.close_func = close_func
 
-        self.model = whisper.load_model(model)
-        self.is_continue = True
-
+        self.silence_duration = RATE * 0.6
+        self.silence_threshold = 0.03
         self.audio_buffer = []
-        self.silence_threshold = silent_threshold
-        self.silent_frames_required = int(silent_time * 16000)
-        self.silent_frame_count = 0
+
+    def on_message(self, ws, message):
+        self.success_func(json.loads(message)['text'])
+        self.audio_buffer = []
+
+    def on_error(self, ws, error):
+        self.failure_func(ws, error)
+
+    def on_close(self, ws, close_status_code, close_msg):
+        self.is_continue = False
+        self.close_func()
+
+    def on_open(self, ws):
+        def run():
+            p = pyaudio.PyAudio()
+            stream = p.open(
+                format=pyaudio.paInt16,
+                channels=CHANNELS,
+                rate=RATE,
+                input=True,
+                frames_per_buffer=CHUNK)
+
+            silence_counter = 0
+            while self.is_continue:
+                data = stream.read(CHUNK)
+                if not data:
+                    continue
+                audio_data = numpy.frombuffer(data, dtype=numpy.int16).astype(numpy.float32) / 32768.0
+                if not self.is_silent(audio_data):
+                    self.audio_buffer.append(data)
+                    silence_counter = 0
+                else:
+                    silence_counter += CHUNK
+                    if len(self.audio_buffer) > 0 and silence_counter >= self.silence_duration:
+                        audio_to_send = base64.b64encode(b''.join(self.audio_buffer)).decode()
+                        ws.send(json.dumps({"data": audio_to_send}))
+                        self.audio_buffer = []
+
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+            ws.close()
+
+        threading.Thread(target=run).start()
+
+    def is_silent(self, audio_data):
+        return numpy.sqrt(numpy.mean(numpy.square(audio_data))) < self.silence_threshold
 
     def closed(self):
         self.is_continue = False
 
-    def statued(self):
-        pass
-
-    def callback(self, indata, frames, time, status):
-        audio_data = indata.copy()
-        audio_data = np.squeeze(audio_data)
-
-        if np.max(np.abs(audio_data)) < self.silence_threshold:
-            self.silent_frame_count += frames
-
-        else:
-            self.silent_frame_count = 0
-            self.audio_buffer.append(audio_data)
-        if self.silent_frame_count >= self.silent_frames_required:
-            if len(self.audio_buffer) > 0:
-                self.process_audio(np.concatenate(self.audio_buffer))
-                self.audio_buffer = []
-
-    def process_audio(self, audio_data):
-        audio_data = whisper.pad_or_trim(audio_data)
-        mel = whisper.log_mel_spectrogram(audio_data).to(self.model.device)
-        options = whisper.DecodingOptions(language="zh", without_timestamps=True)
-        result = whisper.decode(self.model, mel, options)
-        self.success_func(result.text)
-
     def start_recognition(self):
-        with sd.InputStream(callback=self.callback, channels=1, samplerate=16000):
-            while self.is_continue:
-                time.sleep(0.01)
+        ws = websocket.WebSocketApp(self.ws_url,
+                                    on_open=self.on_open,
+                                    on_message=self.on_message,
+                                    on_error=self.on_error,
+                                    on_close=self.on_close)
+
+        ws.run_forever()
 
 
 class XFRealTimeSpeechRecognizer:
@@ -154,7 +171,7 @@ class XFRealTimeSpeechRecognizer:
         self.close_func()
 
     def on_open(self, ws):
-        def run(*args):
+        def run():
             FORMAT = pyaudio.paInt16
             CHANNELS = 1
             RATE = 16000
@@ -201,7 +218,7 @@ class XFRealTimeSpeechRecognizer:
             audio.terminate()
             ws.close()
 
-        thread.start_new_thread(run, ())
+        threading.Thread(target=run).start()
 
     def start_recognition(self):
         websocket.enableTrace(False)
@@ -223,6 +240,7 @@ if __name__ == "__main__":
     def c():
         print("close")
 
-
-    recognizer = XFRealTimeSpeechRecognizer(s, e, c)
+    import socket
+    recognizer = WhisperRealTimeSpeechRecognizer(
+        f"ws://{socket.gethostbyname(socket.gethostname())}:2035", s, e, c)
     recognizer.start_recognition()

@@ -1,53 +1,59 @@
-import whisper
-import numpy as np
+import asyncio
+import base64
+import json
+import os
+import tempfile
+import wave
 import time
-import sounddevice as sd
+import socket
+
+import websockets
+import whisper
+import pyaudio
+
+model = whisper.load_model("base")
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000
+
+ip = socket.gethostbyname(socket.gethostname())
+port = int(time.strftime("%Y"))
 
 
-class WhisperRealTimeSpeechRecognizer:
-    def __init__(self, success_func, error_func, close_func,
-                 model: str = "base", silent_time: float = 0.7, silent_threshold: float = 0.02):
-        self.success_func = success_func
-        self.error_func = error_func
-        self.close_func = close_func
+async def recognize_audio(websocket):
+    audio_data = bytearray()
 
-        self.model = whisper.load_model(model)
-        self.is_continue = True
+    while True:
+        message = await websocket.recv()
+        print("[INFO] Received audio data")
+        audio_data.extend(base64.b64decode(json.loads(message)['data']))
+        wave_filename = f"{tempfile.gettempdir()}/output_{int(time.time())}.wav"
+        save_audio(audio_data, wave_filename)
+        result = model.transcribe(wave_filename)
+        print(f"[INFO] Transcription completed, {result} at {wave_filename}")
+        os.remove(wave_filename)
+        await websocket.send(json.dumps({"text": result['text'], "language": result['language']}, ensure_ascii=False))
+        print("[INFO] Sent message")
+        audio_data.clear()
 
-        self.audio_buffer = []
-        self.silence_threshold = silent_threshold
-        self.silent_frames_required = int(silent_time * 16000)
-        self.silent_frame_count = 0
 
-    def closed(self):
-        self.is_continue = False
+def save_audio(audio_data, filename):
+    wf = wave.open(filename, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(pyaudio.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(audio_data)
+    wf.close()
 
-    def statued(self):
-        pass
 
-    def callback(self, indata, frames, time, status):
-        audio_data = indata.copy()
-        audio_data = np.squeeze(audio_data)
+async def start():
+    print(f'[INFO] start WebSocket Server on ws://{ip}:{port}')
+    async with websockets.serve(recognize_audio, ip, port):
+        await asyncio.Future()
 
-        if np.max(np.abs(audio_data)) < self.silence_threshold:
-            self.silent_frame_count += frames
 
-        else:
-            self.silent_frame_count = 0
-            self.audio_buffer.append(audio_data)
-        if self.silent_frame_count >= self.silent_frames_required:
-            if len(self.audio_buffer) > 0:
-                self.process_audio(np.concatenate(self.audio_buffer))
-                self.audio_buffer = []
-
-    def process_audio(self, audio_data):
-        audio_data = whisper.pad_or_trim(audio_data)
-        mel = whisper.log_mel_spectrogram(audio_data).to(self.model.device)
-        options = whisper.DecodingOptions(language="zh", without_timestamps=True)
-        result = whisper.decode(self.model, mel, options)
-        self.success_func(result.text)
-
-    def start_recognition(self):
-        with sd.InputStream(callback=self.callback, channels=1, samplerate=16000):
-            while self.is_continue:
-                time.sleep(0.01)
+if __name__ == "__main__":
+    try:
+        asyncio.run(start())
+    except KeyboardInterrupt:
+        print("[INFO] Server has been stopped by user")

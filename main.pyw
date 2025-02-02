@@ -1,3 +1,4 @@
+import socket
 import sys
 import time
 import datetime
@@ -52,6 +53,7 @@ import live2d.v3 as live2d
 # 界面库和OpenGL库 GUI
 import tkinter as tk
 import tkinter.ttk as ttk
+import tkinter.messagebox as messagebox
 from tkinter.scrolledtext import ScrolledText
 
 import OpenGL.GL as GL
@@ -179,26 +181,19 @@ class RecognitionThread(QThread):
     def run(self):
         global speech_rec
         if configure['settings']['rec'] == "cloud":
-            if intelligence.recognition.XunFei:
-                func = intelligence.xf_speech_recognition
-            else:
-                QMessageBox.critical(self.parent(), "错误 Error",
-                                     "云端配置依赖包未安装 Cloud configuration dependency package not installed")
-                self.parent().recognition_failure(None,
-                                                  "云端配置依赖包未安装 Cloud configuration dependency package not installed")
-                return
+            speech_rec = intelligence.xf_speech_recognition(
+                self.result.emit,
+                self.parent().recognition_failure, self.parent().recognition_closure
+            )
         else:
-            if intelligence.recognition.Whisper:
-                func = intelligence.whisper_speech_recognition
-            else:
-                QMessageBox.critical(self.parent(), "错误 Error",
-                                     "本地配置依赖包未安装 Local configuration dependency package not installed")
-                self.parent().recognition_failure(None,
-                                                  "本地配置依赖包未安装 Local configuration dependency package not installed")
-                return
-        speech_rec = func(
-            self.result.emit,
-            self.parent().recognition_failure, self.parent().recognition_closure)
+            speech_rec = intelligence.whisper_speech_recognition(
+                self.result.emit,
+                self.parent().recognition_failure, self.parent().recognition_closure,
+                str(configure_settings['local']['rec']['url']).format(
+                    ip=socket.gethostbyname(socket.gethostname()),
+                    year=int(time.strftime('%Y'))
+                )
+            )
         speech_rec.start_recognition()
 
 
@@ -837,9 +832,13 @@ class Setting(tk.Tk):
         self.gsv_api_url.place(x=150, y=35)
 
         tk.Label(self.local_infer, text="语音识别 Recognition").place(x=5, y=65)
-        self.recognition_api_tool = ttk.Combobox(self.local_infer, width=50, values=['whisper'], state="readonly")
-        self.recognition_api_tool.set(configure_settings['local']['rec'])
+        self.recognition_api_tool = ttk.Combobox(self.local_infer, width=10, values=['whisper'], state="readonly")
+        self.recognition_api_tool.set(configure_settings['local']['rec']['tool'])
         self.recognition_api_tool.place(x=150, y=65)
+
+        self.recognition_api_url = ttk.Entry(self.local_infer, width=36)
+        self.recognition_api_url.insert(0, configure_settings['local']['rec']['url'])
+        self.recognition_api_url.place(x=250, y=65)
 
         tk.Label(self.local_infer,
                  text="格式化说明：\n"
@@ -879,6 +878,14 @@ class Setting(tk.Tk):
 
         self.rec_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
                                          variable=self.rec_value, value="local")
+        Balloon(
+            self.rec_local,
+            "【BUG】此推理模式有严重问题，不要使用！如果您选择该模式，"
+            "您会收到一个Python Traceback，如果你可以解决，您可以前往GitHub发pull request来解决这个问题\n\n"
+            "[BUG] This inference mode has serious problems, do not use! "
+            "If you choose this mode, you will receive a Python Traceback, "
+            "and if you can solve, please go to GitHub to submit a pull request to solve this problem",
+            fg="yellow", bg="red")
         self.rec_local.place(x=300, y=380)
         ttk.Button(self.local_infer, text="保存设置 Save Settings", command=self.save_settings).place(x=430, y=100)
 
@@ -919,7 +926,7 @@ class Setting(tk.Tk):
         Balloon(sp,
                 "影响音频速度(拉小变慢，拉大变快)\n"
                 "influence the speed of audio (pull down to slow, pull up to fast)")
-        self.speed_scale = tk.Scale(self.tts_parameter_frame, from_=0.01, to=3.00,
+        self.speed_scale = tk.Scale(self.tts_parameter_frame, from_=0.6, to=3.00,
                                     orient=tk.HORIZONTAL, length=300, resolution=0.01)
         self.speed_scale.set(configure['settings']['tts']['speed'])
         self.speed_scale.place(x=100, y=125)
@@ -1136,10 +1143,16 @@ class Setting(tk.Tk):
         configure['settings']['tts']['parallel'] = self.parallel.get()
 
         configure['settings']['text']['way'] = self.text_value.get()
-        configure['settings']['rec'] = self.rec_value.get()
+        # configure['settings']['rec'] = self.rec_value.get()
+        if self.rec_value.get() == "local":
+            with open("./resources/unsolved_traceback/whisper_api", "r", encoding="utf-8") as uf:
+                api_log = uf.read()
+            messagebox.showerror("Python Traceback LOGS", api_log)
+
         configure['settings']['local']['qwen'] = self.qwen_api_url.get()
         configure['settings']['local']['gsv'] = self.gsv_api_url.get()
-        configure['settings']['local']['rec'] = self.recognition_api_tool.get()
+        configure['settings']['local']['rec']['tool'] = self.recognition_api_tool.get()
+        configure['settings']['local']['rec']['url'] = self.recognition_api_url.get()
         configure['settings']['cloud']['aliyun'] = self.aliyun_apikey_entry.get()
         configure['settings']['cloud']['xunfei']['id'] = self.xunfei_apiid_entry.get()
         configure['settings']['cloud']['xunfei']['key'] = self.xunfei_apikey_entry.get()

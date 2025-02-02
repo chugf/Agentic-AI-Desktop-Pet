@@ -1,4 +1,3 @@
-import socket
 import json
 import threading
 import base64
@@ -73,6 +72,7 @@ def change_module(changer: Changer):
         "{ckpt}",
         changer.module_info[changer.module_name][1]))
     return {"message": "success", "result": True}
+
 
 @CommandReciever.post("/take_tts")
 def tts(param: TTS):

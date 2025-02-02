@@ -30,8 +30,8 @@ def xf_speech_recognition(success_func, error_func, close_func):
     return recognition.XFRealTimeSpeechRecognizer(success_func, error_func, close_func)
 
 
-def whisper_speech_recognition(success_func, error_func, close_func):
-    return recognition.WhisperRealTimeSpeechRecognizer(success_func, error_func, close_func)
+def whisper_speech_recognition(success_func, error_func, close_func, url):
+    return recognition.WhisperRealTimeSpeechRecognizer(url, success_func, error_func, close_func)
 
 
 def text_generator(prompt, is_search_online: bool):
