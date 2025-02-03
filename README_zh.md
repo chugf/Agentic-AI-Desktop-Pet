@@ -3,8 +3,6 @@
     <b><a href="README.md">English</a></b>
     <b> | </b>
     <b><a href="README_zh.md">简体中文</a></b>
-    <b> | </b>
-    <b><a href="README_ja.md">日本語</a></b>
 </div>
 
 # 介绍
