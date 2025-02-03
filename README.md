@@ -1,4 +1,3 @@
-```markdown
 <div align="center">
     <h1 style="margin: 0;">Artificial Intelligence Desktop Companion</h1>
     <b><a href="README.md">English</a></b>
@@ -159,4 +158,3 @@ Advanced
 
 - [PyQt5](https://github.com/PyQt5/PyQt.git)
 - [FFmpeg](https://github.com/FFmpeg/FFmpeg.git)
-```
