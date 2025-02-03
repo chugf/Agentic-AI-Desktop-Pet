@@ -1401,10 +1401,7 @@ class DesktopTop(QOpenGLWidget):
 
         if configure['name'] in result or configure_default in result:
             # 临时对话不启用一些界面 Temporary dialog does not enable some interfaces
-            self.conversation_entry.setVisible(False)
-            self.conversation_button.setVisible(False)
-            self.media_button.setVisible(False)
-            self.clear_memories_button.setVisible(False)
+            self.change_status_for_conversation("hide", False)
             self.chat_box.setVisible(True)
 
             self.have_conversation(result, True)
@@ -1426,19 +1423,51 @@ class DesktopTop(QOpenGLWidget):
     # 对话相关 Conversation related
     def open_close_conversation(self):
         if self.conversation_entry.isVisible():
-            self.conversation_entry.setVisible(False)
-            self.conversation_button.setVisible(False)
-            self.clear_memories_button.setVisible(False)
-            self.media_button.setVisible(False)
-            self.chat_box.setVisible(False)
+            self.change_status_for_conversation("hide")
         else:
+            self.change_status_for_conversation("show")
+
+    def change_status_for_conversation(self,
+                                       status: typing.Literal['hide', 'show'],
+                                       enable_chat_box: bool = True
+                                       ):
+        if status == "show":
             self.conversation_entry.setVisible(True)
             self.conversation_button.setVisible(True)
             self.clear_memories_button.setVisible(True)
             self.media_button.setVisible(True)
-            self.chat_box.setVisible(True)
+            if enable_chat_box:
+                self.chat_box.setVisible(True)
+        else:
+            self.conversation_entry.setVisible(False)
+            self.conversation_button.setVisible(False)
+            self.clear_memories_button.setVisible(False)
+            self.media_button.setVisible(False)
+            if enable_chat_box:
+                self.chat_box.setVisible(False)
 
     def conversation_display(self, text: tuple, temp_action: bool = False):
+        def __processor(html_text: str):
+            """Process markdown text scale"""
+            def __closure(match):
+                original_tag = match.group(1)
+                default_width = 1024
+                default_height = 1024
+                new_width = int(default_width * 0.35)
+                new_height = int(default_height * 0.35)
+                if 'width=' not in original_tag:
+                    original_tag += f' width="{new_width}"'
+                else:
+                    original_tag = re.sub(r'(width=["\'])(\d+)(["\'])', rf'\g<1>{new_width}\g<3>', original_tag)
+                if 'height=' not in original_tag:
+                    original_tag += f' height="{new_height}"'
+                else:
+                    original_tag = re.sub(r'(height=["\'])(\d+)(["\'])', rf'\g<1>{new_height}\g<3>', original_tag)
+
+                return f'{original_tag} />'
+
+            return re.sub(r'(<img[^>]*)/', __closure, html_text)
+
         def __exec(information: list):
             """
             :param information: 0 -> wav_bytes 1 -> duration
@@ -1476,18 +1505,22 @@ class DesktopTop(QOpenGLWidget):
                     self.chat_box.setHtml(markdown_text)
                     self.chat_box.moveCursor(self.chat_box.textCursor().End)
                     if text_begin == "Endless":
-                        self.chat_box.setVisible(False)
-                        self.conversation_entry.setVisible(False)
-                        self.conversation_button.setVisible(False)
-                        self.clear_memories_button.setVisible(False)
-                        self.media_button.setVisible(False)
+                        self.chat_box.setGeometry(QRect(25, 225, 350, 100))
+                        self.change_status_for_conversation("hide")
                         self.chat_box.clear()
                         text_begin = "END"
+                    elif text_begin == "Recover":
+                        self.chat_box.setGeometry(QRect(25, 225, 350, 100))
+                        self.change_status_for_conversation("show", False)
+                    elif "<img" in markdown_text:
+                        self.chat_box.setGeometry(QRect(0, 50, self.width(), self.height() - 125))
+                        if temp_action:
+                            text_begin = "Endless"
+                        else:
+                            text_begin = "Recover"
+                        flot_timer.start(20000)
                     elif not temp_action:
-                        self.conversation_entry.setVisible(True)
-                        self.conversation_button.setVisible(True)
-                        self.media_button.setVisible(True)
-                        self.clear_memories_button.setVisible(True)
+                        self.change_status_for_conversation("show", False)
                     elif temp_action:
                         text_begin = "Endless"
                         flot_timer.start(3000)
@@ -1504,7 +1537,7 @@ class DesktopTop(QOpenGLWidget):
             flot_timer.start(5)
 
         common_text = text[0]
-        markdown_text = text[1]
+        markdown_text = __processor(text[1])
 
         if intelligence.VoiceSwitch and 'tts' not in configure['settings']['disable']:
             VGT = VoiceGenerateThread(self, common_text)

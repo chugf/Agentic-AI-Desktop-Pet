@@ -10,7 +10,8 @@
          "mcon",
          "gmpene",
          "media",
-         "rec"
+         "rec",
+         "tts"
       ],
       "penetration": {
          "enable": false,
@@ -27,10 +28,13 @@
       "local": {
          "qwen": "http://{ip}:{year}",
          "gsv": "http://{ip}:{year}",
-         "rec": "whisper"
+         "rec": {
+            "tool": "whisper",
+            "url": "ws://{ip}:{year}"
+         }
       },
       "tts": {
-         "way": "cloud",
+         "way": "local",
          "top_k": 20,
          "top_p": 0.8,
          "temperature": 0.8,
