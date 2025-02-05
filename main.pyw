@@ -6,7 +6,12 @@ import random
 import threading
 import webbrowser
 
+import idlelib.colorizer as colorizer
+import idlelib.percolator as percolator
+
 # 数据处理 Data Processing
+import ast
+import shutil
 import os
 import re
 import struct
@@ -54,6 +59,7 @@ import live2d.v3 as live2d
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.messagebox as messagebox
+import tkinter.filedialog as filedialog
 from tkinter.scrolledtext import ScrolledText
 
 import OpenGL.GL as GL
@@ -62,12 +68,19 @@ from PyQt5.Qt import Qt, QTimerEvent, QCursor, QThread, pyqtSignal, QRect, QFont
 from PyQt5.QtWidgets import QOpenGLWidget, QApplication, QMessageBox, QMenu, QAction, \
     QTextEdit, QPushButton
 
-
 GWL_EXSTYLE = -20
 WS_EX_TRANSPARENT = 0x00000020
 speech_rec = None
 with open("./resources/configure.json", "r", encoding="utf-8") as f:
-    configure = json.load(f)
+    try:
+        configure = json.load(f)
+    except json.JSONDecodeError:
+        f.close()
+        os.remove("./resources/configure.json")
+        shutil.copy2("./logs/backup/configure.json", "./resources/configure.json")
+        with open("./resources/configure.json", "r", encoding="utf-8") as scf:
+            configure = json.load(scf)
+            f.close()
     configure_default = configure["default"]
     configure_settings = configure["settings"]
     configure_model = configure['model']
@@ -198,13 +211,13 @@ class RecognitionThread(QThread):
 
 
 class MediaUnderstandThread(QThread):
-    result = pyqtSignal(list)
+    result = pyqtSignal(tuple)
 
-    def __init__(self, parent: QOpenGLWidget, image_bytes: bytes,
+    def __init__(self, parent: QOpenGLWidget, image_path: str,
                  texts: str | None = None, is_search_online: bool = False):
         """根据媒体理解线程 Media Understand Thread"""
         super().__init__(parent)
-        self.image_bytes = image_bytes
+        self.image_path = image_path
         self.is_search_online = is_search_online
         self.texts = texts
 
@@ -212,7 +225,7 @@ class MediaUnderstandThread(QThread):
         if self.texts is None:
             self.texts = random.choice(["你觉得我在干什么？", "你有什么想法呀？", "你觉得这个图片怎么样？", "请评价一下这图片"])
         try:
-            answer = intelligence.media_understand(self.texts, self.image_bytes, self.is_search_online)
+            answer = intelligence.text_generator(f"{self.image_path}看着这个图片{self.texts}", self.is_search_online)
         except Exception as e:
             logger(f"子应用 - 媒体文件理解 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
@@ -372,6 +385,61 @@ class AdultEngine:
         keywords = re.findall(r'\b[a-zA-Z]+\b', configure_adults['AdultDescribe'][str(configure['adult_level'])])
         keywords = ''.join(keywords)
         return keywords.lower(), configure_adults['voice'][f"Voice{keywords}"]
+
+
+class ExtractFunctionDocstring(ast.NodeVisitor):
+    """提取函数文档字符串 Extract function docstring"""
+    def __init__(self, function_name):
+        self.function_name = function_name
+        self.description = None
+
+    def visit_FunctionDef(self, node):
+        if isinstance(node.parent, ast.Module) and node.name == self.function_name:
+            docstring = ast.get_docstring(node)
+            if docstring:
+                lines = docstring.split('\n')
+                if lines:
+                    self.description = lines[0].strip()
+        return node
+
+    @staticmethod
+    def add_parents(tree):
+        for node in ast.walk(tree):
+            for child in ast.iter_child_nodes(node):
+                child.parent = node
+
+    def extract(self, code):
+        tree = ast.parse(code)
+        self.add_parents(tree)
+        visitor = ExtractFunctionDocstring(self.function_name)
+        visitor.visit(tree)
+
+        return visitor.description
+
+
+class RemoveFunctionTransformer(ast.NodeTransformer):
+    """移除函数 Remove function"""
+    def __init__(self, function_name):
+        self.function_name = function_name
+
+    def visit_FunctionDef(self, node):
+        if isinstance(node.parent, ast.Module) and node.name == self.function_name:
+            return None
+        return node
+
+    @staticmethod
+    def add_parents(tree):
+        for node in ast.walk(tree):
+            for child in ast.iter_child_nodes(node):
+                child.parent = node
+
+    def remove(self, code):
+        tree = ast.parse(code)
+        self.add_parents(tree)
+        transformer = RemoveFunctionTransformer(self.function_name)
+        new_tree = transformer.visit(tree)
+
+        return ast.unparse(new_tree)
 
 
 class Balloon:
@@ -536,12 +604,16 @@ class Setting(tk.Tk):
         self.attributes("-alpha", 0.9)
         self.attributes("-topmost", True)
 
+        self.required_check_button_value = {}
+        self.function_names = []
+        self.is_selected_file = False
+
         self.note = ttk.Notebook(self)
 
         self.general_frame = tk.Frame(self)
         self.switch_frame = tk.Frame(self)
         self.intelligence_frame = tk.Frame(self)
-        self.animation_frame = tk.Frame(self)
+        self.bind_frame = tk.Frame(self)
         self.character_frame = tk.Frame(self)
         self.about_frame = tk.Frame(self)
         self.note.add(self.general_frame, text="常规 General")
@@ -889,8 +961,44 @@ class Setting(tk.Tk):
         self.rec_local.place(x=300, y=380)
         ttk.Button(self.local_infer, text="保存设置 Save Settings", command=self.save_settings).place(x=430, y=100)
 
-        # self.note.add(self.animation_frame, text="动画绑定 Animation Bind")
-        # tk.Label(self.animation_frame, text="敬请期待 Coming Soon", font=("微软雅黑", 30)).pack()
+        self.bind_note = ttk.Notebook(self.bind_frame)
+        self.note.add(self.bind_frame, text="绑定设置 Bind Settings")
+        self.bind_plugin_frame = tk.Frame(self.bind_note)
+        self.bind_note.add(self.bind_plugin_frame, text="插件 Plugin")
+
+        tk.Label(self.bind_plugin_frame, text="源Python文件路径 Source Python File Path").place(x=5, y=5)
+        self.source_python_file_path = ttk.Entry(self.bind_plugin_frame, width=64)
+        self.source_python_file_path.place(x=20, y=35)
+
+        self.code_review = ScrolledText(self.bind_plugin_frame, width=80, height=5)
+        self.code_review.place(x=5, y=65)
+        colorizer.color_config(self.code_review)
+        p = percolator.Percolator(self.code_review)
+        d = colorizer.ColorDelegator()
+        p.insertfilter(d)
+
+        tk.Label(self.bind_plugin_frame, text="入口 Entrance").place(x=5, y=140)
+        self.entrance_combo = ttk.Combobox(self.bind_plugin_frame, width=20, state="readonly")
+        self.entrance_combo.bind("<<ComboboxSelected>>", lambda event: self.process_code())
+        self.entrance_combo.place(x=100, y=140)
+
+        self.entrance_description = tk.Entry(self.bind_plugin_frame, width=30)
+        self.entrance_description.insert(0, "Description 描述")
+        self.entrance_description.place(x=280, y=140)
+
+        tk.Label(self.bind_plugin_frame, text="必选参数 Required Parameter：").place(x=5, y=175)
+
+        ttk.Button(self.bind_plugin_frame,
+                   text="选择 Choose",
+                   command=lambda: self.select_file(self.source_python_file_path, self.code_review, self.process_code)
+                   ).place(x=500, y=35)
+
+        ttk.Button(self.bind_plugin_frame,
+                   text="编译进程序中 Compile into program",
+                   command=self.complie_plugin, width=80
+                   ).pack(side=tk.BOTTOM)
+
+        self.bind_note.pack(fill=tk.BOTH, expand=True)
 
         self.intelligence_note.add(self.tts_parameter_frame, text="TTS 参数 Parameter")
 
@@ -1006,7 +1114,8 @@ class Setting(tk.Tk):
         self.quote_ffmpeg.place(x=180, y=30)
         self.quote_self = tk.Label(self.use_open_sources,
                                    text='AI Desktop Pet(LGPL v3.0)', fg="blue", font=('微软雅黑', 13))
-        self.quote_self.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/grass-tech/aidesktoppet.git"))
+        self.quote_self.bind("<Button-1>",
+                             lambda e: webbrowser.open("https://github.com/grass-tech/AgenticCompanion.git"))
         self.quote_self.place(x=365, y=30)
         self.use_open_sources.place(x=5, y=50)
 
@@ -1015,6 +1124,192 @@ class Setting(tk.Tk):
         self.refresh_gui()
 
         self.note.pack(fill=tk.BOTH, expand=True)
+
+    def complie_plugin(self):
+        template = {
+            "type": "function",
+            "function": {
+                "name": self.entrance_combo.get(),
+                "description": self.entrance_description.get(),
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                },
+                "required": []
+            }
+        }
+        for var_name, value in self.required_check_button_value.items():
+            if value['value'].get():
+                template['function']['required'].append(var_name)
+            template['function']['parameters']['properties'].update({
+                var_name: {
+                    "type": value['type'].get(),
+                    "description": value['description'].get()
+                }
+            })
+
+        with open("./resources/functions.json", "r", encoding="utf-8") as ff:
+            original: list = json.load(ff)
+            original_functions = {}
+            for function in original:
+                original_functions.update({function['function']['name']: function})
+            ff.close()
+
+        if self.entrance_combo.get() in original_functions.keys():
+            original.remove(original_functions[self.entrance_combo.get()])
+        os.remove("./resources/functions.json")
+        with open("./resources/functions.json", "w", encoding="utf-8") as ff:
+            original.append(template)
+            json.dump(original, ff, indent=3, ensure_ascii=False)
+            ff.close()
+
+        with open("./intelligence/plugin/__init__.py", "r", encoding="utf-8") as of:
+            original_code = of.read()
+            of.close()
+        to_be_complied_code = self.code_review.get(1.0, tk.END)
+        if to_be_complied_code.strip() == "":
+            return
+
+        if self.entrance_combo.get() in original_functions.keys():
+            original_code = RemoveFunctionTransformer(self.entrance_combo.get()).remove(original_code)
+        import_matches = re.findall(
+            r'^\s*(import\s+[\w\s,\.]+|from\s+\w+\s+import\s+[\w\s,\.]+)$',
+            to_be_complied_code,
+            re.MULTILINE)
+        for match in import_matches:
+            if match.strip() not in original_code:
+                original_code = match + original_code + '\n'
+            to_be_complied_code = to_be_complied_code.replace(match, '')
+        original_code += f"\n\n{to_be_complied_code}"
+        with open("./intelligence/plugin/__init__.py", "w", encoding="utf-8") as wnf:
+            wnf.write(original_code)
+            wnf.close()
+        intelligence.text.reload_tools()
+        messagebox.showinfo("编译完成 Finish compling", "编译完成！Finished compling")
+
+    def process_code(self):
+        self.entrance_combo.configure(state=tk.NORMAL)
+        type_mapping = {
+            'str': 'string',
+            'int': 'integer',
+            'bool': 'boolean',
+            'float': 'float',
+            'unknown': 'unknown'
+        }
+
+        matches = re.findall(r'def\s+(\w+)\s*\(([^)]*)\)', self.code_review.get(1.0, tk.END))
+
+        if self.is_selected_file:
+            self.function_names = []
+        x, y = 20, 200
+        for value in self.required_check_button_value.values():
+            value['type'].place_forget()
+            value['description'].place_forget()
+            value['check'].place_forget()
+        self.required_check_button_value = {}
+        for match in matches:
+            function_name = match[0]
+            if self.is_selected_file:
+                self.function_names.append(function_name)
+            parameters = match[1].split(',')
+            parameters = [param.strip() for param in parameters]
+
+            for param in parameters:
+                required_value = tk.BooleanVar(self)
+                if '=' in param:
+                    required_value.set(False)
+                    key, value = param.split('=')
+                    key = key.strip()
+                    value = value.strip()
+                    if ':' in key:
+                        param_name, param_type = key.split(':')
+                        param_name = param_name.strip()
+                    else:
+                        param_name = key
+
+                    if value.startswith('"') and value.endswith('"'):
+                        param_type = 'string'
+                    elif value.isdigit():
+                        param_type = 'integer'
+                    elif re.match(r'^-?\d+\.\d+$', value):
+                        param_type = 'float'
+                    elif value.lower() in ['true', 'false']:
+                        param_type = 'boolean'
+                    else:
+                        param_type = 'unknown'
+
+                else:
+                    required_value.set(True)
+                    if ':' in param:
+                        param_name, param_type = param.split(':')
+                        param_name = param_name.strip()
+                        param_type = param_type.strip()
+                    else:
+                        param_name = param
+                        param_type = 'unknown'
+                    param_type = type_mapping.get(param_type, param_type)
+                try:
+                    selected_function = self.function_names[self.function_names.index(self.entrance_combo.get())]
+                except ValueError:
+                    selected_function = self.function_names[0]
+                if (not param_name or
+                        selected_function != function_name):
+                    continue
+                check = ttk.Checkbutton(
+                    self.bind_plugin_frame,
+                    text=param_name,
+                    variable=required_value,
+                    onvalue=True, offvalue=False
+                )
+                type_combo = ttk.Combobox(
+                    self.bind_plugin_frame,
+                    values=['string', 'integer', 'float', 'boolean'],
+                    width=6, state='readonly',
+                )
+                if param_type != "unknown":
+                    type_combo.set(param_type)
+                value_description = tk.Entry(self.bind_plugin_frame, width=10)
+                value_description.insert(0, "描述 Description")
+                self.required_check_button_value.update(
+                    {param_name: {'check': check,
+                                  'value': required_value,
+                                  'description': value_description,
+                                  'type': type_combo}})
+                type_combo.place(x=x + 120, y=y)
+                value_description.place(x=x + 120 + 70, y=y)
+                check.place(x=x, y=y)
+                x += 270
+                if x > 400:
+                    x = 20
+                    y += 25
+
+        if self.is_selected_file:
+            self.entrance_combo.configure(values=self.function_names)
+            self.entrance_combo.current(0)
+        self.entrance_combo.configure(state="readonly")
+        self.is_selected_file = False
+
+        function_doc_string = "描述 Description"
+        extraction_doc = ExtractFunctionDocstring(self.entrance_combo.get()).extract(self.code_review.get(1.0, tk.END))
+        if extraction_doc is not None:
+            function_doc_string = extraction_doc
+        self.entrance_description.delete(0, tk.END)
+        self.entrance_description.insert(0, function_doc_string)
+
+    def select_file(self,
+                    fill_box: tk.Entry | tk.Text, content_box: ScrolledText, running_func=None):
+        self.is_selected_file = True
+        fill_box.delete(0, tk.END)
+        fill_box.insert(0, filedialog.askopenfilename(
+            filetypes=[("Python Source", "*.py")],
+            title="选择文件 Select File"
+        ))
+        content_box.delete(0.0, tk.END)
+        with open(fill_box.get(), "r", encoding="utf-8") as cf:
+            content_box.insert(0.0, cf.read())
+            cf.close()
+        if running_func is not None:
+            running_func()
 
     def refresh_gui(self):
         self.globe_mouse_penetration_value.set(configure['settings']['penetration']['enable'])
@@ -1252,7 +1547,7 @@ class DesktopTop(QOpenGLWidget):
         self.is_penetration = self.is_playing_animation = self.is_movement = False
         self.stop_playing_animation: list[bool | str] = [False, ""]
         self.enter_position = self.drag_position = None
-        self.random_cancel_penetration = self.resources_image = self.direction = self.last_pos = None
+        self.random_cancel_penetration = self.image_path = self.direction = self.last_pos = None
         self.pet_model: live2d.LAppModel | None = None
         self.param_dict: dict = {}
 
@@ -1372,21 +1667,20 @@ class DesktopTop(QOpenGLWidget):
     # 功能 Functions
     def look_for_me(self):
         self.look_timer.stop()
-        if intelligence.MediaUnderstandSwitch:
-            image_bytes = runtime.capture()
-            RFST = MediaUnderstandThread(self, image_bytes)
-            RFST.result.connect(lambda text: self.conversation_display(text, True))
-            RFST.start()
-            if "media" not in configure['settings']['disable']:
-                self.look_timer.start(random.randint(
-                    configure['settings']['understand']['min'],
-                    configure['settings']['understand']['max']) * 1000)
+        image_path = runtime.capture()
+        RFST = MediaUnderstandThread(self, image_path)
+        RFST.result.connect(lambda text: self.conversation_display(text, True))
+        RFST.start()
+        if "media" not in configure['settings']['disable']:
+            self.look_timer.start(random.randint(
+                configure['settings']['understand']['min'],
+                configure['settings']['understand']['max']) * 1000)
 
     def capture_screen(self):
         if "media" in configure['settings']['disable']:
             return
         self.conversation_entry.setText(str(self.conversation_entry.toPlainText()) + "$[图片]$")
-        self.resources_image = runtime.capture()
+        self.image_path = runtime.capture()
 
     # 语音识别 Recognition
     def recognize(self):
@@ -1448,7 +1742,7 @@ class DesktopTop(QOpenGLWidget):
 
     def conversation_display(self, text: tuple, temp_action: bool = False):
         def __processor(html_text: str):
-            """Process markdown text scale"""
+            """Process Markdown text scale"""
             def __closure(match):
                 original_tag = match.group(1)
                 default_width = 1024
@@ -1558,17 +1852,17 @@ class DesktopTop(QOpenGLWidget):
         self.clear_memories_button.setVisible(False)
         self.chat_box.setText(f"{configure['name']}思考中...\n{configure['name']} is thinking...")
 
-        if self.resources_image is None and "$[图片]$" not in self.conversation_entry.toPlainText():
+        if self.image_path is None and "$[图片]$" not in self.conversation_entry.toPlainText():
             text_generate = TextGenerateThread(
                 self, chat_message,
                 True if "online" not in configure['settings']['disable'] else False,
             )
         else:
             text_generate = MediaUnderstandThread(
-                self, self.resources_image, chat_message.replace("$[图片]$", ""),
+                self, self.image_path, chat_message.replace("$[图片]$", ""),
                 True if "online" not in configure['settings']['disable'] else False,
             )
-            self.resources_image = None
+            self.image_path = None
         text_generate.start()
         text_generate.result.connect(lambda texts: self.conversation_display(texts, temp_action))
 
@@ -2031,6 +2325,11 @@ class DesktopTop(QOpenGLWidget):
 
     def exit_program(self):
         self.close()
+        try:
+            os.remove("./logs/backup/configure.json")
+        except FileNotFoundError:
+            pass
+        shutil.copy2("./resources/configure.json", "./logs/backup/configure.json")
         logger("程序退出 Program exit", logs.HISTORY_PATH)
         os.kill(os.getpid(), __import__("signal").SIGINT)
 

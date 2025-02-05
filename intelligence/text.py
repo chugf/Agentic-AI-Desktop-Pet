@@ -1,53 +1,22 @@
-import json
 import re
-import pathlib
-from urllib.parse import unquote, urlparse
+import json
+import importlib
 
-import requests
+from . import plugin
+
 import markdown
 import dashscope
 
 memories = []
 prompts = {}
-tools = [
-    # 画画工具 Plating Tool
-    {
-        "type": "function",
-        "function": {
-            "name": "draw_picture_by_qwen",
-            "description": "当你想要画一副画时非常有用。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "prompts": {
-                        "type": "string",
-                        "description": "画画的提示词，比如：可爱的。"
-                    }
-                }
-            },
-            "required": [
-                "prompts"
-            ]
-        }
-    }
-]
-
-
-def draw_picture_by_qwen(prompts):
-    """画画工具"""
-    rsp = dashscope.ImageSynthesis.call(
-        model="wanx2.1-t2i-turbo",
-        prompt=prompts,
-        n=1,
-        size='1024*1024')
-    filepath = "ERROR"
-    for result in rsp.output.results:
-        file_name = pathlib.PurePosixPath(unquote(urlparse(result.url).path)).parts[-1]
-        filepath = f"./logs/picture/{file_name}"
-        with open(filepath, 'wb+') as f:
-            f.write(requests.get(result.url).content)
-            f.close()
-    return json.dumps({"filepath": filepath})
+with open("./resources/functions.json", "r", encoding="utf-8") as ff:
+    tools = json.load(ff)
+    tool_names = []
+    properties = {}
+    for tool in tools:
+        tool_names.append(tool['function']['name'])
+        properties.update({tool['function']['name']: list(tool['function']['parameters']['properties'].keys())})
+    ff.close()
 
 
 def clear_memories():
@@ -66,6 +35,19 @@ def reload_memories(model):
     except (FileNotFoundError, FileExistsError):
         memories = []
         prompts = {}
+
+
+def reload_tools():
+    global tools, tool_names, properties
+    importlib.reload(plugin)
+    with open("./resources/functions.json", "r", encoding="utf-8") as ff:
+        tools = json.load(ff)
+        tool_names = []
+        properties = {}
+        for tool in tools:
+            tool_names.append(tool['function']['name'])
+            properties.update({tool['function']['name']: list(tool['function']['parameters']['properties'].keys())})
+        ff.close()
 
 
 def get_response(extra_body):
@@ -94,10 +76,12 @@ class TextGenerator:
         memories.append(assistant_output)
         if 'tool_calls' not in assistant_output:
             return assistant_output.content, markdown.markdown(assistant_output.content)
-        elif assistant_output.tool_calls[0]['function']['name'] == 'draw_picture_by_qwen':
-            tool_info = {"name": "draw_picture_by_qwen", "role": "tool"}
-            prompt = json.loads(assistant_output.tool_calls[0]['function']['arguments'])['prompts']
-            tool_info['content'] = draw_picture_by_qwen(prompt)
+
+        to_be_called_tool = assistant_output.tool_calls[0]['function']
+        tool_info = {"name": to_be_called_tool['name'], "role": "tool"}
+        compound_parameters = json.loads(to_be_called_tool['arguments'])
+        to_be_called_function = getattr(plugin, to_be_called_tool['name'])
+        tool_info['content'] = to_be_called_function(**compound_parameters)
 
         memories.append(tool_info)
         final_answer = get_response(extra_body)

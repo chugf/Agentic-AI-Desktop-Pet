@@ -4,14 +4,12 @@
    "default": "vanilla",
    "adult_level": 0,
    "settings": {
-      "compatibility": false,
+      "compatibility": true,
       "translate": "ai.tongyi",
       "disable": [
          "mcon",
          "gmpene",
-         "media",
-         "rec",
-         "tts"
+         "rec"
       ],
       "penetration": {
          "enable": false,

@@ -7,20 +7,11 @@ try:
     from . import translate
 except ImportError:
     VoiceSwitch = False
-MediaUnderstandSwitch = True
-try:
-    from . import media
-except ImportError:
-    MediaUnderstandSwitch = False
 
 ALI_API_KEY = ""
 XF_API_ID = ""
 XF_API_KEY = ""
 XF_API_SECRET = ""
-
-
-def media_understand(text_, image_path, is_search_online):
-    return media.PictureUnderstand(ALI_API_KEY).picture_understand(text_, image_path, is_search_online)
 
 
 def xf_speech_recognition(success_func, error_func, close_func):
