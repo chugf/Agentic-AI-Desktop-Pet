@@ -61,6 +61,7 @@ An advanced Artificial Intelligence desktop companion developed in Python utiliz
 
 > [!IMPORTANT]
 > AI inference necessitates *CUDA Runtime*
+> 
 > Local inference might hurt your GPU
 
 |    MODEL    | Minimum Model Requirements | Minimum GPU Requirements | Recommended Model Requirements | Recommended GPU Requirements |              Application               |
