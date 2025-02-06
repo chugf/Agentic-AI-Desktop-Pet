@@ -145,6 +145,24 @@ default     :         $ .string (程序启动时加载的初始模型)
 }
 ```
 
+# 自定义扩展模块
+
+扩展模块采用的脚本语言是Python，全面支持所有Python语法标准。遵循PEP8指南并保持良好的编码习惯可以避免手动配置调整的必要性。
+
+合规要求：
+- 扩展模块的主要入口点必须是一个单一函数；尽管一个Python脚本可以包含多个函数，但只能有一个指定函数作为入口点。
+- 建议根据`PEP-8 Python标准`编写扩展模块，使得自动配置设置器能够智能地填充所需参数。
+
+## 示例代码：
+
+```python
+def process_human_information(name: str, age: int, gender: str):
+    """
+    在需要处理有关人类实体的信息时非常有用。
+    """
+    return "处理完成！"
+```
+
 # 致谢
 
 ![live2d](https://raw.githubusercontent.com/Arkueid/live2d-py/ba7fe4a70a77f62300e600ff56eaf59231cbb80f/docs/logo.svg)
