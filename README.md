@@ -10,8 +10,8 @@
 This project introduces an innovative desktop companion powered by artificial intelligence, designed to interact seamlessly with users.
 
 An advanced Artificial Intelligence desktop companion developed in Python utilizing Live2D technology. This software supports interactive dialogue, voice recognition, touch-responsive animations, and the flexibility to customize Live2D models and anime characters according to user preference. It is equipped with pre-installed models of Vanilla
-
-> Developer's Note: **Perhaps it's a touch *unconventional*...**?
+> [!NOTE]
+> **Perhaps it's a touch *unconventional*...**?
 
 # Unique Features
 
