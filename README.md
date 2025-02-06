@@ -145,6 +145,24 @@ Advanced
 }
 ```
 
+# Customized Extension Module
+
+The scripting language adopted for the extension module is Python, featuring comprehensive support for all Python syntax standards. Adhering to PEP8 guidelines and maintaining exemplary coding practices negates the necessity for manual configuration adjustments.
+
+Compliance Requirements:
+- The primary entry point of the extension must be a singular function; although a single Python script may encapsulate multiple functions, only one designated function serves as the entry point.
+- It is advisable to author the extension in accordance with the `PEP-8 Python Standards`, enabling the automatic configuration setter to adeptly populate the required parameters.
+
+## Illustrative Example:
+
+```python
+def process_human_information(name: str, age: int, gender: str):
+    """
+    Extremely beneficial when one seeks to manage information pertinent to human entities.
+    """
+    return "Processing Complete!"
+```
+
 # Acknowledgments
 
 ![live2d](https://raw.githubusercontent.com/Arkueid/live2d-py/ba7fe4a70a77f62300e600ff56eaf59231cbb80f/docs/logo.svg)
