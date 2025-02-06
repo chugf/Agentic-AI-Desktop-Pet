@@ -55,11 +55,11 @@ An advanced Artificial Intelligence desktop companion developed in Python utiliz
 
 ### Local Inference Specifications
 
-> Note: If your system doesn't meet the minimum requirements, opt for cloud inference.
+> [!IMPORTANT]
+> If your system doesn't meet the minimum requirements, opt for cloud inference.
 > 
 > Simply input your Aliyun API-key and XunfeiYun API credentials to enjoy a comparable experience to local inference.
-
-> [!IMPORTANT]
+>
 > AI inference necessitates *CUDA Runtime*
 > 
 > Local inference might hurt your GPU
