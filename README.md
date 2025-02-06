@@ -166,6 +166,28 @@ def process_human_information(name: str, age: int, gender: str):
     return "Processing Complete!"
 ```
 
+## Supported External Libraries
+
+> [!NOTE]
+> Supported for all built-in libraries
+
+|    Libraries     | Version |
+|:----------------:|:-------:|
+|      pyqt5       | latest  |
+|     pyopengl     | latest  |
+|    pypiwin32     | latest  |
+|    live2d-py     | latest  |
+|    dashscope     | latest  |
+|     markdown     | latest  |
+|     requests     | latest  |
+|     pyaudio      | latest  |
+|      numpy       | latest  |
+| websocket-client | latest  |
+|       mss        | latest  |
+|     pydantic     | latest  |
+|     uvicorn      | latest  |
+|     fastapi      | latest  |
+
 # Acknowledgments
 
 ![live2d](https://raw.githubusercontent.com/Arkueid/live2d-py/ba7fe4a70a77f62300e600ff56eaf59231cbb80f/docs/logo.svg)
