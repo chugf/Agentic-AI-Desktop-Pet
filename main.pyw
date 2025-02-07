@@ -1823,7 +1823,7 @@ class DesktopTop(QOpenGLWidget):
             start_time = time.time()
             text_begin = -1
             is_emotion = False
-            if intelligence.VoiceSwitch and 'tts' not in configure['settings']['disable']:
+            if information[0] is not None:
                 SpeakThread(self, information[0]).start()
 
             flot_timer = QTimer(self)
@@ -1833,7 +1833,8 @@ class DesktopTop(QOpenGLWidget):
         common_text = text[0]
         markdown_text = __processor(text[1])
 
-        if intelligence.VoiceSwitch and 'tts' not in configure['settings']['disable']:
+        if ((intelligence.VoiceSwitch and configure['settings']['tts']['way'] == "local") or
+                configure['settings']['tts']['way'] == "cloud") and 'tts' not in configure['settings']['disable']:
             VGT = VoiceGenerateThread(self, common_text)
             VGT.result.connect(__exec)
             VGT.start()
