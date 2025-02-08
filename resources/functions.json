@@ -91,5 +91,22 @@
             "source_code"
          ]
       }
+   },
+   {
+      "type": "function",
+      "function": {
+         "name": "game_number_bomb",
+         "description": "当用户需要玩数字炸弹游戏时非常有用。",
+         "parameters": {
+            "type": "object",
+            "properties": {
+               "user_input_number": {
+                  "type": "integer",
+                  "description": "用户输入的数字（非必选，为空初始化。游戏开始后必选！）"
+               }
+            }
+         },
+         "required": []
+      }
    }
 ]

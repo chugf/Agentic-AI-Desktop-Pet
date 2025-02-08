@@ -24,11 +24,11 @@
          }
       },
       "local": {
-         "qwen": "http://{ip}:{year}",
-         "gsv": "http://{ip}:{year}",
+         "text": "http://{ip}:{year}/chat",
+         "gsv": "http://{ip}:{year} + 2",
          "rec": {
             "tool": "whisper",
-            "url": "ws://{ip}:{year}"
+            "url": "ws://{ip}:{year} + 3"
          }
       },
       "tts": {
@@ -74,9 +74,28 @@
          },
          "action": {
             "ActionTouchHead": {
+               "position": [
+                  129,
+                  202,
+                  0,
+                  50
+               ],
                "param": "EarDown",
                "reverse": true,
-               "play": "coquetry"
+               "play": "coquetry",
+               "play_type": "random"
+            },
+            "ActionClickChest": {
+               "position": [
+                  159,
+                  217,
+                  143,
+                  172
+               ],
+               "param": null,
+               "reverse": false,
+               "play": "angry",
+               "play_type": "refuse1.wav"
             }
          },
          "voice": {
@@ -102,5 +121,14 @@
             ]
          }
       }
+   },
+   "record": {
+      "position": [
+         -1,
+         -1,
+         -1,
+         -1
+      ],
+      "enable_position": false
    }
 }

@@ -68,31 +68,34 @@ from PyQt5.Qt import Qt, QTimerEvent, QCursor, QThread, pyqtSignal, QRect, QFont
 from PyQt5.QtWidgets import QOpenGLWidget, QApplication, QMessageBox, QMenu, QAction, \
     QTextEdit, QPushButton
 
+param_dict = {}
 GWL_EXSTYLE = -20
 WS_EX_TRANSPARENT = 0x00000020
 speech_rec = None
 with open("./resources/configure.json", "r", encoding="utf-8") as f:
-    try:
-        configure = json.load(f)
-    except json.JSONDecodeError:
-        f.close()
+    def recover_backup():
+        global configure
         os.remove("./resources/configure.json")
         shutil.copy2("./logs/backup/configure.json", "./resources/configure.json")
         with open("./resources/configure.json", "r", encoding="utf-8") as scf:
             configure = json.load(scf)
-            f.close()
+            scf.close()
+
+    try:
+        configure = json.load(f)
+    except json.JSONDecodeError:
+        f.close()
+        recover_backup()
     configure_default = configure["default"]
     configure_settings = configure["settings"]
     configure_model = configure['model']
 
-    if configure_default == "tongyi":
+    if configure_default == "origin":
         configure_default = "vanilla"
 
-    configure_actions = configure['model'][configure_default]['action']
     configure_adults = configure['model'][configure_default]['adult']
     configure_voices = configure['model'][configure_default]['voice']
 
-    action_TouchHead = configure_actions['ActionTouchHead']
     f.close()
 if intelligence:
     intelligence.text.reload_memories(configure['default'])
@@ -114,6 +117,59 @@ def logger(text, father_dir):
                  f" [LOGGING]: \n{text}\n"
                  f"}}\n")
         lf.close()
+
+
+def parse_local_url(url: str):
+    truly_url = url.format(
+        ip=__import__("socket").gethostbyname(__import__("socket").gethostname()),
+        year=time.strftime("%Y"),
+    )
+    cleaned_url = re.sub(r'\s*\+\s*', '+', truly_url)
+    pattern = r'^(http|https)://([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(:(.*?))?(/.*)?$'
+    match = re.match(pattern, cleaned_url)
+    if match:
+        request_header = match.group(1)
+        ip = match.group(2)
+        port_part = match.group(4) if match.group(4) else '80'
+        path = match.group(5) if match.group(5) else '/'
+        try:
+            port = str(eval(port_part)) if port_part else '80'
+        except Exception as e:
+            return None
+
+        return f"{request_header}://{ip}:{port}{path}"
+
+
+def get_audio_path(action: str):
+    try:
+        return (f"./resources/voice/{configure['default']}/"
+                f"{configure['model'][configure_default]['action'][action]['play']}/"
+                f"{random.choice(configure_voices[configure['model'][
+                    configure_default]['action'][action]['play']])
+                    if configure['model'][configure_default]['action'][action]['play_type'] == 'random' else
+                    configure['model'][configure_default]['action'][action]['play_type']}")
+    except (KeyError, IndexError):
+        return ""
+
+
+def load_template_model(model: str):
+    with open("./resources/template.json", "r", encoding="utf-8") as tf:
+        template = json.load(tf)
+        tf.close()
+    if not os.path.exists(f"./resources/voice/{model}"):
+        os.mkdir(f"./resources/voice/{model}")
+        for template_dir in template['voice'].keys():
+            try:
+                os.mkdir(f"./resources/voice/{model}/{template_dir}")
+            except FileExistsError:
+                pass
+    for emotion_type in os.listdir(f"./resources/voice/{model}"):
+        template['voice'][emotion_type] = list(map(lambda v: v.split("\\")[-1], __import__("glob").glob(
+            f"./resources/voice/{model}/{emotion_type}/*.wav")))
+    configure['model'].update({model: template})
+    with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+        json.dump(configure, sf, indent=3, ensure_ascii=False)
+        sf.close()
 
 
 # Live2D 操作线程 Liv2D Operation Thread
@@ -158,6 +214,8 @@ class SpeakThread(QThread):
         self.resource_data = resource_data
 
     def run(self):
+        if self.resource_data is None or not self.resource_data.strip():
+            return
         if isinstance(self.resource_data, bytes):
             wave_source = io.BytesIO(self.resource_data)
             mode = "rb"
@@ -202,10 +260,7 @@ class RecognitionThread(QThread):
             speech_rec = intelligence.whisper_speech_recognition(
                 self.result.emit,
                 self.parent().recognition_failure, self.parent().recognition_closure,
-                str(configure_settings['local']['rec']['url']).format(
-                    ip=socket.gethostbyname(socket.gethostname()),
-                    year=int(time.strftime('%Y'))
-                )
+                parse_local_url(configure['settings']['local']['rec']['url'])
             )
         speech_rec.start_recognition()
 
@@ -248,7 +303,11 @@ class TextGenerateThread(QThread):
 
     def run(self):
         try:
-            answer = intelligence.text_generator(self.text, self.is_search_online)
+            answer = intelligence.text_generator(
+                self.text,
+                self.is_search_online,
+                url=parse_local_url(configure['settings']['local']['text']
+                                    ) if configure['settings']['text']['way'] == "local" else None)
         except Exception as e:
             logger(f"子应用 - AI剧情问答 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
@@ -295,9 +354,7 @@ class VoiceGenerateThread(QThread):
                 configure['settings']['tts']['temperature'], configure['settings']['tts']['speed'],
                 configure['settings']['tts']['batch_size'], configure['settings']['tts']['batch_threshold'],
                 parallel_infer=configure['settings']['tts']['parallel'],
-                url=str(configure['settings']['local']['gsv']).format(
-                    ip=__import__("socket").gethostbyname(__import__("socket").gethostname()),
-                    year=time.strftime("%Y")))
+                url=parse_local_url(configure['settings']['local']['gsv']))
             # 计算长度 Calculate length
             riff_header = wav_bytes[:12]
             if not riff_header.startswith(b'RIFF') or not riff_header[8:12] == b'WAVE':
@@ -620,7 +677,7 @@ class Setting(tk.Tk):
 
         tk.Label(self.general_frame, text="宠物形象 Pet Character：").place(x=5, y=5)
         clist = os.listdir("./resources/model")
-        clist.append("tongyi")
+        clist.append("origin")
         self.pet_character = ttk.Combobox(self.general_frame, values=clist, state="readonly")
         self.pet_character.set(configure['default'])
         self.pet_character.bind("<<ComboboxSelected>>",
@@ -893,9 +950,9 @@ class Setting(tk.Tk):
 
         self.local_infer = tk.LabelFrame(self.inference_frame, text="本地推理 Local Infer", width=590, height=160)
 
-        tk.Label(self.local_infer, text="通义千问 Tongyi").place(x=5, y=5)
+        tk.Label(self.local_infer, text="文本模型 Text Model").place(x=5, y=5)
         self.qwen_api_url = ttk.Entry(self.local_infer, width=50)
-        self.qwen_api_url.insert(0, configure_settings['local']['qwen'])
+        self.qwen_api_url.insert(0, configure_settings['local']['text'])
         self.qwen_api_url.place(x=150, y=5)
 
         tk.Label(self.local_infer, text="GPT-SoVITS (TTS)").place(x=5, y=35)
@@ -964,6 +1021,7 @@ class Setting(tk.Tk):
         self.bind_note = ttk.Notebook(self.bind_frame)
         self.note.add(self.bind_frame, text="绑定设置 Bind Settings")
         self.bind_plugin_frame = tk.Frame(self.bind_note)
+        self.bind_animation_frame = tk.Frame(self.bind_note)
         self.bind_note.add(self.bind_plugin_frame, text="插件 Plugin")
 
         tk.Label(self.bind_plugin_frame, text="源Python文件路径 Source Python File Path").place(x=5, y=5)
@@ -997,6 +1055,80 @@ class Setting(tk.Tk):
                    text="编译进程序中 Compile into program",
                    command=self.complie_plugin, width=80
                    ).pack(side=tk.BOTTOM)
+
+        self.bind_note.add(self.bind_animation_frame, text="动画绑定 Animation Bind")
+
+        tk.Label(self.bind_animation_frame, text="模型 Model").place(x=5, y=5)
+        self.model_lists = os.listdir("./resources/model")
+        self.model_list = ttk.Combobox(self.bind_animation_frame,
+                                       width=20, state="readonly", values=self.model_lists)
+        self.model_list.bind("<<ComboboxSelected>>", lambda event: self.fill_binder())
+        self.model_list.set(configure['default'])
+        self.model_list.place(x=100, y=5)
+
+        tk.Label(self.bind_animation_frame, text="动画 Animation").place(x=5, y=35)
+        self.animation_lists = ['ActionTouchHead', 'ActionClickChest']
+        self.animation_binder = ttk.Combobox(self.bind_animation_frame,
+                                             width=20, state="readonly", values=self.animation_lists)
+        self.animation_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_information())
+        self.animation_binder.current(0)
+        self.animation_binder.place(x=100, y=35)
+
+        self.bind_parameter_frame = tk.LabelFrame(self.bind_animation_frame,
+                                                  text="参数 Parameter",
+                                                  width=585, height=320,
+                                                  )
+
+        tk.Label(self.bind_parameter_frame, text="坐标 Coordinate").place(x=5, y=0)
+        tk.Label(self.bind_parameter_frame, text="min(X)").place(x=25, y=20)
+        self.min_x = ttk.Entry(self.bind_parameter_frame, width=10)
+        self.min_x.place(x=25, y=40)
+        tk.Label(self.bind_parameter_frame, text="min(Y)").place(x=125, y=20)
+        self.min_y = ttk.Entry(self.bind_parameter_frame, width=10)
+        self.min_y.place(x=125, y=40)
+        tk.Label(self.bind_parameter_frame, text="max(X)").place(x=225, y=20)
+        self.max_x = ttk.Entry(self.bind_parameter_frame, width=10)
+        self.max_x.place(x=225, y=40)
+        tk.Label(self.bind_parameter_frame, text="max(Y)").place(x=325, y=20)
+        self.max_y = ttk.Entry(self.bind_parameter_frame, width=10)
+        self.max_y.place(x=325, y=40)
+        self.auto_record_btn = ttk.Button(self.bind_parameter_frame,
+                                          text="录入 Record",
+                                          command=self.auto_record_position)
+        self.auto_record_btn.place(x=450, y=30)
+
+        self.parameter_binder = ttk.Combobox(self.bind_parameter_frame,
+                                             width=30, state="readonly", values=['<None>'] + list(param_dict.keys()))
+
+        self.save_animation_btn = ttk.Button(self.bind_animation_frame,
+                                             text="保存 Save",
+                                             width=400,
+                                             command=self.save_settings)
+        self.save_animation_btn.pack(side=tk.BOTTOM)
+
+        tk.Label(self.bind_parameter_frame, text="音频 Audio").place(x=5, y=70)
+        self.audio_lists = os.listdir(f"./resources/voice/{configure_default}")
+        self.audio_binder = ttk.Combobox(self.bind_parameter_frame,
+                                         width=20, state="readonly", values=self.audio_lists)
+
+        tk.Label(self.bind_parameter_frame, text="播放方式 Play Way").place(x=5, y=100)
+        self.audio_type = ttk.Combobox(self.bind_parameter_frame,
+                                       width=20, state="readonly", values=['random'])
+        self.audio_type.current(0)
+        self.audio_type.place(x=140, y=100)
+
+        self.audio_binder.current(0)
+        self.audio_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_play_type())
+        self.audio_binder.place(x=140, y=70)
+
+        tk.Label(self.bind_parameter_frame, text="参数 Parameter").place(x=5, y=130)
+        if (cap := configure['model'][configure_default]['action'][self.animation_binder.get()]['param']) is not None:
+            self.parameter_binder.set(cap)
+        else:
+            self.parameter_binder.set('<None>')
+        self.parameter_binder.place(x=140, y=130)
+
+        self.bind_parameter_frame.place(x=5, y=80)
 
         self.bind_note.pack(fill=tk.BOTH, expand=True)
 
@@ -1120,10 +1252,55 @@ class Setting(tk.Tk):
         self.use_open_sources.place(x=5, y=50)
 
         self.refresh_prompt()
-
+        self.fill_play_type()
         self.refresh_gui()
+        self.fill_information()
 
         self.note.pack(fill=tk.BOTH, expand=True)
+
+    @staticmethod
+    def auto_record_position():
+        messagebox.showinfo(
+            "帮助 Help",
+            "开始录入：你需要在您的角色上点击录入。点击两次，第一次为最小值，第二次为最大值\n"
+            "Start recording: You need to click on your character to record. "
+            "Click twice, the first is the minimum value, the second is the maximum value")
+        configure['record']['enable_position'] = True
+        configure['record']['position'] = [
+            -1, -1, -1, -1
+        ]
+
+    def fill_play_type(self):
+        selected = self.audio_binder.get()
+        values = os.listdir(f"./resources/voice/{configure_default}/{selected}")
+        values.append("random")
+        self.audio_type.configure(values=values)
+
+    def fill_information(self):
+        self.audio_type.set(configure['model'][configure_default]['action'][self.animation_binder.get()]['play_type'])
+        self.audio_binder.set(configure['model'][configure_default]['action'][self.animation_binder.get()]['play'])
+        if (cap := configure['model'][configure_default]['action'][self.animation_binder.get()]['param']) is not None:
+            self.parameter_binder.set(cap)
+        else:
+            self.parameter_binder.set("<None>")
+
+        self.min_x.delete(0, tk.END)
+        self.min_y.delete(0, tk.END)
+        self.max_x.delete(0, tk.END)
+        self.max_y.delete(0, tk.END)
+
+        self.min_x.insert(0,
+                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][0])
+        self.min_y.insert(0,
+                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][2])
+        self.max_x.insert(0,
+                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][1])
+        self.max_y.insert(0,
+                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][3])
+
+    def fill_binder(self):
+        if self.model_list.get() not in configure['model'].keys():
+            load_template_model(self.model_list.get())
 
     def complie_plugin(self):
         template = {
@@ -1314,11 +1491,25 @@ class Setting(tk.Tk):
     def refresh_gui(self):
         self.globe_mouse_penetration_value.set(configure['settings']['penetration']['enable'])
         self.penetration_start_value.set(configure['settings']['penetration']['start'])
+
+        if (self.min_x.get() == "-1" or self.max_x.get() == "-1" or
+                self.min_y.get() == "-1" or self.max_y.get() == "-1" or
+                configure['record']['enable_position']):
+            self.min_x.delete(0, tk.END)
+            self.max_x.delete(0, tk.END)
+            self.min_y.delete(0, tk.END)
+            self.max_y.delete(0, tk.END)
+
+            self.min_x.insert(0, configure['record']['position'][0])
+            self.min_y.insert(0, configure['record']['position'][1])
+            self.max_x.insert(0, configure['record']['position'][2])
+            self.max_y.insert(0, configure['record']['position'][3])
+
         self.after(100, self.refresh_gui)
 
     def refresh_prompt(self):
         self.sets_tree.delete(*self.sets_tree.get_children())
-        if configure['default'] == "tongyi":
+        if configure['default'] == "origin":
             return
         if not os.path.exists(f"./intelligence/prompts/{configure['default']}.json"):
             with open(f"./intelligence/prompts/{configure['default']}.json", "w", encoding="utf-8") as lf:
@@ -1330,7 +1521,7 @@ class Setting(tk.Tk):
             f.close()
 
     def change_prompt(self, run_type: typing.Literal['add', 'remove']):
-        if configure['default'] == "tongyi":
+        if configure['default'] == "origin":
             return
         if run_type == "add":
             self.sets_tree.insert("", "end", values=(f"{configure['default']}", "Role", "Content"))
@@ -1385,7 +1576,12 @@ class Setting(tk.Tk):
         entry_edit.bind("<Return>", lambda e: save_edit())
 
     def change_character(self, character):
-        configure['default'] = character
+        if character in configure['model'].keys() or character == "origin":
+            configure['default'] = character
+        else:
+            messagebox.showwarning("警告 Warning",
+                                   f"资源中没有{character}。请前往动画绑定进行绑定后重试！\n"
+                                   f"{character} not found in resources. Please bind it first!")
         configure['name'] = self.pet_nickname_entry.get()
         configure['voice_model'] = self.voice_model_lists.get()
 
@@ -1444,7 +1640,7 @@ class Setting(tk.Tk):
                 api_log = uf.read()
             messagebox.showerror("Python Traceback LOGS", api_log)
 
-        configure['settings']['local']['qwen'] = self.qwen_api_url.get()
+        configure['settings']['local']['text'] = self.qwen_api_url.get()
         configure['settings']['local']['gsv'] = self.gsv_api_url.get()
         configure['settings']['local']['rec']['tool'] = self.recognition_api_tool.get()
         configure['settings']['local']['rec']['url'] = self.recognition_api_url.get()
@@ -1452,6 +1648,19 @@ class Setting(tk.Tk):
         configure['settings']['cloud']['xunfei']['id'] = self.xunfei_apiid_entry.get()
         configure['settings']['cloud']['xunfei']['key'] = self.xunfei_apikey_entry.get()
         configure['settings']['cloud']['xunfei']['secret'] = self.xunfei_apisecret_entry.get()
+
+        configure['record']['position'] = [-1, -1, -1, -1]
+
+        position = [int(self.min_x.get()), int(self.max_x.get()), int(self.min_y.get()), int(self.max_y.get())]
+        configure['model'][self.model_list.get()]['action'][
+            self.animation_binder.get()]['position'] = position
+        configure['model'][self.model_list.get()]['action'][
+            self.animation_binder.get()]['param'] = None if self.parameter_binder.get() == "<None>"\
+            else self.parameter_binder.get()
+        configure['model'][self.model_list.get()]['action'][
+            self.animation_binder.get()]['play'] = self.audio_binder.get()
+        configure['model'][self.model_list.get()]['action'][
+            self.animation_binder.get()]['play_type'] = self.audio_type.get()
 
         with open("./resources/configure.json", "w", encoding="utf-8") as sf:
             json.dump(configure, sf, indent=3, ensure_ascii=False)
@@ -1549,7 +1758,6 @@ class DesktopTop(QOpenGLWidget):
         self.enter_position = self.drag_position = None
         self.random_cancel_penetration = self.image_path = self.direction = self.last_pos = None
         self.pet_model: live2d.LAppModel | None = None
-        self.param_dict: dict = {}
 
         # 屏幕中心坐标 Center of the screen
         self.screen_geometry = QApplication.desktop().availableGeometry()
@@ -1613,10 +1821,11 @@ class DesktopTop(QOpenGLWidget):
                     configure['settings']['understand']['max'] // 2) * 1000)
 
         # 桌宠预备 Pet Preparation
-        SpeakThread(
-            self,
-            f"./resources/voice/{configure_default}/welcome/{random.choice(configure_voices['welcome'])}"
-        ).start()
+        if configure_voices['welcome']:
+            SpeakThread(
+                self,
+                f"./resources/voice/{configure_default}/welcome/{random.choice(configure_voices['welcome'])}"
+            ).start()
 
         self.show()
 
@@ -2169,19 +2378,30 @@ class DesktopTop(QOpenGLWidget):
         elif not self.is_penetration:
             self.set_mouse_transparent(True)
             # 判断是否是在播放动画时 Check if the animation is being played
-            if self.is_playing_animation:
+            if self.is_playing_animation and configure['model'][
+                configure_default]['action']['ActionTouchHead']['param'] is not None:
                 # 如果是耳朵 下垂的动画就执行反转动画 if it is the ears down animation, then reverse the animation
-                if action_TouchHead['param'] in self.stop_playing_animation[1] and action_TouchHead['reverse']:
+                if configure['model'][configure_default][
+                    'action']['ActionTouchHead']['param'] in self.stop_playing_animation[1] and \
+                        configure['model'][configure_default]['action']['ActionTouchHead']['reverse']:
                     if "Forward" in self.stop_playing_animation[1]:
-                        self.stop_playing_animation = [True, f"{action_TouchHead['param']}:Reverse"]
-                        IterateAddParameterValue(self, action_TouchHead['param'],
+                        self.stop_playing_animation = [True, f"{configure['model'][
+                            configure_default]['action']['ActionTouchHead']['param']}:Reverse"]
+                        IterateAddParameterValue(self, configure['model'][
+                            configure_default]['action']['ActionTouchHead']['param'],
                                                  -1, self.maximum_param_counter, 0, 1,
                                                  0.006).start()
                     else:
-                        self.stop_playing_animation = [True, f"{action_TouchHead['param']}:Forward"]
-                        IterateAddParameterValue(self, action_TouchHead['param'],
+                        self.stop_playing_animation = [True, f"{configure['model'][
+                            configure_default]['action'][
+                            'ActionTouchHead']['param']}:Forward"]
+                        IterateAddParameterValue(self, configure['model'][
+                            configure_default]['action']['ActionTouchHead']['param'],
                                                  1, 0, self.maximum_param_counter, 1,
                                                  0.006).start()
+                self.stop_playing_animation = [False, ""]
+                self.is_playing_animation = False
+            elif configure['model'][configure_default]['action']['ActionTouchHead']['param'] is None:
                 self.stop_playing_animation = [False, ""]
                 self.is_playing_animation = False
 
@@ -2209,8 +2429,9 @@ class DesktopTop(QOpenGLWidget):
             event.accept()
 
     def mouseMoveEvent(self, event):
-        def checker(x_min: int, x_max: int, y_min: int, y_max: int, turn_count: int) -> bool:
+        def checker(parameter: str, turn_count: int) -> bool:
             """检查是否满足框内要求 Check whether the box is satisfied"""
+            x_min, x_max, y_min, y_max = configure['model'][configure_default]['action'][parameter]['position']
             return (
                     x_min <= current_x <= x_max and y_min <= current_y <= y_max and
                     not self.is_playing_animation and self.turn_count >= turn_count and self.click_in_area
@@ -2256,40 +2477,48 @@ class DesktopTop(QOpenGLWidget):
 
             if self.click_in_area and not self.is_movement:
                 # 摸头互动 Touch interaction
-                if checker(129, 202, 0, 50, 4):
-                    SpeakThread(self,
-                                f"./resources/voice/{configure['default']}/coquetry/"
-                                f"{random.choice(configure_voices['coquetry'])}").start()
-                    self.is_playing_animation = True
+                if checker('ActionTouchHead', 4):
+                    SpeakThread(self, get_audio_path('ActionTouchHead')).start()
                     self.click_in_area = False
-
+                    self.is_playing_animation = True
                     # 播放正向动画 Play the forward animation
-                    self.stop_playing_animation = [True, f"{action_TouchHead['param']}:Forward"]
-                    self.maximum_param_counter = self.param_dict['EarDown']['max']
-                    IterateAddParameterValue(self, f"{action_TouchHead['param']}",
+                    self.stop_playing_animation = [True, f"{configure['model'][
+                        configure_default]['action']['ActionTouchHead']['param']}:Forward"]
+                    try:
+                        self.maximum_param_counter = param_dict[
+                            configure['model'][configure_default]['action']['ActionTouchHead']['param']]['max']
+                    except KeyError:
+                        self.maximum_param_counter = 1.0
+                    IterateAddParameterValue(self, f"{configure['model'][
+                        configure_default]['action']['ActionTouchHead']['param']}",
                                              1, 0, self.maximum_param_counter, 1,
                                              0.0053).start()
 
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        def checker(x_min, x_max, y_min, y_max):
+        def checker(parameter_action: str):
             """检查点击位置是否符合标准 Check whether the click position meets the standard"""
+            x_min, x_max, y_min, y_max = configure['model'][configure_default]['action'][parameter_action]['position']
             return x_min <= click_x <= x_max and y_min <= click_y <= y_max
 
         click_x, click_y = event.globalPos().x() - self.x(), event.globalPos().y() - self.y()
         if event.button() == Qt.LeftButton and self.click_in_area:
             print(f"meet the requirements. CLICK pos: {click_x, click_y}")
-            if checker(159, 217, 143, 172):
+            if configure['record']['enable_position']:
+                if configure['record']['position'][:2].count(-1) == len(configure['record']['position'][:2]):
+                    configure['record']['position'][:2] = [click_x, click_y]
+                else:
+                    configure['record']['position'][2:] = [click_x, click_y]
+                    configure['record']['enable_position'] = False
+            if checker("ActionClickChest"):
                 if configure['adult_level'] > 0:
                     dir_, voice_list = AdultEngine.voice()
                     SpeakThread(self,
                                 f"./resources/adult/{configure['default']}/voice/{dir_}/"
                                 f"{random.choice(voice_list)}").start()
                 else:
-                    SpeakThread(self,
-                                f"./resources/voice/{configure['default']}/angry/"
-                                f"{random.choice(configure_voices['angry'])}").start()
+                    SpeakThread(self, get_audio_path("ActionClickChest")).start()
             event.accept()
         self.is_movement = False
 
@@ -2309,10 +2538,15 @@ class DesktopTop(QOpenGLWidget):
 
         live2d.glewInit()
         self.pet_model = live2d.LAppModel()
-        self.pet_model.LoadModelJson("./resources/model/vanilla/Vanilla.model3.json")
+        if os.path.exists(f"./resources/model/{configure_default}/{configure_default.title()}.model3.json"):
+            self.pet_model.LoadModelJson(
+                f"./resources/model/{configure_default}/{configure_default.title()}.model3.json")
+        else:
+            self.pet_model.LoadModelJson(f"./resources/model/{configure_default}/{configure_default}.model3.json")
+
         for i in range(self.pet_model.GetParameterCount()):
             param = self.pet_model.GetParameter(i)
-            self.param_dict.update({param.id: {"value": param.value, "max": param.max, "min": param.min}})
+            param_dict.update({param.id: {"value": param.value, "max": param.max, "min": param.min}})
         self.startTimer(int(1000 / 900))
 
     def resizeGL(self, width, height):
