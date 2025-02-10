@@ -1,4 +1,3 @@
-import socket
 import sys
 import time
 import datetime
@@ -64,7 +63,8 @@ from tkinter.scrolledtext import ScrolledText
 
 import OpenGL.GL as GL
 
-from PyQt5.Qt import Qt, QTimerEvent, QCursor, QThread, pyqtSignal, QRect, QFont, QTimer
+from PyQt5.Qt import Qt, QTimerEvent, QCursor, QThread, pyqtSignal, QRect, QFont, QTimer, \
+    QIcon
 from PyQt5.QtWidgets import QOpenGLWidget, QApplication, QMessageBox, QMenu, QAction, \
     QTextEdit, QPushButton
 
@@ -1566,7 +1566,9 @@ class Setting(tk.Tk):
             be_updated_prompts = {}
             for child_id in self.sets_tree.get_children():
                 prompts = self.sets_tree.item(child_id)['values']
-                be_updated_prompts.update({prompts[0]: {prompts[1]: prompts[2]}})
+                if not be_updated_prompts.get(prompts[0]):
+                    be_updated_prompts.update({prompts[0]: {}})
+                be_updated_prompts[prompts[0]].update({prompts[1]: prompts[2]})
             for character, prompt in be_updated_prompts.items():
                 with open(f"./intelligence/prompts/{character}.json", "w", encoding="utf-8") as df:
                     json.dump(prompt, df, indent=3, ensure_ascii=False)
@@ -1741,6 +1743,10 @@ class DesktopTop(QOpenGLWidget):
         # 窗口大小
         width = 400
         height = 400
+        # 设置标题 Set Title
+        self.setWindowTitle("AgenticCompanion - Character Mainloop")
+        # 设置图标 Set icon
+        self.setWindowIcon(QIcon("logo.ico"))
         # 设置属性 Set Attribute
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -2379,7 +2385,7 @@ class DesktopTop(QOpenGLWidget):
             self.set_mouse_transparent(True)
             # 判断是否是在播放动画时 Check if the animation is being played
             if self.is_playing_animation and configure['model'][
-                configure_default]['action']['ActionTouchHead']['param'] is not None:
+                    configure_default]['action']['ActionTouchHead']['param'] is not None:
                 # 如果是耳朵 下垂的动画就执行反转动画 if it is the ears down animation, then reverse the animation
                 if configure['model'][configure_default][
                     'action']['ActionTouchHead']['param'] in self.stop_playing_animation[1] and \

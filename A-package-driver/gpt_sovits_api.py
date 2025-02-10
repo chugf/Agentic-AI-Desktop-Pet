@@ -15,13 +15,18 @@ import requests
 import uvicorn
 from pydantic import BaseModel
 
-MODULE_LIST_PATH = ""
+MODULE_LIST_PATH = r""   # ./modules/
 
-base_url = f"http://{socket.gethostbyname(socket.gethostname())}:{time.strftime("%Y")}"
+ttk_port = int(time.strftime("%Y")) + 2
+command_port = int(time.strftime("%Y")) + 1
+ip = socket.gethostbyname(socket.gethostname())
+base_url = f"http://{ip}:{ttk_port}"
+
 endpoint_tts = "/tts"                                              # POST
 endpoint_change_sovits = "/set_sovits_weights?weights_path={pth}"  # GET
 endpoint_change_gpt = "/set_gpt_weights?weights_path={ckpt}"       # GET
 CommandReciever = fastapi.FastAPI()
+
 os.system("color 0")
 
 
@@ -93,13 +98,14 @@ def tts(param: TTS):
         "parallel_infer": param.parallel_infer,
         "repetition_penalty": param.repetition_penalty
     }
+    response = requests.post(base_url + endpoint_tts, json=tts_param)
     return json.dumps({
         "message": "success",
-        "result": base64.b64encode(requests.post(base_url + endpoint_tts, json=tts_param).content).decode("utf-8")
+        "result": base64.b64encode(response.content).decode("utf-8")
     })
 
 
 if __name__ == "__main__":
     threading.Thread(target=subprocess.run, args=(rf".\runtime\python api_v2.py -a "
-                                                  rf"{socket.gethostbyname(socket.gethostname())} -p {int(time.strftime("%Y")) + 2}",)).start()
-    uvicorn.run(CommandReciever, host=socket.gethostbyname(socket.gethostname()), port=int(time.strftime("%Y")) + 1)
+                                                  rf"{ip} -p {ttk_port}",)).start()
+    uvicorn.run(CommandReciever, host=ip, port=command_port)
