@@ -36,7 +36,7 @@ VSVersionInfo(
         StringStruct('LegalCopyright', 'Copyright © 2025 All Rights Reserved. GrassTech. 版权所有'),
         StringStruct('OriginalFilename', ''),
         StringStruct('ProductName', 'Ai Desktop Pet'),
-        StringStruct('ProductVersion', '8.1.0.0'),
+        StringStruct('ProductVersion', '1.6.0.0'),
         StringStruct('SquirrelAwareVersion', '1.6'),
         StringStruct('', ''),
         StringStruct('lTrademarks', 'GrassTech')])
