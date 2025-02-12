@@ -1,7 +1,8 @@
 {
    "name": "香草",
-   "voice_model": "香草",
+   "voice_model": "艾莲",
    "default": "vanilla",
+   "watermark": "ParamHairBack;-30",
    "adult_level": 0,
    "settings": {
       "compatibility": true,
@@ -25,7 +26,7 @@
       },
       "local": {
          "text": "http://{ip}:{year}/chat",
-         "gsv": "http://{ip}:{year} + 2",
+         "gsv": "http://{ip}:{year} + 1",
          "rec": {
             "tool": "whisper",
             "url": "ws://{ip}:{year} + 3"
@@ -75,13 +76,12 @@
          "action": {
             "ActionTouchHead": {
                "position": [
-                  129,
-                  202,
+                  149,
+                  233,
                   0,
-                  50
+                  62
                ],
-               "param": "EarDown",
-               "reverse": true,
+               "motion": "Idle:1",
                "play": "coquetry",
                "play_type": "random"
             },
@@ -92,8 +92,7 @@
                   143,
                   172
                ],
-               "param": null,
-               "reverse": false,
+               "motion": "Idle:0",
                "play": "angry",
                "play_type": "refuse1.wav"
             }

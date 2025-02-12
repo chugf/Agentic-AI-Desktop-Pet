@@ -45,6 +45,18 @@
    {
       "type": "function",
       "function": {
+         "name": "get_current_time",
+         "description": "当你想获取时间时非常有用。",
+         "parameters": {
+            "type": "object",
+            "properties": {}
+         },
+         "required": []
+      }
+   },
+   {
+      "type": "function",
+      "function": {
          "name": "find_file",
          "description": "当你想查找文件是非常有用。",
          "parameters": {
@@ -64,49 +76,44 @@
    {
       "type": "function",
       "function": {
-         "name": "get_current_time",
-         "description": "当你想获取时间时非常有用。",
-         "parameters": {
-            "type": "object",
-            "properties": {}
-         },
-         "required": []
-      }
-   },
-   {
-      "type": "function",
-      "function": {
-         "name": "run_python_code",
-         "description": "当你想运行Python源代码时非常有用",
+         "name": "load_file",
+         "description": "当你想读取文件时非常有用。",
          "parameters": {
             "type": "object",
             "properties": {
-               "source_code": {
+               "filepath": {
                   "type": "string",
-                  "description": "Python源代码"
+                  "description": "文件路径"
                }
             }
          },
          "required": [
-            "source_code"
+            "filepath"
          ]
       }
    },
    {
       "type": "function",
       "function": {
-         "name": "game_number_bomb",
-         "description": "当用户需要玩数字炸弹游戏时非常有用。",
+         "name": "save_file",
+         "description": "当你想保存文件时非常有用。",
          "parameters": {
             "type": "object",
             "properties": {
-               "user_input_number": {
-                  "type": "integer",
-                  "description": "用户输入的数字（非必选，为空初始化。游戏开始后必选！）"
+               "filepath": {
+                  "type": "string",
+                  "description": "文件路径"
+               },
+               "content": {
+                  "type": "string",
+                  "description": "文件内容"
                }
             }
          },
-         "required": []
+         "required": [
+            "filepath",
+            "content"
+         ]
       }
    }
 ]

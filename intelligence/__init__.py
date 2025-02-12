@@ -25,8 +25,11 @@ def whisper_speech_recognition(success_func, error_func, close_func, url):
     return recognition.WhisperRealTimeSpeechRecognizer(url, success_func, error_func, close_func)
 
 
-def text_generator(prompt, is_search_online: bool):
-    a = text.TextGenerator(ALI_API_KEY).generate_text(prompt, is_search_online)
+def text_generator(prompt, is_search_online: bool, url: str | None = None):
+    if url is None:
+        a = text.TextGenerator(ALI_API_KEY).generate_text(prompt, is_search_online)
+    else:
+        a = text.TextGeneratorLocal(prompt, url)
     return a
 
 
@@ -35,7 +38,7 @@ def gsv_voice_generator(texts, language, module_name, module_info, top_k=12, top
                         url=None):
     return voice.take_a_tts(texts, language, module_name, module_info,
                             top_k, top_p, temperature, speed, batch_size, batch_threshold,
-                            seed, parallel_infer, repetition_penalty)
+                            seed, parallel_infer, repetition_penalty, url)
 
 
 def ali_voice_generator(texts):

@@ -4,14 +4,11 @@ pypiwin32
 live2d-py
 dashscope
 markdown
-
 requests
 pyaudio
 numpy
-
 websocket-client
 mss
-
 pydantic
 uvicorn
 fastapi

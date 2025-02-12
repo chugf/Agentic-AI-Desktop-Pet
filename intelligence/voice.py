@@ -52,7 +52,8 @@ def change_module(name: str, module_info: dict):
 def take_a_tts(text: str, language: Literal['zh', 'en', 'ja', 'ko', 'yue'], module_name: str, module_info: dict,
                top_k: int = 12, top_p: float = 0.95, temperature: float = 0.34, speed: float = 1.0,
                batch_size: int = 3, batch_threshold: float = 0.75,
-               seed: int = -1, parallel_infer: bool = True, repetition_penalty: float = 1.35):
+               seed: int = -1, parallel_infer: bool = True, repetition_penalty: float = 1.35,
+               url: str = ""):
     tts_param = {
         "text": text,
         "language": language,
@@ -68,7 +69,7 @@ def take_a_tts(text: str, language: Literal['zh', 'en', 'ja', 'ko', 'yue'], modu
         "parallel_infer": parallel_infer,
         "repetition_penalty": repetition_penalty
     }
-    response = requests.post(f"{base_url}/take_tts", json=tts_param)
+    response = requests.post(f"{url}/take_tts", json=tts_param)
     return base64.b64decode(json.loads(response.json())['result'])
 
 

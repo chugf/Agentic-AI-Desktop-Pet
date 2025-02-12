@@ -143,11 +143,11 @@ def parse_local_url(url: str):
 def get_audio_path(action: str):
     try:
         return (f"./resources/voice/{configure['default']}/"
-                f"{configure['model'][configure_default]['action'][action]['play']}/"
+                f"{get_configure_actions()[action]['play']}/"
                 f"{random.choice(configure_voices[configure['model'][
                     configure_default]['action'][action]['play']])
-                    if configure['model'][configure_default]['action'][action]['play_type'] == 'random' else
-                    configure['model'][configure_default]['action'][action]['play_type']}")
+                    if get_configure_actions()[action]['play_type'] == 'random' else
+                    get_configure_actions()[action]['play_type']}")
     except (KeyError, IndexError):
         return ""
 
@@ -172,34 +172,9 @@ def load_template_model(model: str):
         sf.close()
 
 
-# Live2D 操作线程 Liv2D Operation Thread
-class IterateAddParameterValue(QThread):
-    """根据最小值和最大值进行迭代的线程 According to the minimum and maximum values to iterate"""
-    def __init__(self, parent, param: str, value: int, minimum: int, maximum: int, weight, duration):
-        super().__init__(parent)
-        self.id_param = self.parent().stop_playing_animation[1]
-        self.param = param
-        self.value = value
-        self.minimum = int(minimum)
-        self.maximum = int(maximum)
-        self.weight = weight
-        self.duration = duration
-
-    def run(self):
-        for value in range(self.minimum, self.maximum, self.value):
-            if (
-                    self.parent().stop_playing_animation[0] and
-                    self.parent().stop_playing_animation[1] != self.id_param or
-                    not self.parent().stop_playing_animation[1] and "Reverse" not in self.id_param):
-                break
-            live2d.clearBuffer()
-            self.parent().pet_model.Update()
-            self.parent().pet_model.AddParameterValue(self.param, value)
-            self.parent().pet_model.Draw()
-            self.parent().maximum_param_counter = value
-            time.sleep(self.duration)
-        if "Reverse" in self.id_param:
-            self.parent().maximum_param_counter = max([self.minimum + 1, self.maximum])
+# configure
+def get_configure_actions():
+    return configure['model'][configure_default]['action']
 
 
 # 基本功能线程 Basic Function Thread
@@ -656,6 +631,7 @@ class Balloon:
 class Setting(tk.Tk):
     def __init__(self):
         super().__init__()
+        self.iconbitmap("logo.ico")
         self.title("AI-Agent  桌面宠物设置 | Desktop Pet Settings")
         self.geometry("600x460")
         self.attributes("-alpha", 0.9)
@@ -736,6 +712,18 @@ class Setting(tk.Tk):
                                            command=self.play_refer_audio)
         self.play_refer_audio.place(x=380, y=100)
         self.voice_model_lists.bind("<<ComboboxSelected>>", self.change_refer_text)
+
+        tk.Label(self.general_frame, text="水印 Watermark").place(x=5, y=180)
+        self.watermark_combo = ttk.Combobox(self.general_frame, values=list(param_dict.keys()),
+                                            state="readonly")
+        self.watermark_combo.set(configure['watermark'].split(";")[0])
+        self.watermark_combo.bind("<<ComboboxSelected>>", self.change_watermark)
+        self.watermark_combo.place(x=200, y=180)
+
+        self.watermark_scale = ttk.Scale(self.general_frame, length=200, from_=-100, to=100,
+                                         command=self.change_watermark)
+        self.watermark_scale.set(int(configure['watermark'].split(";")[1]))
+        self.watermark_scale.place(x=380, y=180)
 
         self.note.add(self.switch_frame, text="开关 Switch")
 
@@ -1097,9 +1085,15 @@ class Setting(tk.Tk):
                                           command=self.auto_record_position)
         self.auto_record_btn.place(x=450, y=30)
 
-        self.parameter_binder = ttk.Combobox(self.bind_parameter_frame,
-                                             width=30, state="readonly", values=['<None>'] + list(param_dict.keys()))
-
+        mg = tk.Label(self.bind_parameter_frame, text="动作组 Motion Groups")
+        Balloon(mg, text="绑定的动作组名\nMotion binding group name")
+        mg.place(x=140, y=150)
+        self.motion_binder = tk.Entry(self.bind_parameter_frame)
+        mi = tk.Label(self.bind_parameter_frame, text="动作序 Motion Index")
+        Balloon(mi, text="绑定的动作序号，从motions文件夹从上之下顺序，从0开始\n"
+                         "Motion binding group index, from motions folder from top to bottom, beginning with 0")
+        mi.place(x=300, y=150)
+        self.motion_index_binder = tk.Entry(self.bind_parameter_frame)
         self.save_animation_btn = ttk.Button(self.bind_animation_frame,
                                              text="保存 Save",
                                              width=400,
@@ -1121,12 +1115,9 @@ class Setting(tk.Tk):
         self.audio_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_play_type())
         self.audio_binder.place(x=140, y=70)
 
-        tk.Label(self.bind_parameter_frame, text="参数 Parameter").place(x=5, y=130)
-        if (cap := configure['model'][configure_default]['action'][self.animation_binder.get()]['param']) is not None:
-            self.parameter_binder.set(cap)
-        else:
-            self.parameter_binder.set('<None>')
-        self.parameter_binder.place(x=140, y=130)
+        tk.Label(self.bind_parameter_frame, text="动画 Motion").place(x=5, y=130)
+        self.motion_binder.place(x=140, y=130)
+        self.motion_index_binder.place(x=300, y=130)
 
         self.bind_parameter_frame.place(x=5, y=80)
 
@@ -1277,26 +1268,25 @@ class Setting(tk.Tk):
         self.audio_type.configure(values=values)
 
     def fill_information(self):
-        self.audio_type.set(configure['model'][configure_default]['action'][self.animation_binder.get()]['play_type'])
-        self.audio_binder.set(configure['model'][configure_default]['action'][self.animation_binder.get()]['play'])
-        if (cap := configure['model'][configure_default]['action'][self.animation_binder.get()]['param']) is not None:
-            self.parameter_binder.set(cap)
+        self.audio_type.set(get_configure_actions()[self.animation_binder.get()]['play_type'])
+        self.audio_binder.set(get_configure_actions()[self.animation_binder.get()]['play'])
+        self.motion_binder.delete(0, tk.END)
+        self.motion_index_binder.delete(0, tk.END)
+        if (cap := get_configure_actions()[self.animation_binder.get()]['motion']) is not None:
+            self.motion_binder.insert(0, str(cap).split(":")[0])
+            self.motion_index_binder.insert(0, str(cap).split(":")[1])
         else:
-            self.parameter_binder.set("<None>")
+            self.motion_binder.insert(0, "")
 
         self.min_x.delete(0, tk.END)
         self.min_y.delete(0, tk.END)
         self.max_x.delete(0, tk.END)
         self.max_y.delete(0, tk.END)
 
-        self.min_x.insert(0,
-                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][0])
-        self.min_y.insert(0,
-                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][2])
-        self.max_x.insert(0,
-                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][1])
-        self.max_y.insert(0,
-                          configure['model'][configure_default]['action'][self.animation_binder.get()]['position'][3])
+        self.min_x.insert(0, get_configure_actions()[self.animation_binder.get()]['position'][0])
+        self.min_y.insert(0, get_configure_actions()[self.animation_binder.get()]['position'][2])
+        self.max_x.insert(0, get_configure_actions()[self.animation_binder.get()]['position'][1])
+        self.max_y.insert(0, get_configure_actions()[self.animation_binder.get()]['position'][3])
 
     def fill_binder(self):
         if self.model_list.get() not in configure['model'].keys():
@@ -1657,8 +1647,7 @@ class Setting(tk.Tk):
         configure['model'][self.model_list.get()]['action'][
             self.animation_binder.get()]['position'] = position
         configure['model'][self.model_list.get()]['action'][
-            self.animation_binder.get()]['param'] = None if self.parameter_binder.get() == "<None>"\
-            else self.parameter_binder.get()
+            self.animation_binder.get()]['motion'] = f"{self.motion_binder.get()}:{self.motion_index_binder.get()}"
         configure['model'][self.model_list.get()]['action'][
             self.animation_binder.get()]['play'] = self.audio_binder.get()
         configure['model'][self.model_list.get()]['action'][
@@ -1667,6 +1656,13 @@ class Setting(tk.Tk):
         with open("./resources/configure.json", "w", encoding="utf-8") as sf:
             json.dump(configure, sf, indent=3, ensure_ascii=False)
             sf.close()
+
+    def change_watermark(self, event=None):
+        watermark_value = int(self.watermark_scale.get())
+        watermark_param = self.watermark_combo.get()
+        self.watermark_scale.configure(from_=param_dict[self.watermark_combo.get()]['min'],
+                                       to=param_dict[self.watermark_combo.get()]['max'])
+        self.change_configure(f"{watermark_param};{watermark_value}", "watermark")
 
     def change_translate(self):
         configure['settings']['translate'] = \
@@ -1757,10 +1753,9 @@ class DesktopTop(QOpenGLWidget):
 
         # 基础变量和开关 Variables and Switches
         self.speaking_lists: list[bool] = []
-        self.maximum_param_counter = self.turn_count = self.among = 0
+        self.turn_count = self.among = 0
         self.click_in_area = self.click_x = self.click_y = -1
         self.is_penetration = self.is_playing_animation = self.is_movement = False
-        self.stop_playing_animation: list[bool | str] = [False, ""]
         self.enter_position = self.drag_position = None
         self.random_cancel_penetration = self.image_path = self.direction = self.last_pos = None
         self.pet_model: live2d.LAppModel | None = None
@@ -2089,6 +2084,21 @@ class DesktopTop(QOpenGLWidget):
         intelligence.text.clear_memories()
         self.chat_box.clear()
 
+    # 自定义事件 Custom events
+    # 动画事件 Animation Event
+    def finishedAnimationEvent(self):
+        self.is_playing_animation = False
+        self.turn_count = 0
+        self.resetDefaultValueEvent()
+        print("END")
+
+    # 重置默认值事件 Reset default value event
+    def resetDefaultValueEvent(self):
+        for param, values in param_dict.items():
+            if param == configure['watermark'].split(";")[0]:
+                continue
+            self.pet_model.SetParameterValue(param, values['default'], 1)
+
     # 事件 Events
     # 右键菜单事件 Right-click menu events
     def contextMenuEvent(self, event):
@@ -2300,13 +2310,6 @@ class DesktopTop(QOpenGLWidget):
             # 清除缓存 Clear empty cache
             self.speaking_lists.clear()
 
-        # 跟随鼠标 Follow the mouse
-        if not self.is_playing_animation:
-            x, y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
-            self.pet_model.Update()
-            self.pet_model.Drag(x, y)
-            self.pet_model.Draw()
-
         # 定时器检查 Timer checker
         if "media" in configure['settings']['disable']:
             if self.look_timer.isActive():
@@ -2318,6 +2321,12 @@ class DesktopTop(QOpenGLWidget):
                     configure['settings']['understand']['max']) * 1000)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
+        try:
+            self.pet_model.Update()
+            self.pet_model.Drag(local_x, local_y)
+            self.pet_model.Draw()
+        except SystemError:
+            pass
         # 检查是否开启全局鼠标穿透 Check whether global mouse transparency is enabled
         if configure['settings']['penetration']['enable']:
             self.set_mouse_transparent(True)
@@ -2370,10 +2379,7 @@ class DesktopTop(QOpenGLWidget):
         else:
             save_change()
 
-        if self.among == 0:
-            self.pet_model.StartMotion("TapBody", 0, live2d.MotionPriority.FORCE,
-                                       onFinishMotionHandler=lambda: print("end"))
-        elif self.among > 100:
+        if self.among > 100:
             self.among = 0
         self.among += 1
 
@@ -2383,34 +2389,6 @@ class DesktopTop(QOpenGLWidget):
             self.click_in_area = True
         elif not self.is_penetration:
             self.set_mouse_transparent(True)
-            # 判断是否是在播放动画时 Check if the animation is being played
-            if self.is_playing_animation and configure['model'][
-                    configure_default]['action']['ActionTouchHead']['param'] is not None:
-                # 如果是耳朵 下垂的动画就执行反转动画 if it is the ears down animation, then reverse the animation
-                if configure['model'][configure_default][
-                    'action']['ActionTouchHead']['param'] in self.stop_playing_animation[1] and \
-                        configure['model'][configure_default]['action']['ActionTouchHead']['reverse']:
-                    if "Forward" in self.stop_playing_animation[1]:
-                        self.stop_playing_animation = [True, f"{configure['model'][
-                            configure_default]['action']['ActionTouchHead']['param']}:Reverse"]
-                        IterateAddParameterValue(self, configure['model'][
-                            configure_default]['action']['ActionTouchHead']['param'],
-                                                 -1, self.maximum_param_counter, 0, 1,
-                                                 0.006).start()
-                    else:
-                        self.stop_playing_animation = [True, f"{configure['model'][
-                            configure_default]['action'][
-                            'ActionTouchHead']['param']}:Forward"]
-                        IterateAddParameterValue(self, configure['model'][
-                            configure_default]['action']['ActionTouchHead']['param'],
-                                                 1, 0, self.maximum_param_counter, 1,
-                                                 0.006).start()
-                self.stop_playing_animation = [False, ""]
-                self.is_playing_animation = False
-            elif configure['model'][configure_default]['action']['ActionTouchHead']['param'] is None:
-                self.stop_playing_animation = [False, ""]
-                self.is_playing_animation = False
-
             self.turn_count = 0
             self.click_in_area = False
 
@@ -2437,7 +2415,7 @@ class DesktopTop(QOpenGLWidget):
     def mouseMoveEvent(self, event):
         def checker(parameter: str, turn_count: int) -> bool:
             """检查是否满足框内要求 Check whether the box is satisfied"""
-            x_min, x_max, y_min, y_max = configure['model'][configure_default]['action'][parameter]['position']
+            x_min, x_max, y_min, y_max = get_configure_actions()[parameter]['position']
             return (
                     x_min <= current_x <= x_max and y_min <= current_y <= y_max and
                     not self.is_playing_animation and self.turn_count >= turn_count and self.click_in_area
@@ -2487,37 +2465,37 @@ class DesktopTop(QOpenGLWidget):
                     SpeakThread(self, get_audio_path('ActionTouchHead')).start()
                     self.click_in_area = False
                     self.is_playing_animation = True
-                    # 播放正向动画 Play the forward animation
-                    self.stop_playing_animation = [True, f"{configure['model'][
-                        configure_default]['action']['ActionTouchHead']['param']}:Forward"]
-                    try:
-                        self.maximum_param_counter = param_dict[
-                            configure['model'][configure_default]['action']['ActionTouchHead']['param']]['max']
-                    except KeyError:
-                        self.maximum_param_counter = 1.0
-                    IterateAddParameterValue(self, f"{configure['model'][
-                        configure_default]['action']['ActionTouchHead']['param']}",
-                                             1, 0, self.maximum_param_counter, 1,
-                                             0.0053).start()
+                    # 播放动画 Play animation
+                    group, index = get_configure_actions()['ActionTouchHead']['motion'].split(":")
+                    self.pet_model.StartMotion(group, int(index), live2d.MotionPriority.FORCE,
+                                               onFinishMotionHandler=self.finishedAnimationEvent)
 
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         def checker(parameter_action: str):
             """检查点击位置是否符合标准 Check whether the click position meets the standard"""
-            x_min, x_max, y_min, y_max = configure['model'][configure_default]['action'][parameter_action]['position']
-            return x_min <= click_x <= x_max and y_min <= click_y <= y_max
+            x_min, x_max, y_min, y_max = get_configure_actions()[parameter_action]['position']
+            return x_min <= click_x <= x_max and y_min <= click_y <= y_max \
+                and not self.is_playing_animation
 
         click_x, click_y = event.globalPos().x() - self.x(), event.globalPos().y() - self.y()
         if event.button() == Qt.LeftButton and self.click_in_area:
             print(f"meet the requirements. CLICK pos: {click_x, click_y}")
+            # 记录位置 Record position
             if configure['record']['enable_position']:
                 if configure['record']['position'][:2].count(-1) == len(configure['record']['position'][:2]):
                     configure['record']['position'][:2] = [click_x, click_y]
                 else:
                     configure['record']['position'][2:] = [click_x, click_y]
                     configure['record']['enable_position'] = False
+
+            # 胸部点击行为 Chest click behavior
             if checker("ActionClickChest"):
+                self.is_playing_animation = True
+                group, index = get_configure_actions()['ActionClickChest']['motion'].split(":")
+                self.pet_model.StartMotion(group, int(index), live2d.MotionPriority.FORCE,
+                                           onFinishMotionHandler=self.finishedAnimationEvent)
                 if configure['adult_level'] > 0:
                     dir_, voice_list = AdultEngine.voice()
                     SpeakThread(self,
@@ -2537,6 +2515,7 @@ class DesktopTop(QOpenGLWidget):
     def leaveEvent(self, event):
         self.is_movement = False
         self.enter_position = None
+        self.is_playing_animation = False
 
     # OpenGL 事件 OpenGL events
     def initializeGL(self):
@@ -2552,7 +2531,9 @@ class DesktopTop(QOpenGLWidget):
 
         for i in range(self.pet_model.GetParameterCount()):
             param = self.pet_model.GetParameter(i)
-            param_dict.update({param.id: {"value": param.value, "max": param.max, "min": param.min}})
+            param_dict.update({param.id: {
+                "value": param.value, "max": param.max, "min": param.min, "default": param.default,
+            }})
         self.startTimer(int(1000 / 900))
 
     def resizeGL(self, width, height):
@@ -2561,10 +2542,20 @@ class DesktopTop(QOpenGLWidget):
     def paintGL(self):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         live2d.clearBuffer()
+        # 清除水印 Clear watermark
+        try:
+            watermark_param = configure['watermark'].split(";")[0]
+            watermark_value = configure['watermark'].split(";")[1]
+            self.pet_model.SetParameterValue(
+                watermark_param,
+                float(watermark_value) if "." in watermark_value else int(watermark_value), 1)
+        except ValueError:
+            pass
         # 加载模型 Load Model
         self.pet_model.Draw()
 
     def exit_program(self):
+        live2d.dispose()
         self.close()
         try:
             os.remove("./logs/backup/configure.json")

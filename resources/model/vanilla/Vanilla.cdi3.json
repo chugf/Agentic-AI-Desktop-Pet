@@ -7,6 +7,16 @@
 			"Name": "耳朵 下垂"
 		},
 		{
+			"Id": "RightArm",
+			"GroupId": "ParamGroup",
+			"Name": "手臂 右"
+		},
+		{
+			"Id": "LeftArm",
+			"GroupId": "ParamGroup",
+			"Name": "手臂 左"
+		},
+		{
 			"Id": "ParamAngleX",
 			"GroupId": "",
 			"Name": "角度 X"

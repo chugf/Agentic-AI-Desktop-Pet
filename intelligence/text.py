@@ -6,6 +6,7 @@ from . import plugin
 
 import markdown
 import dashscope
+import requests
 
 memories = []
 prompts = {}
@@ -50,15 +51,13 @@ def reload_tools():
         ff.close()
 
 
-def get_response(extra_body):
-    completion = dashscope.Generation().call(
-        model="qwen-plus",
-        messages=memories,
-        presence_penalty=0.6,
-        extra_body=extra_body,
-        tools=tools
-    )
-    return completion
+def TextGeneratorLocal(prompt, url) -> tuple:
+    memories.append({"role": "user", "content": prompt})
+    response = requests.post(url, json={"model": "deepseek-r1:8b", "messages": memories})
+    answer = response.json()
+    memories.append({'role': 'assistant', 'content': answer['message']['content']})
+    return (answer['message']['content'],
+            markdown.markdown(answer['message']['content']))
 
 
 class TextGenerator:
@@ -66,27 +65,38 @@ class TextGenerator:
         dashscope.api_key = API_KEY
 
     @staticmethod
-    def generate_text(prompt, is_search_online: bool = False):
+    def get_response(extra_body):
+        completion = dashscope.Generation().call(
+            model="qwen-plus",
+            messages=memories,
+            presence_penalty=0.6,
+            extra_body=extra_body,
+            tools=tools
+        )
+        return completion
+
+    def generate_text(self, prompt, is_search_online: bool = False):
         extra_body = {}
         extra_body.update({"enable_search": is_search_online})
         memories.append({"role": "user", "content": prompt})
-        completion = get_response(extra_body)
+        completion = self.get_response(extra_body)
         assistant_output = completion.output.choices[0].message
 
         memories.append(assistant_output)
-        if 'tool_calls' not in assistant_output:
-            return assistant_output.content, markdown.markdown(assistant_output.content)
+        while 'tool_calls' in assistant_output:
+            to_be_called_tool = assistant_output.tool_calls[0]['function']
+            tool_info = {"name": to_be_called_tool['name'], "role": "tool"}
+            compound_parameters = json.loads(to_be_called_tool['arguments'])
+            to_be_called_function = getattr(plugin, to_be_called_tool['name'])
+            tool_info['content'] = to_be_called_function(**compound_parameters)
 
-        to_be_called_tool = assistant_output.tool_calls[0]['function']
-        tool_info = {"name": to_be_called_tool['name'], "role": "tool"}
-        compound_parameters = json.loads(to_be_called_tool['arguments'])
-        to_be_called_function = getattr(plugin, to_be_called_tool['name'])
-        tool_info['content'] = to_be_called_function(**compound_parameters)
+            memories.append(tool_info)
+            multiple_answer = self.get_response(extra_body)
+            assistant_output = multiple_answer.output.choices[0].message
+            memories.append(assistant_output)
 
-        memories.append(tool_info)
-        final_answer = get_response(extra_body)
-        return (final_answer.output.choices[0].message.content,
-                markdown.markdown(final_answer.output.choices[0].message.content))
+        return (assistant_output.content,
+                markdown.markdown(assistant_output.content))
 
 
 class CustomGenerator:
