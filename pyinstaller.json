@@ -1,0 +1,101 @@
+{
+ "version": "auto-py-to-exe-configuration_v1",
+ "pyinstallerOptions": [
+  {
+   "optionDest": "noconfirm",
+   "value": true
+  },
+  {
+   "optionDest": "filenames",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/main.pyw"
+  },
+  {
+   "optionDest": "onefile",
+   "value": true
+  },
+  {
+   "optionDest": "console",
+   "value": false
+  },
+  {
+   "optionDest": "icon_file",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/logo.ico"
+  },
+  {
+   "optionDest": "name",
+   "value": "Ai Desktop Pet"
+  },
+  {
+   "optionDest": "clean_build",
+   "value": false
+  },
+  {
+   "optionDest": "strip",
+   "value": false
+  },
+  {
+   "optionDest": "noupx",
+   "value": false
+  },
+  {
+   "optionDest": "disable_windowed_traceback",
+   "value": false
+  },
+  {
+   "optionDest": "version_file",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/file_version_info.txt"
+  },
+  {
+   "optionDest": "uac_admin",
+   "value": false
+  },
+  {
+   "optionDest": "uac_uiaccess",
+   "value": false
+  },
+  {
+   "optionDest": "argv_emulation",
+   "value": false
+  },
+  {
+   "optionDest": "bootloader_ignore_signals",
+   "value": false
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/__init__.py;intelligence/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/media.py;intelligence/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/recognition.py;intelligence/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/text.py;intelligence/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/translate.py;intelligence/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/voice.py;intelligence/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/plugin/__init__.py;intelligence/plugin"
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/logs/__init__.py;logs/"
+  }
+ ],
+ "nonPyinstallerOptions": {
+  "increaseRecursionLimit": true,
+  "manualArguments": ""
+ }
+}

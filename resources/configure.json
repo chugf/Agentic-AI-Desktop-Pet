@@ -1,6 +1,6 @@
 {
    "name": "香草",
-   "voice_model": "艾莲",
+   "voice_model": "香草",
    "default": "vanilla",
    "watermark": "ParamHairBack;-30",
    "adult_level": 0,

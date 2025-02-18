@@ -52,7 +52,10 @@ import win32con
 import win32api
 
 # 引入live2d库 Import Live2D
-import live2d.v3 as live2d
+try:
+    import live2d.v3 as live2d
+except ImportError:
+    import live2d.v2 as live2d
 
 # 界面库和OpenGL库 GUI
 import tkinter as tk
@@ -2519,9 +2522,15 @@ class DesktopTop(QOpenGLWidget):
 
     # OpenGL 事件 OpenGL events
     def initializeGL(self):
-        GL.glEnable(GL.GL_DEPTH_TEST)
-
-        live2d.glewInit()
+        try:
+            GL.glEnable(GL.GL_DEPTH_TEST)
+        except GL.error.GLError as e:
+            messagebox.showerror("OpenGL", "您的设备可能不支持OpenGL，请检查显卡驱动或检查是否开启OpenGL\n"
+                                           "Your device may not support OpenGL, "
+                                           "please check the graphics card driver or check if OpenGL is enabled")
+            self.exit_program()
+        if live2d.LIVE2D_VERSION == 3:
+            live2d.glewInit()
         self.pet_model = live2d.LAppModel()
         if os.path.exists(f"./resources/model/{configure_default}/{configure_default.title()}.model3.json"):
             self.pet_model.LoadModelJson(
