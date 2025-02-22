@@ -1,27 +1,32 @@
-import sys
 import time
 import datetime
-import random
 import threading
 import webbrowser
 
 import idlelib.colorizer as colorizer
 import idlelib.percolator as percolator
 
-# 数据处理 Data Processing
-import ast
-import shutil
+# 系统信息 System Information
+import sys
 import os
+
+# 数据处理 Data Processing
 import re
-import struct
-import json
+import random
 import typing
+import ast
+import struct
+import shutil
+import json
 # 音频数据处理 audio data processing
 import wave
 import pyaudio
 import io
 
-# 日志数据
+# 着色器加载 load shader
+import shader
+
+# 日志数据 Logs data
 import logs
 
 # AI
@@ -54,7 +59,7 @@ import win32api
 # 引入live2d库 Import Live2D
 try:
     import live2d.v3 as live2d
-except ImportError:
+except (OSError, SystemError, ImportError):
     import live2d.v2 as live2d
 
 # 界面库和OpenGL库 GUI
@@ -64,7 +69,7 @@ import tkinter.messagebox as messagebox
 import tkinter.filedialog as filedialog
 from tkinter.scrolledtext import ScrolledText
 
-import OpenGL.GL as GL
+from OpenGL import GL
 
 from PyQt5.Qt import Qt, QTimerEvent, QCursor, QThread, pyqtSignal, QRect, QFont, QTimer, \
     QIcon
@@ -90,8 +95,6 @@ with open("./resources/configure.json", "r", encoding="utf-8") as f:
         f.close()
         recover_backup()
     configure_default = configure["default"]
-    configure_settings = configure["settings"]
-    configure_model = configure['model']
 
     if configure_default == "origin":
         configure_default = "vanilla"
@@ -102,10 +105,10 @@ with open("./resources/configure.json", "r", encoding="utf-8") as f:
     f.close()
 if intelligence:
     intelligence.text.reload_memories(configure['default'])
-    intelligence.ALI_API_KEY = configure_settings['cloud']['aliyun']
-    intelligence.XF_API_ID = configure_settings['cloud']['xunfei']['id']
-    intelligence.XF_API_KEY = configure_settings['cloud']['xunfei']['key']
-    intelligence.XF_API_SECRET = configure_settings['cloud']['xunfei']['secret']
+    intelligence.ALI_API_KEY = configure["settings"]['cloud']['aliyun']
+    intelligence.XF_API_ID = configure["settings"]['cloud']['xunfei']['id']
+    intelligence.XF_API_KEY = configure["settings"]['cloud']['xunfei']['key']
+    intelligence.XF_API_SECRET = configure["settings"]['cloud']['xunfei']['secret']
 
 
 def logger(text, father_dir):
@@ -315,13 +318,13 @@ class VoiceGenerateThread(QThread):
         # 翻译和语言 Translation and language
         language = "zh"
         if configure['settings']['tts']['way'] == "local":
-            if "trans" not in configure['settings']['disable']:
-                if "spider" in configure_settings['translate']:
-                    if "bing" in configure_settings['translate']:
+            if configure['settings']['enable']['trans']:
+                if "spider" in configure["settings"]['translate']:
+                    if "bing" in configure["settings"]['translate']:
                         text = intelligence.machine_translate(text)
                         language = "ja"
-                elif "ai" in configure_settings['translate']:
-                    if "tongyi" in configure_settings['translate']:
+                elif "ai" in configure["settings"]['translate']:
+                    if "tongyi" in configure["settings"]['translate']:
                         text = intelligence.tongyi_translate(text)
                         language = "ja"
 
@@ -671,11 +674,11 @@ class Setting(tk.Tk):
         tk.Label(self.general_frame, text="翻译工具 Translation Tool：").place(x=5, y=35)
         self.translation_class = ttk.Combobox(self.general_frame, values=["爬虫 Spider", "人工智能 AI"], state="readonly")
         self.translation_class.current(0)
-        if "spider" in configure_settings['translate']:
+        if "spider" in configure["settings"]['translate']:
             self.translation_class.current(0)
             self.translation_tool = ttk.Combobox(self.general_frame, values=["必应 Bing"],
                                                  state="readonly")
-        elif "ai" in configure_settings['translate']:
+        elif "ai" in configure["settings"]['translate']:
             self.translation_class.current(1)
             self.translation_tool = ttk.Combobox(self.general_frame, values=["通义千问 Tongyi"],
                                                  state="readonly")
@@ -685,9 +688,9 @@ class Setting(tk.Tk):
         self.translation_class.bind("<<ComboboxSelected>>", self.change_translation_tool)
         self.translation_tool.bind("<<ComboboxSelected>>", lambda event: self.change_translate())
         self.translation_class.place(x=200, y=35)
-        if "bing" in configure_settings['translate']:
+        if "bing" in configure["settings"]['translate']:
             self.translation_tool.current(0)
-        elif "tongyi" in configure_settings['translate']:
+        elif "tongyi" in configure["settings"]['translate']:
             self.translation_tool.current(0)
         self.translation_tool.place(x=380, y=35)
 
@@ -725,8 +728,14 @@ class Setting(tk.Tk):
 
         self.watermark_scale = ttk.Scale(self.general_frame, length=200, from_=-100, to=100,
                                          command=self.change_watermark)
-        self.watermark_scale.set(int(configure['watermark'].split(";")[1]))
+        self.watermark_scale.set(float(configure['watermark'].split(";")[1]))
         self.watermark_scale.place(x=380, y=180)
+
+        tk.Label(self.general_frame, text="常规透明度 General Opacity: ").place(x=5, y=210)
+        self.opacity_scale = ttk.Scale(self.general_frame, length=200, from_=0, to=1,
+                                       command=self.change_opacity)
+        self.opacity_scale.set(configure['settings']['transparency'])
+        self.opacity_scale.place(x=200, y=210)
 
         self.note.add(self.switch_frame, text="开关 Switch")
 
@@ -752,7 +761,7 @@ class Setting(tk.Tk):
         self.adult_button.place(x=400, y=5)
 
         self.speech_recognition_value = tk.BooleanVar(self)
-        self.speech_recognition_value.set(True if "rec" not in configure['settings']['disable'] else False)
+        self.speech_recognition_value.set(configure['settings']['enable']['rec'])
         self.speech_recognition_button = ttk.Checkbutton(self.switches, text="语音识别 Speech Recognition",
                                                          variable=self.speech_recognition_value, onvalue=True,
                                                          offvalue=False,
@@ -760,21 +769,21 @@ class Setting(tk.Tk):
         self.speech_recognition_button.place(x=10, y=30)
 
         self.ai_voice_value = tk.BooleanVar(self)
-        self.ai_voice_value.set(True if "tts" not in configure['settings']['disable'] else False)
+        self.ai_voice_value.set(configure['settings']['enable']['tts'])
         self.ai_voice_button = ttk.Checkbutton(self.switches, text="AI语音 AI Voice",
                                                variable=self.ai_voice_value, onvalue=True, offvalue=False,
                                                command=lambda: self.io_configure("tts"))
         self.ai_voice_button.place(x=400, y=30)
 
         self.online_search_value = tk.BooleanVar(self)
-        self.online_search_value.set(True if "online" not in configure['settings']['disable'] else False)
+        self.online_search_value.set(configure['settings']['enable']['online'])
         self.online_search_button = ttk.Checkbutton(self.switches, text="在线搜索 Online Search",
                                                     variable=self.online_search_value, onvalue=True, offvalue=False,
                                                     command=lambda: self.io_configure("online"))
         self.online_search_button.place(x=10, y=55)
 
         self.translate_value = tk.BooleanVar(self)
-        self.translate_value.set(True if "trans" not in configure['settings']['disable'] else False)
+        self.translate_value.set(configure['settings']['enable']['trans'])
         self.translate_button = ttk.Checkbutton(self.switches, text="翻译 Translate",
                                                 variable=self.translate_value, onvalue=True, offvalue=False,
                                                 command=lambda: self.io_configure("trans"))
@@ -784,7 +793,7 @@ class Setting(tk.Tk):
                                                    text="高级开关 Advanced Switch", width=590, height=200)
         tk.Label(self.advanced_switch_frame, text="从\t        到\t\t 之间随机选取作为时间间隔").place(x=230, y=5)
         self.media_understand_value = tk.BooleanVar(self)
-        self.media_understand_value.set(True if "media" not in configure['settings']['disable'] else False)
+        self.media_understand_value.set(configure['settings']['enable']['media'])
         self.media_understand_button = ttk.Checkbutton(self.advanced_switch_frame, text="媒体理解 Media Understand",
                                                        variable=self.media_understand_value, onvalue=True,
                                                        offvalue=False,
@@ -806,7 +815,7 @@ class Setting(tk.Tk):
         self.media_understand_button.place(x=5, y=5)
 
         self.globe_mouse_penetration_value = tk.BooleanVar(self)
-        self.globe_mouse_penetration_value.set(True if configure['settings']['penetration']['enable'] else False)
+        self.globe_mouse_penetration_value.set(configure['settings']['penetration']['enable'])
         self.globe_mouse_penetration_button = ttk.Checkbutton(
             self.advanced_switch_frame,
             text="全局鼠标穿透 Global Mouse Penetration",
@@ -894,6 +903,21 @@ class Setting(tk.Tk):
                 "settings.penetration.start"
             ))
         self.penetration_start_right_click_top.place(x=380, y=105)
+
+        self.taskbar_lock_value = tk.BooleanVar(self)
+        self.taskbar_lock_value.set(configure['settings']['enable']['locktsk'])
+        self.taskbar_lock_button = ttk.Checkbutton(
+            self.advanced_switch_frame,
+            text="任务栏锁定 Taskbar Lock",
+            variable=self.taskbar_lock_value, onvalue=True, offvalue=False,
+            command=lambda: self.change_configure(
+                self.taskbar_lock_value.get(),
+                "settings.enable.locktsk"
+            ))
+        self.taskbar_lock_button.place(x=5, y=140)
+        Balloon(self.taskbar_lock_button,
+                "当移动桌宠时，桌宠始终不会超过任务栏\n"
+                "When moving the pet, the pet will never exceed the taskbar",)
         # self.penetration_want_custom = ttk.Radiobutton(
         #     self.advanced_switch_frame,
         #     text="我想什么时候 I want when",
@@ -907,6 +931,43 @@ class Setting(tk.Tk):
 
         self.advanced_switch_frame.place(x=5, y=110)
 
+        self.live2d_switch_frame = tk.LabelFrame(self.switch_frame, text="Live2D 开关 Switch",
+                                                 width=590, height=60)
+        self.autoblink_value = tk.BooleanVar(self)
+        self.autoblink_value.set(configure['settings']['live2d']['enable']['AutoBlink'])
+        self.autoblink_check = ttk.Checkbutton(self.live2d_switch_frame, text="自动眨眼 Auto Blink",
+                                               variable=self.autoblink_value, onvalue=True,
+                                               offvalue=False,
+                                               command=lambda: self.change_configure(
+                                                   self.autoblink_value.get(),
+                                                   "settings.live2d.enable.AutoBlink"
+                                               ))
+        self.autoblink_check.place(x=5, y=5)
+
+        self.autobreath_value = tk.BooleanVar(self)
+        self.autobreath_value.set(configure['settings']['live2d']['enable']['AutoBlink'])
+        self.autobreath_check = ttk.Checkbutton(self.live2d_switch_frame, text="自动呼吸 Auto Breath",
+                                                variable=self.autobreath_value, onvalue=True,
+                                                offvalue=False,
+                                                command=lambda: self.change_configure(
+                                                    self.autobreath_value.get(),
+                                                    "settings.live2d.enable.AutoBreath"
+                                                ))
+        self.autobreath_check.place(x=205, y=5)
+
+        self.autodrag_value = tk.BooleanVar(self)
+        self.autodrag_value.set(configure['settings']['live2d']['enable']['AutoDrag'])
+        self.autodrag_check = ttk.Checkbutton(self.live2d_switch_frame, text="自动拖拽 Auto Drag",
+                                              variable=self.autodrag_value, onvalue=True,
+                                              offvalue=False,
+                                              command=lambda: self.change_configure(
+                                                  self.autodrag_value.get(),
+                                                  "settings.live2d.enable.AutoDrag"
+                                              ))
+        self.autodrag_check.place(x=410, y=5)
+
+        self.live2d_switch_frame.place(x=5, y=310)
+
         self.note.add(self.intelligence_frame, text="人工智能 AI")
 
         self.intelligence_note = ttk.Notebook(self.intelligence_frame)
@@ -919,22 +980,22 @@ class Setting(tk.Tk):
 
         tk.Label(self.cloud_infer, text="阿里云 API_KEY：").place(x=5, y=5)
         self.aliyun_apikey_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
-        self.aliyun_apikey_entry.insert(0, configure_settings['cloud']['aliyun'])
+        self.aliyun_apikey_entry.insert(0, configure["settings"]['cloud']['aliyun'])
         self.aliyun_apikey_entry.place(x=150, y=5)
 
         tk.Label(self.cloud_infer, text="讯飞 API_ID：").place(x=5, y=35)
         self.xunfei_apiid_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
-        self.xunfei_apiid_entry.insert(0, configure_settings['cloud']['xunfei']['id'])
+        self.xunfei_apiid_entry.insert(0, configure["settings"]['cloud']['xunfei']['id'])
         self.xunfei_apiid_entry.place(x=150, y=35)
 
         tk.Label(self.cloud_infer, text="讯飞 API_KEY：").place(x=5, y=65)
         self.xunfei_apikey_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
-        self.xunfei_apikey_entry.insert(0, configure_settings['cloud']['xunfei']['key'])
+        self.xunfei_apikey_entry.insert(0, configure["settings"]['cloud']['xunfei']['key'])
         self.xunfei_apikey_entry.place(x=150, y=65)
 
         tk.Label(self.cloud_infer, text="讯飞 API_SECRET：").place(x=5, y=95)
         self.xunfei_apisecret_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
-        self.xunfei_apisecret_entry.insert(0, configure_settings['cloud']['xunfei']['secret'])
+        self.xunfei_apisecret_entry.insert(0, configure["settings"]['cloud']['xunfei']['secret'])
         self.xunfei_apisecret_entry.place(x=150, y=95)
 
         self.cloud_infer.place(x=5, y=5)
@@ -943,21 +1004,21 @@ class Setting(tk.Tk):
 
         tk.Label(self.local_infer, text="文本模型 Text Model").place(x=5, y=5)
         self.qwen_api_url = ttk.Entry(self.local_infer, width=50)
-        self.qwen_api_url.insert(0, configure_settings['local']['text'])
+        self.qwen_api_url.insert(0, configure["settings"]['local']['text'])
         self.qwen_api_url.place(x=150, y=5)
 
         tk.Label(self.local_infer, text="GPT-SoVITS (TTS)").place(x=5, y=35)
         self.gsv_api_url = ttk.Entry(self.local_infer, width=50)
-        self.gsv_api_url.insert(0, configure_settings['local']['gsv'])
+        self.gsv_api_url.insert(0, configure["settings"]['local']['gsv'])
         self.gsv_api_url.place(x=150, y=35)
 
         tk.Label(self.local_infer, text="语音识别 Recognition").place(x=5, y=65)
         self.recognition_api_tool = ttk.Combobox(self.local_infer, width=10, values=['whisper'], state="readonly")
-        self.recognition_api_tool.set(configure_settings['local']['rec']['tool'])
+        self.recognition_api_tool.set(configure["settings"]['local']['rec']['tool'])
         self.recognition_api_tool.place(x=150, y=65)
 
         self.recognition_api_url = ttk.Entry(self.local_infer, width=36)
-        self.recognition_api_url.insert(0, configure_settings['local']['rec']['url'])
+        self.recognition_api_url.insert(0, configure["settings"]['local']['rec']['url'])
         self.recognition_api_url.place(x=250, y=65)
 
         tk.Label(self.local_infer,
@@ -1058,7 +1119,7 @@ class Setting(tk.Tk):
         self.model_list.place(x=100, y=5)
 
         tk.Label(self.bind_animation_frame, text="动画 Animation").place(x=5, y=35)
-        self.animation_lists = ['ActionTouchHead', 'ActionClickChest']
+        self.animation_lists = list(configure['model'][self.model_list.get()]['action'].keys())
         self.animation_binder = ttk.Combobox(self.bind_animation_frame,
                                              width=20, state="readonly", values=self.animation_lists)
         self.animation_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_information())
@@ -1067,7 +1128,7 @@ class Setting(tk.Tk):
 
         self.bind_parameter_frame = tk.LabelFrame(self.bind_animation_frame,
                                                   text="参数 Parameter",
-                                                  width=585, height=320,
+                                                  width=585, height=300,
                                                   )
 
         tk.Label(self.bind_parameter_frame, text="坐标 Coordinate").place(x=5, y=0)
@@ -1122,7 +1183,7 @@ class Setting(tk.Tk):
         self.motion_binder.place(x=140, y=130)
         self.motion_index_binder.place(x=300, y=130)
 
-        self.bind_parameter_frame.place(x=5, y=80)
+        self.bind_parameter_frame.place(x=5, y=60)
 
         self.bind_note.pack(fill=tk.BOTH, expand=True)
 
@@ -1229,7 +1290,8 @@ class Setting(tk.Tk):
         self.quote_pyqt5 = tk.Label(self.use_open_sources, text='PyQt5(LGPL v3.0)', fg="blue", font=('微软雅黑', 13))
         self.quote_pyqt5.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/PyQt5/PyQt.git"))
         self.quote_pyqt5.place(x=180, y=0)
-        self.quote_opengl = tk.Label(self.use_open_sources, text='PyOpenGL', fg="blue", font=('微软雅黑', 13))
+        self.quote_opengl = tk.Label(self.use_open_sources,
+                                     text='PyOpenGL(OpenGL-ctypes)', fg="blue", font=('微软雅黑', 13))
         self.quote_opengl.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/mcfletch/pyopengl"))
         self.quote_opengl.place(x=365, y=0)
         self.quote_python = tk.Label(self.use_open_sources, text='Python(PSF)', fg="blue", font=('微软雅黑', 13))
@@ -1241,9 +1303,19 @@ class Setting(tk.Tk):
         self.quote_self = tk.Label(self.use_open_sources,
                                    text='AI Desktop Pet(LGPL v3.0)', fg="blue", font=('微软雅黑', 13))
         self.quote_self.bind("<Button-1>",
-                             lambda e: webbrowser.open("https://github.com/grass-tech/AgenticCompanion.git"))
+                             lambda e: webbrowser.open("https://github.com/grass-tech/Agentic-AI-Desktop-Pet.git"))
         self.quote_self.place(x=365, y=30)
         self.use_open_sources.place(x=5, y=50)
+
+        about_ = ScrolledText(self.about_frame, width=81, height=14, bg="#E0FFFF")
+        about_.insert(tk.INSERT, f"{open('resources/explain', 'r', encoding='utf-8').read()}")
+        about_.configure(state=tk.DISABLED)
+        about_.place(x=5, y=160)
+
+        license_ = ScrolledText(self.about_frame, width=81, height=5, bg="#D3D3D3")
+        license_.insert(tk.INSERT, f"{open('./resources/license', 'r').read()}")
+        license_.configure(state=tk.DISABLED)
+        license_.place(x=5, y=360)
 
         self.refresh_prompt()
         self.fill_play_type()
@@ -1660,8 +1732,12 @@ class Setting(tk.Tk):
             json.dump(configure, sf, indent=3, ensure_ascii=False)
             sf.close()
 
+    def change_opacity(self, event=None):
+        opacity_value = float(self.opacity_scale.get())
+        self.change_configure(opacity_value, "settings.transparency")
+
     def change_watermark(self, event=None):
-        watermark_value = int(self.watermark_scale.get())
+        watermark_value = round(float(self.watermark_scale.get()), 1)
         watermark_param = self.watermark_combo.get()
         self.watermark_scale.configure(from_=param_dict[self.watermark_combo.get()]['min'],
                                        to=param_dict[self.watermark_combo.get()]['max'])
@@ -1721,12 +1797,12 @@ class Setting(tk.Tk):
                         self.adult_lists.configure(state="readonly")
                     temp_dict[last_key] = 1 if behave == int else True
         else:
-            if value not in configure['settings']['disable']:
-                configure_settings['disable'].append(value)
+            if configure['settings']['enable'][value]:
+                configure['settings']['enable'][value] = False
                 if relative is not None:
                     relative()
             else:
-                configure_settings['disable'].remove(value)
+                configure['settings']['enable'][value] = True
                 if relative is not None:
                     relative()
 
@@ -1736,7 +1812,7 @@ class Setting(tk.Tk):
 
 
 # 主程序
-class DesktopTop(QOpenGLWidget):
+class DesktopTop(shader.ADPOpenGLCanvas):
     def __init__(self):
         super().__init__()
         # 窗口大小
@@ -1767,7 +1843,7 @@ class DesktopTop(QOpenGLWidget):
         self.screen_geometry = QApplication.desktop().availableGeometry()
         x = (self.screen_geometry.width() - self.width()) // 2
         y = self.screen_geometry.height() - self.height()
-        self.move(x, y + 15)  # 15是距离任务栏的距离 15 is distance from the taskbar
+        self.move(x, y + 15)
 
         self.recognize_thread = RecognitionThread(self)
         self.recognize_thread.result.connect(self.recognition_success)
@@ -1819,7 +1895,7 @@ class DesktopTop(QOpenGLWidget):
         # 定时器
         self.look_timer = QTimer(self)
         self.look_timer.timeout.connect(self.look_for_me)
-        if "media" not in configure['settings']['disable']:
+        if configure['settings']['enable']['media']:
             self.look_timer.start(random.randint(
                     configure['settings']['understand']['min'] // 2,
                     configure['settings']['understand']['max'] // 2) * 1000)
@@ -1884,20 +1960,20 @@ class DesktopTop(QOpenGLWidget):
         RFST = MediaUnderstandThread(self, image_path)
         RFST.result.connect(lambda text: self.conversation_display(text, True))
         RFST.start()
-        if "media" not in configure['settings']['disable']:
+        if configure['settings']['enable']['media']:
             self.look_timer.start(random.randint(
                 configure['settings']['understand']['min'],
                 configure['settings']['understand']['max']) * 1000)
 
     def capture_screen(self):
-        if "media" in configure['settings']['disable']:
+        if not configure['settings']['enable']['media']:
             return
         self.conversation_entry.setText(str(self.conversation_entry.toPlainText()) + "$[图片]$")
         self.image_path = runtime.capture()
 
     # 语音识别 Recognition
     def recognize(self):
-        if "rec" in configure['settings']['disable']:
+        if not configure['settings']['enable']['rec']:
             return
         if self.recognize_thread.isRunning():
             self.recognize_thread.wait()
@@ -2047,7 +2123,7 @@ class DesktopTop(QOpenGLWidget):
         markdown_text = __processor(text[1])
 
         if ((intelligence.VoiceSwitch and configure['settings']['tts']['way'] == "local") or
-                configure['settings']['tts']['way'] == "cloud") and 'tts' not in configure['settings']['disable']:
+                configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts']:
             VGT = VoiceGenerateThread(self, common_text)
             VGT.result.connect(__exec)
             VGT.start()
@@ -2069,12 +2145,12 @@ class DesktopTop(QOpenGLWidget):
         if self.image_path is None and "$[图片]$" not in self.conversation_entry.toPlainText():
             text_generate = TextGenerateThread(
                 self, chat_message,
-                True if "online" not in configure['settings']['disable'] else False,
+                True if configure['settings']['enable']['online'] else False,
             )
         else:
             text_generate = MediaUnderstandThread(
                 self, self.image_path, chat_message.replace("$[图片]$", ""),
-                True if "online" not in configure['settings']['disable'] else False,
+                True if configure['settings']['enable']['online'] else False,
             )
             self.image_path = None
         text_generate.start()
@@ -2121,12 +2197,12 @@ class DesktopTop(QOpenGLWidget):
                     else:
                         temp_dict[last_key] = 1 if behave == int else True
             else:
-                if value not in configure['settings']['disable']:
-                    configure_settings['disable'].append(value)
+                if configure['settings']['enable'][value]:
+                    configure['settings']['enable'][value] = False
                     if relative is not None:
                         relative()
                 else:
-                    configure_settings['disable'].remove(value)
+                    configure['settings']['enable'][value] = True
                     if relative is not None:
                         relative()
 
@@ -2173,29 +2249,30 @@ class DesktopTop(QOpenGLWidget):
         content_menu.addAction(compatibility_action)
 
         globe_mouse_penetration_action = QAction(
-            f"{'√' if 'gmpene' not in configure['settings']['disable'] else ''} 全局鼠标穿透 Global Mouse Penetration", self)
-        globe_mouse_penetration_action.triggered.connect(lambda: io_configure("gmpene"))
+            f"{'√' if configure['settings']['penetration']['enable'] else ''} 全局鼠标穿透 Global Mouse Penetration", self)
+        globe_mouse_penetration_action.triggered.connect(lambda: io_configure(
+            "{penetration}", "settings.penetration.enable", bool))
         content_menu.addAction(globe_mouse_penetration_action)
 
         # 语音识别 Recognition
         recognition_action = QAction(
-            f"{'√' if 'rec' not in configure['settings']['disable'] else ''} 语音识别 Recognition", self)
+            f"{'√' if configure['settings']['enable']['rec'] else ''} 语音识别 Recognition", self)
         recognition_action.triggered.connect(lambda: io_configure("rec"))
         content_menu.addAction(recognition_action)
 
         # AI语音 AI voice
-        ai_voice = QAction(f"{'√' if 'tts' not in configure['settings']['disable'] else ''} AI语音 AI Voice", self)
+        ai_voice = QAction(f"{'√' if configure['settings']['enable']['tts'] else ''} AI语音 AI Voice", self)
         ai_voice.triggered.connect(lambda: io_configure("tts"))
         content_menu.addAction(ai_voice)
 
         # 联网搜索 Online search
         online_search = QAction(
-            f"{'√' if 'online' not in configure['settings']['disable'] else ''} 联网搜索 Online Search", self)
+            f"{'√' if configure['settings']['enable']['online'] else ''} 联网搜索 Online Search", self)
         online_search.triggered.connect(lambda: io_configure("online"))
         content_menu.addAction(online_search)
 
         # 翻译 Translate
-        translate = QAction(f"{'√' if 'trans' not in configure['settings']['disable'] else ''} 翻译 Translate",
+        translate = QAction(f"{'√' if configure['settings']['enable']['trans'] else ''} 翻译 Translate",
                             self)
         translate.triggered.connect(lambda: io_configure("trans"))
         content_menu.addAction(translate)
@@ -2247,7 +2324,7 @@ class DesktopTop(QOpenGLWidget):
             model_action = QAction(f"{'√' if model == configure['voice_model'] else ' '} {model}", self)
             model_action.triggered.connect(lambda checked, m=model: change_configure("voice_model", m))
             voice_model_menu.addAction(model_action)
-        if "tts" not in configure['settings']['disable']:
+        if configure['settings']['enable']['tts']:
             content_menu.addMenu(voice_model_menu)
 
         # 成人模式菜单 Adult content menu
@@ -2291,10 +2368,25 @@ class DesktopTop(QOpenGLWidget):
                 sf.close()
             self.set_mouse_transparent(False)
 
+        def check_mouse_pressed(left_condition: str, right_condition: str):
+            if not MouseListener.isListening:
+                MouseListener.start_listening()
+            if configure['settings']['penetration']['start'] == left_condition:
+                pressed = MouseListener.is_left_button_pressed
+            elif configure['settings']['penetration']['start'] == right_condition:
+                pressed = MouseListener.is_right_button_pressed
+            else:
+                pressed = False
+            if not MouseListener.isListening:
+                MouseListener.start_listening()
+            return pressed
+
         if not self.isVisible():
             return
+        # 设置透明度 Set transparency
+        self.setCanvasOpacity(configure['settings']['transparency'])
         # 判断兼容性 Compatibility
-        if configure_settings["compatibility"] is False and self.among == 100:
+        if configure["settings"]["compatibility"] is False and self.among == 100:
             # 判断顺序是否低于任务栏 Check whether the order is below the taskbar
             hwnd = self.winId().__int__()
             taskbar_hwnd = win32gui.FindWindow("Shell_TrayWnd", None)
@@ -2302,9 +2394,9 @@ class DesktopTop(QOpenGLWidget):
                 self.set_window_below_taskbar()
 
         # 检查识别器 Check the recognizer
-        if not self.recognize_thread.isRunning() and "rec" not in configure['settings']['disable']:
+        if not self.recognize_thread.isRunning() and configure['settings']['enable']['rec']:
             self.recognize()
-        elif speech_rec is not None and "rec" in configure['settings']['disable']:
+        elif speech_rec is not None and not configure['settings']['enable']['rec']:
             speech_rec.closed()
 
         # 释放资源 Release resources
@@ -2314,7 +2406,7 @@ class DesktopTop(QOpenGLWidget):
             self.speaking_lists.clear()
 
         # 定时器检查 Timer checker
-        if "media" in configure['settings']['disable']:
+        if not configure['settings']['enable']['media']:
             if self.look_timer.isActive():
                 self.look_timer.stop()
         else:
@@ -2325,13 +2417,13 @@ class DesktopTop(QOpenGLWidget):
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         try:
-            self.pet_model.Update()
-            self.pet_model.Drag(local_x, local_y)
-            self.pet_model.Draw()
+            if configure['settings']['live2d']['enable']['AutoDrag']:
+                self.pet_model.Drag(local_x, local_y)
         except SystemError:
             pass
         # 检查是否开启全局鼠标穿透 Check whether global mouse transparency is enabled
         if configure['settings']['penetration']['enable']:
+            self.setCanvasOpacity(0.4)
             self.set_mouse_transparent(True)
             self.is_penetration = True
             # 如果start有以下几种情况，则取消全局鼠标穿透 if start has the following four situations, cancel global mouse transparency
@@ -2351,31 +2443,13 @@ class DesktopTop(QOpenGLWidget):
                         minutes=random.randint(5, 30))
             # 鼠标左键或右键在顶部按下时取消全局鼠标穿透 if the start is left-top or right-top, cancel global mouse transparency
             elif configure['settings']['penetration']['start'] in ('left-top', 'right-top'):
-                if not MouseListener.isListening:
-                    MouseListener.start_listening()
-                if configure['settings']['penetration']['start'] == "left-top":
-                    pressed = MouseListener.is_left_button_pressed
-                elif configure['settings']['penetration']['start'] == "right-top":
-                    pressed = MouseListener.is_right_button_pressed
-                else:
-                    pressed = False
-                if self.is_in_live2d_area(local_x, local_y) and pressed and \
+                if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-top', 'right-top') and \
                         80 > local_y > 0:
                     MouseListener.stop_listening()
                     save_change()
             # 鼠标左键或右键在底部按下时取消全局鼠标穿透 if the start is left-bottom or right-bottom, cancel global mouse transparency
             elif configure['settings']['penetration']['start'] in ('left-bottom', 'right-bottom'):
-                if not MouseListener.isListening:
-                    MouseListener.start_listening()
-                if configure['settings']['penetration']['start'] == "left-bottom":
-                    pressed = MouseListener.is_left_button_pressed
-                elif configure['settings']['penetration']['start'] == "right-bottom":
-                    pressed = MouseListener.is_right_button_pressed
-                else:
-                    pressed = False
-                if not MouseListener.isListening:
-                    MouseListener.start_listening()
-                if self.is_in_live2d_area(local_x, local_y) and pressed and \
+                if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-bottom', 'right-bottom') and \
                         self.height() > local_y > self.height() - 80:
                     MouseListener.stop_listening()
                     save_change()
@@ -2431,7 +2505,8 @@ class DesktopTop(QOpenGLWidget):
             if self.drag_position is not None:
                 if self.click_in_area:
                     new_pos = event.globalPos() - self.drag_position
-                    new_pos.setY(max(self.screen_geometry.height() - self.height(), new_pos.y()))
+                    if configure['settings']['enable']['locktsk']:
+                        new_pos.setY(max(self.screen_geometry.height() - self.height(), new_pos.y()))
                     self.move(new_pos)
                 event.accept()
 
@@ -2521,36 +2596,55 @@ class DesktopTop(QOpenGLWidget):
         self.is_playing_animation = False
 
     # OpenGL 事件 OpenGL events
-    def initializeGL(self):
-        try:
-            GL.glEnable(GL.GL_DEPTH_TEST)
-        except GL.error.GLError as e:
-            messagebox.showerror("OpenGL", "您的设备可能不支持OpenGL，请检查显卡驱动或检查是否开启OpenGL\n"
-                                           "Your device may not support OpenGL, "
-                                           "please check the graphics card driver or check if OpenGL is enabled")
-            self.exit_program()
-        if live2d.LIVE2D_VERSION == 3:
-            live2d.glewInit()
+    def on_init(self):
+        live2d.glewInit()
         self.pet_model = live2d.LAppModel()
-        if os.path.exists(f"./resources/model/{configure_default}/{configure_default.title()}.model3.json"):
-            self.pet_model.LoadModelJson(
-                f"./resources/model/{configure_default}/{configure_default.title()}.model3.json")
-        else:
-            self.pet_model.LoadModelJson(f"./resources/model/{configure_default}/{configure_default}.model3.json")
-
+        try:
+            if os.path.exists(f"./resources/model/"
+                              f"{configure_default}/"
+                              f"{configure_default.title()}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}"):
+                self.pet_model.LoadModelJson(
+                    f"./resources/model/"
+                    f"{configure_default}/{configure_default.title()}."
+                    f"model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
+            else:
+                self.pet_model.LoadModelJson(
+                    f"./resources/model/{configure_default}/"
+                    f"{configure_default}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
+        except (KeyError, FileNotFoundError):
+            messagebox.showerror("模型错误 Model Error",
+                                 "模型可能不支持Live2D Cubism 2.0 Core。\n"
+                                 "如果是2.0 Core则可能使用64位应用程序建模。不支持32位应用程序\n\n"
+                                 "Model is not supported for Live2D Cubism 2.0 Core\n"
+                                 "If the model is 2.0 Core, it may use 64-bits application built. "
+                                 "It's not supported for 32-bits application")
+            if messagebox.askyesno("兼容模型 Compatible Model",
+                                   "您的模型不支持Live2D Cubism 2.0 Core，程序内置2.0 Core的模型，是否启用？"
+                                   "\n\nYour model is not supported for Live2D Cubism 2.0 Core, "
+                                   "The program built-in 2.0 Core model, "
+                                   "do you want to enable it?"):
+                configure['default'] = 'kasumi2'
+                load_template_model(configure['default'])
+                messagebox.showinfo("兼容模型 Compatible Model",
+                                    "需要重启程序，以启用兼容模型\n"
+                                    "You need to restart the program to enable the compatible model")
+                with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+                    json.dump(configure, sf, indent=3, ensure_ascii=False)
+                    sf.close()
+            self.exit_program()
         for i in range(self.pet_model.GetParameterCount()):
             param = self.pet_model.GetParameter(i)
-            param_dict.update({param.id: {
+            param_dict.update({str(param.id): {
                 "value": param.value, "max": param.max, "min": param.min, "default": param.default,
             }})
         self.startTimer(int(1000 / 900))
 
-    def resizeGL(self, width, height):
+    def on_resize(self, width, height):
         self.pet_model.Resize(width, height)
 
-    def paintGL(self):
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+    def on_draw(self):
         live2d.clearBuffer()
+        self.pet_model.Update()
         # 清除水印 Clear watermark
         try:
             watermark_param = configure['watermark'].split(";")[0]
@@ -2560,6 +2654,11 @@ class DesktopTop(QOpenGLWidget):
                 float(watermark_value) if "." in watermark_value else int(watermark_value), 1)
         except ValueError:
             pass
+        # 加载Live2D开关
+        self.pet_model.SetAutoBlinkEnable(
+            configure['settings']['live2d']['enable']['AutoBlink'])
+        self.pet_model.SetAutoBreathEnable(
+            configure['settings']['live2d']['enable']['AutoBreath'])
         # 加载模型 Load Model
         self.pet_model.Draw()
 

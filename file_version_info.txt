@@ -6,8 +6,8 @@ VSVersionInfo(
   ffi=FixedFileInfo(
     # filevers and prodvers should be always a tuple with four items: (1, 2, 3, 4)
     # Set not needed items to zero 0.
-    filevers=(1,6,5,0),
-    prodvers=(1,6,0,0),
+    filevers=(1,7,0,0),
+    prodvers=(1,7,0,0),
     # Contains a bitmask that specifies the valid bits 'flags'r
     mask=0x3f,
     # Contains a bitmask that specifies the Boolean attributes of the file.
@@ -31,13 +31,13 @@ VSVersionInfo(
         '040904b0',
         [StringStruct('CompanyName', 'GrassTech'),
         StringStruct('FileDescription', '人工智能桌面宠物'),
-        StringStruct('FileVersion', '1.6.5.0'),
+        StringStruct('FileVersion', '1.7.0.0'),
         StringStruct('InternalName', 'Ai Desktop Pet'),
         StringStruct('LegalCopyright', 'Copyright © 2025 All Rights Reserved. GrassTech. 版权所有'),
         StringStruct('OriginalFilename', ''),
         StringStruct('ProductName', 'Ai Desktop Pet'),
-        StringStruct('ProductVersion', '1.6.0.0'),
-        StringStruct('SquirrelAwareVersion', '1.6'),
+        StringStruct('ProductVersion', '1.7.0.0'),
+        StringStruct('SquirrelAwareVersion', '1.7'),
         StringStruct('', ''),
         StringStruct('lTrademarks', 'GrassTech')])
       ]), 

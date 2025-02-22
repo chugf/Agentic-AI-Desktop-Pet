@@ -2,16 +2,27 @@
    "name": "香草",
    "voice_model": "香草",
    "default": "vanilla",
-   "watermark": "ParamHairBack;-30",
+   "watermark": "ParamHairBack;-30.0",
    "adult_level": 0,
    "settings": {
+      "transparency": 0.967741935483871,
       "compatibility": true,
       "translate": "ai.tongyi",
-      "disable": [
-         "mcon",
-         "gmpene",
-         "rec"
-      ],
+      "live2d": {
+         "enable": {
+            "AutoBlink": true,
+            "AutoBreath": false,
+            "AutoDrag": true
+         }
+      },
+      "enable": {
+         "tts": true,
+         "media": true,
+         "online": true,
+         "trans": true,
+         "rec": false,
+         "locktsk": true
+      },
       "penetration": {
          "enable": false,
          "start": "next"
@@ -118,6 +129,58 @@
                "welcome2.wav",
                "welcome3.wav"
             ]
+         }
+      },
+      "kasumi2": {
+         "adult": {
+            "AdultContent": false,
+            "AdultLevelMinimum": 1,
+            "AdultLevelMaximum": 5,
+            "AdultDescribe": {
+               "1": "娇喘 Gasp",
+               "2": "裸露 Nudity",
+               "3": "行为 Sex",
+               "4": "互动 Interact",
+               "5": "模拟 Simulate"
+            },
+            "action": {
+               "ActionSex": []
+            },
+            "voice": {
+               "VoiceGasp": []
+            }
+         },
+         "action": {
+            "ActionTouchHead": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:0",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickChest": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:0",
+               "play": "",
+               "play_type": ""
+            }
+         },
+         "voice": {
+            "angry": [],
+            "coquetry": [],
+            "happy": [],
+            "sad": [],
+            "stable": [],
+            "welcome": []
          }
       }
    },

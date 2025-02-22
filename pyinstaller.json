@@ -7,7 +7,7 @@
   },
   {
    "optionDest": "filenames",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/main.pyw"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/main.pyw"
   },
   {
    "optionDest": "onefile",
@@ -19,7 +19,7 @@
   },
   {
    "optionDest": "icon_file",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/logo.ico"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/logo.ico"
   },
   {
    "optionDest": "name",
@@ -43,7 +43,7 @@
   },
   {
    "optionDest": "version_file",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/file_version_info.txt"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/file_version_info.txt"
   },
   {
    "optionDest": "uac_admin",
@@ -63,35 +63,39 @@
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/__init__.py;intelligence/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/__init__.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/media.py;intelligence/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/recognition.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/recognition.py;intelligence/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/text.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/text.py;intelligence/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/translate.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/translate.py;intelligence/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/voice.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/voice.py;intelligence/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/plugin/__init__.py;intelligence/plugin/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/intelligence/plugin/__init__.py;intelligence/plugin"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/logs/__init__.py;logs/"
   },
   {
    "optionDest": "datas",
-   "value": "C:/Users/Fabian/Desktop/PycharmProjects/Ai Desktop Pet_v2/logs/__init__.py;logs/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/runtime;runtime/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/shader;shader/"
   }
  ],
  "nonPyinstallerOptions": {
