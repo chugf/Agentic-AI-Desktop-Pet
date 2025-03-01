@@ -1,12 +1,8 @@
 from . import text
 from . import recognition
 
-VoiceSwitch = True
-try:
-    from . import voice
-    from . import translate
-except ImportError:
-    VoiceSwitch = False
+from . import voice
+from . import translate
 
 ALI_API_KEY = ""
 XF_API_ID = ""
@@ -25,9 +21,9 @@ def whisper_speech_recognition(success_func, error_func, close_func, url):
     return recognition.WhisperRealTimeSpeechRecognizer(url, success_func, error_func, close_func)
 
 
-def text_generator(prompt, is_search_online: bool, url: str | None = None):
+def text_generator(prompt, model, is_search_online: bool, url: str | None = None):
     if url is None:
-        a = text.TextGenerator(ALI_API_KEY).generate_text(prompt, is_search_online)
+        a = text.TextGenerator(ALI_API_KEY).generate_text(prompt, model, is_search_online)
     else:
         a = text.TextGeneratorLocal(prompt, url)
     return a
@@ -45,8 +41,8 @@ def ali_voice_generator(texts):
     return voice.ali_tts(texts, ALI_API_KEY)
 
 
-def voice_change(name, modules):
-    return voice.change_module(name, modules)
+def voice_change(name, modules, url):
+    return voice.change_module(name, modules, url)
 
 
 def machine_translate(prompt):

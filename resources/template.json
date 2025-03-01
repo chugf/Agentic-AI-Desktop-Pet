@@ -20,13 +20,43 @@
   "action": {
     "ActionTouchHead": {
       "position": [-1, -1, -1, -1],
-      "motion": "NULL:0",
+      "motion": "NULL:motions/null.json:0",
+      "expression": "",
+      "play": "",
+      "play_type": ""
+    },
+    "ActionTouchLeg": {
+      "position": [-1, -1, -1, -1],
+      "motion": "NULL:motions/null.json:0",
+      "expression": "",
+      "play": "",
+      "play_type": ""
+    },
+    "ActionClickCap": {
+      "position": [-1, -1, -1, -1],
+      "motion": "NULL:motions/null.json:0",
+      "expression": "",
       "play": "",
       "play_type": ""
     },
     "ActionClickChest": {
       "position": [-1, -1, -1, -1],
-      "motion": "NULL:0",
+      "motion": "NULL:motions/null.json:0",
+      "expression": "",
+      "play": "",
+      "play_type": ""
+    },
+    "ActionTouchCustom": {
+      "position": [-1, -1, -1, -1],
+      "motion": "NULL:motions/null.json:0",
+      "expression": "",
+      "play": "",
+      "play_type": ""
+    },
+    "ActionClickCustom": {
+      "position": [-1, -1, -1, -1],
+      "motion": "NULL:motions/null.json:0",
+      "expression": "",
       "play": "",
       "play_type": ""
     }

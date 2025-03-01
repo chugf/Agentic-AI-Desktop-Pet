@@ -65,21 +65,33 @@ class TextGenerator:
         dashscope.api_key = API_KEY
 
     @staticmethod
-    def get_response(extra_body):
-        completion = dashscope.Generation().call(
-            model="qwen-plus",
-            messages=memories,
-            presence_penalty=0.6,
-            extra_body=extra_body,
-            tools=tools
-        )
+    def get_response(extra_body, model, enable_tools: bool = True):
+        if enable_tools:
+            completion = dashscope.Generation().call(
+                model=model,
+                messages=memories,
+                presence_penalty=0.6,
+                extra_body=extra_body,
+                tools=tools
+            )
+        else:
+            completion = dashscope.Generation().call(
+                model=model,
+                messages=memories,
+                presence_penalty=0.6,
+                extra_body=extra_body
+            )
         return completion
 
-    def generate_text(self, prompt, is_search_online: bool = False):
+    def generate_text(self, prompt, model,
+                      is_search_online: bool = False):
         extra_body = {}
         extra_body.update({"enable_search": is_search_online})
         memories.append({"role": "user", "content": prompt})
-        completion = self.get_response(extra_body)
+        completion = self.get_response(extra_body, model)
+        if completion.status_code == 400:
+            completion = self.get_response(extra_body, model, False)
+
         assistant_output = completion.output.choices[0].message
 
         memories.append(assistant_output)
@@ -91,7 +103,7 @@ class TextGenerator:
             tool_info['content'] = to_be_called_function(**compound_parameters)
 
             memories.append(tool_info)
-            multiple_answer = self.get_response(extra_body)
+            multiple_answer = self.get_response(extra_body, model)
             assistant_output = multiple_answer.output.choices[0].message
             memories.append(assistant_output)
 

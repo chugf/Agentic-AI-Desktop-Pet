@@ -96,6 +96,10 @@
   {
    "optionDest": "datas",
    "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/shader;shader/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/live2d_custom;live2d_custom/"
   }
  ],
  "nonPyinstallerOptions": {

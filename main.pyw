@@ -32,16 +32,9 @@ import logs
 # AI
 try:
     import intelligence
-    MODULE_INFO = intelligence.voice.get_module_lists()
 
 except ImportError:
-    intelligence.VoiceSwitch = False
-    Client = intelligence = None
-    MODULE_INFO = {}
-
-except __import__("requests").exceptions.ConnectionError:
-    intelligence.VoiceSwitch = False
-    Client = None
+    intelligence = None
     MODULE_INFO = {}
 
 try:
@@ -59,8 +52,10 @@ import win32api
 # 引入live2d库 Import Live2D
 try:
     import live2d.v3 as live2d
+    import live2d_custom.v3 as live2d_custom
 except (OSError, SystemError, ImportError):
     import live2d.v2 as live2d
+    import live2d_custom.v2 as live2d_custom
 
 # 界面库和OpenGL库 GUI
 import tkinter as tk
@@ -99,8 +94,8 @@ with open("./resources/configure.json", "r", encoding="utf-8") as f:
     if configure_default == "origin":
         configure_default = "vanilla"
 
-    configure_adults = configure['model'][configure_default]['adult']
-    configure_voices = configure['model'][configure_default]['voice']
+    configure['model'][configure['default']]['adult'] = configure['model'][configure_default]['adult']
+    configure['model'][configure['default']]['voice'] = configure['model'][configure_default]['voice']
 
     f.close()
 if intelligence:
@@ -141,16 +136,17 @@ def parse_local_url(url: str):
         try:
             port = str(eval(port_part)) if port_part else '80'
         except Exception as e:
-            return None
+            return url
 
         return f"{request_header}://{ip}:{port}{path}"
+    return url
 
 
 def get_audio_path(action: str):
     try:
         return (f"./resources/voice/{configure['default']}/"
                 f"{get_configure_actions()[action]['play']}/"
-                f"{random.choice(configure_voices[configure['model'][
+                f"{random.choice(configure['model'][configure['default']]['voice'][configure['model'][
                     configure_default]['action'][action]['play']])
                     if get_configure_actions()[action]['play_type'] == 'random' else
                     get_configure_actions()[action]['play_type']}")
@@ -176,11 +172,33 @@ def load_template_model(model: str):
     with open("./resources/configure.json", "w", encoding="utf-8") as sf:
         json.dump(configure, sf, indent=3, ensure_ascii=False)
         sf.close()
+    if not os.path.exists(f"./resources/voice/{model}"):
+        load_template_model(model)
+
+
+def delete_character(model: str):
+    if os.path.exists(f"./resources/voice/{model}"):
+        shutil.rmtree(f"./resources/voice/{model}")
+        del configure['model'][model]
+        with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+            json.dump(configure, sf, indent=3, ensure_ascii=False)
+            sf.close()
+    if os.path.exists(f"./intelligence/prompts/{model}.json"):
+        os.remove(f"./intelligence/prompts/{model}.json")
+    shutil.rmtree(f"./resources/model/{model}")
 
 
 # configure
 def get_configure_actions():
     return configure['model'][configure_default]['action']
+
+
+if intelligence:
+    MODULE_INFO = intelligence.voice.get_module_lists(parse_local_url(configure['settings']['local']['gsv']))
+    if MODULE_INFO:
+        VoiceSwitch = True
+    else:
+        VoiceSwitch = False
 
 
 # 基本功能线程 Basic Function Thread
@@ -202,6 +220,11 @@ class SpeakThread(QThread):
             mode = "rb"
         else:
             wave_source = self.resource_data
+            try:
+                open(wave_source, "r")
+            except (PermissionError, FileNotFoundError):
+                self.parent().speaking_lists[self.current_speak_index] = False
+                return
             mode = "r"
 
         if self.parent().speaking_lists[self.current_speak_index - 1] and self.current_speak_index != 0:
@@ -261,7 +284,8 @@ class MediaUnderstandThread(QThread):
         if self.texts is None:
             self.texts = random.choice(["你觉得我在干什么？", "你有什么想法呀？", "你觉得这个图片怎么样？", "请评价一下这图片"])
         try:
-            answer = intelligence.text_generator(f"{self.image_path}看着这个图片{self.texts}", self.is_search_online)
+            answer = intelligence.text_generator(f"{self.image_path}看着这个图片{self.texts}",
+                                                 configure['settings']['intelligence'], self.is_search_online)
         except Exception as e:
             logger(f"子应用 - 媒体文件理解 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
@@ -286,6 +310,7 @@ class TextGenerateThread(QThread):
         try:
             answer = intelligence.text_generator(
                 self.text,
+                configure['settings']['intelligence'],
                 self.is_search_online,
                 url=parse_local_url(configure['settings']['local']['text']
                                     ) if configure['settings']['text']['way'] == "local" else None)
@@ -328,7 +353,8 @@ class VoiceGenerateThread(QThread):
                         text = intelligence.tongyi_translate(text)
                         language = "ja"
 
-            intelligence.voice_change(configure['voice_model'], MODULE_INFO)
+            intelligence.voice_change(configure['voice_model'], MODULE_INFO,
+                                      parse_local_url(configure['settings']['local']['gsv']))
             wav_bytes = intelligence.gsv_voice_generator(
                 text, language, configure['voice_model'], MODULE_INFO,
                 configure['settings']['tts']['top_k'], configure['settings']['tts']['top_p'],
@@ -420,9 +446,10 @@ class AdultEngine:
     """成人内容加载引擎 Adult content loading engine"""
     @staticmethod
     def voice() -> tuple:
-        keywords = re.findall(r'\b[a-zA-Z]+\b', configure_adults['AdultDescribe'][str(configure['adult_level'])])
+        keywords = re.findall(r'\b[a-zA-Z]+\b', configure['model'][configure[
+            'default']]['adult']['AdultDescribe'][str(configure['adult_level'])])
         keywords = ''.join(keywords)
-        return keywords.lower(), configure_adults['voice'][f"Voice{keywords}"]
+        return keywords.lower(), configure['model'][configure['default']]['adult']['voice'][f"Voice{keywords}"]
 
 
 class ExtractFunctionDocstring(ast.NodeVisitor):
@@ -656,7 +683,6 @@ class Setting(tk.Tk):
         self.character_frame = tk.Frame(self)
         self.about_frame = tk.Frame(self)
         self.note.add(self.general_frame, text="常规 General")
-
         tk.Label(self.general_frame, text="宠物形象 Pet Character：").place(x=5, y=5)
         clist = os.listdir("./resources/model")
         clist.append("origin")
@@ -665,6 +691,14 @@ class Setting(tk.Tk):
         self.pet_character.bind("<<ComboboxSelected>>",
                                 lambda event: self.change_character(self.pet_character.get()))
         self.pet_character.place(x=200, y=5)
+
+        self.delete_character_btn = ttk.Button(self.general_frame, text="删除角色 Delete Character",
+                                               command=self.delete_character)
+        Balloon(self.delete_character_btn, "将删除所有含有该角色的信息。谨慎操作！删除角色后无法恢复！\n\n"
+                                           "It will delete all information related to the character. Be careful!"
+                                           " WARNING: Deleting the character cannot be undone!",
+                fg="yellow", bg="red")
+        self.delete_character_btn.place(x=420, y=400)
 
         self.pet_nickname_entry = ttk.Entry(self.general_frame, width=23)
         self.pet_nickname_entry.insert(0, configure['name'])
@@ -695,7 +729,8 @@ class Setting(tk.Tk):
         self.translation_tool.place(x=380, y=35)
 
         tk.Label(self.general_frame, text="成人模式 Adult Mode: ").place(x=5, y=70)
-        self.adult_lists = ttk.Combobox(self.general_frame, values=list(configure_adults['AdultDescribe'].values()),
+        self.adult_lists = ttk.Combobox(self.general_frame, values=list(configure['model'][configure[
+            'default']]['adult']['AdultDescribe'].values()),
                                         state="readonly")
         if configure['adult_level'] > 0:
             self.adult_lists.current(configure['adult_level'] - 1)
@@ -704,7 +739,8 @@ class Setting(tk.Tk):
         self.adult_lists.bind(
             "<<ComboboxSelected>>",
             lambda event: self.change_configure(
-                list(configure_adults['AdultDescribe'].values()).index(self.adult_lists.get()) + 1, "adult_level"))
+                list(configure['model'][configure['default']][
+                         'adult']['AdultDescribe'].values()).index(self.adult_lists.get()) + 1, "adult_level"))
         self.adult_lists.place(x=200, y=70)
 
         tk.Label(self.general_frame, text="语音模型 Voice Module：").place(x=5, y=100)
@@ -732,7 +768,7 @@ class Setting(tk.Tk):
         self.watermark_scale.place(x=380, y=180)
 
         tk.Label(self.general_frame, text="常规透明度 General Opacity: ").place(x=5, y=210)
-        self.opacity_scale = ttk.Scale(self.general_frame, length=200, from_=0, to=1,
+        self.opacity_scale = ttk.Scale(self.general_frame, length=200, from_=0.1, to=1,
                                        command=self.change_opacity)
         self.opacity_scale.set(configure['settings']['transparency'])
         self.opacity_scale.place(x=200, y=210)
@@ -979,9 +1015,18 @@ class Setting(tk.Tk):
         self.cloud_infer = tk.LabelFrame(self.inference_frame, text="云端推理 Cloud Infer", width=590, height=150)
 
         tk.Label(self.cloud_infer, text="阿里云 API_KEY：").place(x=5, y=5)
-        self.aliyun_apikey_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
+        self.aliyun_apikey_entry = ttk.Entry(self.cloud_infer, width=30, show="*")
         self.aliyun_apikey_entry.insert(0, configure["settings"]['cloud']['aliyun'])
         self.aliyun_apikey_entry.place(x=150, y=5)
+
+        self.aliyun_intelligence_model = ttk.Combobox(self.cloud_infer, width=15, state='readonly',
+                                                      values=json.load(
+                                                          open("./resources/intelligence.json", "r", encoding='utf-8')))
+        self.aliyun_intelligence_model.bind("<<ComboboxSelected>>",
+                                            lambda event: self.change_configure(
+                                                self.aliyun_intelligence_model.get(), "settings.intelligence"))
+        self.aliyun_intelligence_model.set(configure["settings"]['intelligence'])
+        self.aliyun_intelligence_model.place(x=380, y=5)
 
         tk.Label(self.cloud_infer, text="讯飞 API_ID：").place(x=5, y=35)
         self.xunfei_apiid_entry = ttk.Entry(self.cloud_infer, width=50, show="*")
@@ -1074,6 +1119,7 @@ class Setting(tk.Tk):
         self.note.add(self.bind_frame, text="绑定设置 Bind Settings")
         self.bind_plugin_frame = tk.Frame(self.bind_note)
         self.bind_animation_frame = tk.Frame(self.bind_note)
+        self.bind_pagerules_frame = tk.Frame(self.bind_note)
         self.bind_note.add(self.bind_plugin_frame, text="插件 Plugin")
 
         tk.Label(self.bind_plugin_frame, text="源Python文件路径 Source Python File Path").place(x=5, y=5)
@@ -1152,16 +1198,29 @@ class Setting(tk.Tk):
         mg = tk.Label(self.bind_parameter_frame, text="动作组 Motion Groups")
         Balloon(mg, text="绑定的动作组名\nMotion binding group name")
         mg.place(x=140, y=150)
-        self.motion_binder = tk.Entry(self.bind_parameter_frame)
-        mi = tk.Label(self.bind_parameter_frame, text="动作序 Motion Index")
-        Balloon(mi, text="绑定的动作序号，从motions文件夹从上之下顺序，从0开始\n"
-                         "Motion binding group index, from motions folder from top to bottom, beginning with 0")
+        self.parameter_dict = live2d_custom.Parameters(ex.model_json_path).get_motions
+        self.motion_binder = ttk.Combobox(self.bind_parameter_frame,
+                                          values=list(self.parameter_dict.keys()),
+                                          width=18, state="readonly"
+                                          )
+        self.motion_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_motions())
+        mi = tk.Label(self.bind_parameter_frame, text="动作名 Motion File")
+        Balloon(mi, text="绑定的动作文件名字，从motions文件夹从上之下顺序\n"
+                         "Motion binding group file name, from motions folder from top to bottom")
         mi.place(x=300, y=150)
-        self.motion_index_binder = tk.Entry(self.bind_parameter_frame)
+        self.motion_name_binder = ttk.Combobox(self.bind_parameter_frame, width=30, state="readonly")
+        self.motion_name_binder.bind("<<ComboboxSelected>>", lambda event: self.preview_motion())
         self.save_animation_btn = ttk.Button(self.bind_animation_frame,
                                              text="保存 Save",
                                              width=400,
                                              command=self.save_settings)
+
+        tk.Label(self.bind_parameter_frame, text="表情 Expression").place(x=5, y=180)
+        self.expressions_lists = live2d_custom.Parameters(ex.model_json_path).get_expressions
+        self.expression_binder = ttk.Combobox(self.bind_parameter_frame, values=self.expressions_lists,
+                                              width=48, state="readonly")
+        self.expression_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_expression())
+        self.expression_binder.place(x=140, y=180)
         self.save_animation_btn.pack(side=tk.BOTTOM)
 
         tk.Label(self.bind_parameter_frame, text="音频 Audio").place(x=5, y=70)
@@ -1181,9 +1240,42 @@ class Setting(tk.Tk):
 
         tk.Label(self.bind_parameter_frame, text="动画 Motion").place(x=5, y=130)
         self.motion_binder.place(x=140, y=130)
-        self.motion_index_binder.place(x=300, y=130)
+        self.motion_name_binder.place(x=300, y=130)
 
         self.bind_parameter_frame.place(x=5, y=60)
+
+        self.bind_note.add(self.bind_pagerules_frame, text="绑定规则 Bind Rules")
+
+        tk.Label(self.bind_pagerules_frame, text="模型 Model").place(x=5, y=5)
+        self.rule_model_rules = ttk.Combobox(self.bind_pagerules_frame,
+                                             width=20, state="readonly", values=list(configure['model'].keys()))
+        self.rule_model_rules.set(self.pet_character.get())
+        self.rule_model_rules.bind("<<ComboboxSelected>>", lambda event: self.fill_rule())
+        self.rule_model_rules.place(x=100, y=5)
+        self.rule_treeview = ttk.Treeview(
+            self.bind_pagerules_frame,
+            columns=("rule", "expression"),
+            show="headings")
+        self.rule_treeview.column("rule", width=300, anchor="center")
+        self.rule_treeview.column("expression", width=100, anchor="center")
+        self.rule_treeview.heading("rule", text="规则 Rules")
+        self.rule_treeview.heading("expression", text="表情 Expression")
+        self.rule_treeview.place(x=5, y=60, w=590, h=200)
+
+        self.delete_rule = ttk.Button(self.bind_pagerules_frame,
+                                      text="删除 Delete",
+                                      command=self.delete_rule_from_treeview)
+        self.delete_rule.place(x=5, y=300)
+
+        self.rule_entry = ttk.Entry(self.bind_pagerules_frame)
+        self.rule_entry.place(x=5, y=350)
+        self.rule_expression_combo = ttk.Combobox(self.bind_pagerules_frame,
+                                                  width=20, state="readonly", values=self.expressions_lists)
+        self.rule_expression_combo.place(x=170, y=350)
+        self.add_rule = ttk.Button(self.bind_pagerules_frame,
+                                   text="添加 Add",
+                                   command=self.add_rule_to_treeview)
+        self.add_rule.place(x=350, y=350)
 
         self.bind_note.pack(fill=tk.BOTH, expand=True)
 
@@ -1321,6 +1413,7 @@ class Setting(tk.Tk):
         self.fill_play_type()
         self.refresh_gui()
         self.fill_information()
+        self.fill_rule()
 
         self.note.pack(fill=tk.BOTH, expand=True)
 
@@ -1336,6 +1429,62 @@ class Setting(tk.Tk):
             -1, -1, -1, -1
         ]
 
+    def preview_motion(self):
+        ex.pet_model.StartMotion(
+            self.motion_binder.get(),
+            int(self.parameter_dict[self.motion_binder.get()].index(self.motion_name_binder.get())),
+            live2d.MotionPriority.FORCE, onFinishMotionHandler=ex.finishedAnimationEvent)
+
+    def add_rule_to_treeview(self):
+        with open(f"./intelligence/rules/{self.rule_model_rules.get()}.json", "r", encoding="utf-8") as rf:
+            rules = json.load(rf)
+            rf.close()
+        if self.rule_entry.get() in rules.keys():
+            rules[self.rule_entry.get()] = self.rule_expression_combo.get()
+        else:
+            rules.update({self.rule_entry.get(): self.rule_expression_combo.get()})
+        self.rule_treeview.insert('', 'end', values=(self.rule_entry.get(), self.rule_expression_combo.get()))
+        with open(f"./intelligence/rules/{self.rule_model_rules.get()}.json", "w", encoding="utf-8") as rsf:
+            json.dump(rules, rsf, indent=3, ensure_ascii=False)
+            rsf.close()
+
+    def delete_rule_from_treeview(self):
+        if self.rule_treeview.selection():
+            for item in self.rule_treeview.selection():
+                with open(f"./intelligence/rules/{self.rule_model_rules.get()}.json", "r", encoding="utf-8") as rf:
+                    rules = json.load(rf)
+                    rf.close()
+                del rules[self.rule_treeview.item(item)['values'][0]]
+                self.rule_treeview.delete(item)
+                with open(f"./intelligence/rules/{self.rule_model_rules.get()}.json", "w", encoding="utf-8") as wf:
+                    json.dump(rules, wf)
+                    wf.close()
+
+    def fill_rule(self):
+        self.rule_treeview.delete(*self.rule_treeview.get_children())
+        if not os.path.isfile(f"./intelligence/rules/{self.rule_model_rules.get()}.json"):
+            json.dump({}, open(f"./intelligence/rules/{self.rule_model_rules.get()}.json", "w"))
+        with open(f"./intelligence/rules/{self.rule_model_rules.get()}.json", "r", encoding="utf-8") as rf:
+            for rule, expr in json.load(rf).items():
+                self.rule_treeview.insert("", "end", values=(rule, expr))
+            rf.close()
+
+    def fill_motions(self):
+        self.expression_binder.set("")
+        self.motion_name_binder.configure(values=self.parameter_dict[self.motion_binder.get()])
+        self.motion_name_binder.current(0)
+
+    def fill_expression(self):
+        def cancel_e():
+            self.after_cancel(id_)
+            ex.pet_model.ResetExpression()
+            
+        self.motion_binder.set("")
+        self.motion_name_binder.set("")
+        self.expression_binder.configure(values=self.expressions_lists)
+        ex.pet_model.SetExpression(self.expression_binder.get())
+        id_ = self.after(3000, cancel_e)
+
     def fill_play_type(self):
         selected = self.audio_binder.get()
         values = os.listdir(f"./resources/voice/{configure_default}/{selected}")
@@ -1345,13 +1494,14 @@ class Setting(tk.Tk):
     def fill_information(self):
         self.audio_type.set(get_configure_actions()[self.animation_binder.get()]['play_type'])
         self.audio_binder.set(get_configure_actions()[self.animation_binder.get()]['play'])
-        self.motion_binder.delete(0, tk.END)
-        self.motion_index_binder.delete(0, tk.END)
-        if (cap := get_configure_actions()[self.animation_binder.get()]['motion']) is not None:
-            self.motion_binder.insert(0, str(cap).split(":")[0])
-            self.motion_index_binder.insert(0, str(cap).split(":")[1])
+        if (cap := get_configure_actions()[self.animation_binder.get()]['motion'].strip()) != "::":
+            self.motion_binder.set(str(cap).split(":")[0])
+            self.motion_name_binder.configure(values=self.parameter_dict[self.motion_binder.get()])
+            self.motion_name_binder.set(str(cap).split(":")[1])
         else:
-            self.motion_binder.insert(0, "")
+            self.motion_binder.set("")
+            self.motion_name_binder.set("")
+            self.expression_binder.set(get_configure_actions()[self.animation_binder.get()]['expression'])
 
         self.min_x.delete(0, tk.END)
         self.min_y.delete(0, tk.END)
@@ -1642,39 +1792,15 @@ class Setting(tk.Tk):
         entry_edit.bind("<FocusOut>", lambda e: save_edit())
         entry_edit.bind("<Return>", lambda e: save_edit())
 
-    def change_character(self, character):
-        if character in configure['model'].keys() or character == "origin":
-            configure['default'] = character
-        else:
-            messagebox.showwarning("警告 Warning",
-                                   f"资源中没有{character}。请前往动画绑定进行绑定后重试！\n"
-                                   f"{character} not found in resources. Please bind it first!")
-        configure['name'] = self.pet_nickname_entry.get()
-        configure['voice_model'] = self.voice_model_lists.get()
-
-        intelligence.text.reload_memories(character)
-
-        with open("./resources/configure.json", "w", encoding="utf-8") as sf:
-            json.dump(configure, sf, indent=3, ensure_ascii=False)
-            sf.close()
-
-    def change_refer_text(self, event):
-        refer_text = MODULE_INFO[self.voice_model_lists.get()][3]
-        self.voice_text_entry.delete(0, tk.END)
-        self.voice_text_entry.insert(0, refer_text)
-        configure['voice_model'] = self.voice_model_lists.get()
-
-        with open("./resources/configure.json", "w", encoding="utf-8") as sf:
-            json.dump(configure, sf, indent=3, ensure_ascii=False)
-            sf.close()
-
     def play_refer_audio(self):
         if self.tts_value.get() == "local":
-            if not intelligence.VoiceSwitch:
+            if not VoiceSwitch:
                 return
             lang, t = self.voice_text_entry.get().split(":")
-            intelligence.voice_change(self.voice_model_lists.get(), MODULE_INFO)
-            audio_bytes = intelligence.gsv_voice_generator(t, lang, self.voice_model_lists.get(), MODULE_INFO)
+            intelligence.voice_change(self.voice_model_lists.get(),
+                                      MODULE_INFO, parse_local_url(configure['settings']['local']['gsv']))
+            audio_bytes = intelligence.gsv_voice_generator(t, lang, self.voice_model_lists.get(), MODULE_INFO,
+                                                           url=parse_local_url(configure['settings']['local']['gsv']))
         else:
             audio_bytes, duration = intelligence.ali_voice_generator(self.voice_text_entry.get())
 
@@ -1691,6 +1817,7 @@ class Setting(tk.Tk):
             p.terminate()
 
     def save_settings(self):
+        global MODULE_INFO
         configure['settings']['tts']['way'] = self.tts_value.get()
         configure['settings']['tts']['top_k'] = self.top_k_scale.get()
         configure['settings']['tts']['top_p'] = self.top_p_scale.get()
@@ -1705,10 +1832,13 @@ class Setting(tk.Tk):
         if self.rec_value.get() == "local":
             with open("./resources/unsolved_traceback/whisper_api", "r", encoding="utf-8") as uf:
                 api_log = uf.read()
+                uf.close()
             messagebox.showerror("Python Traceback LOGS", api_log)
 
         configure['settings']['local']['text'] = self.qwen_api_url.get()
         configure['settings']['local']['gsv'] = self.gsv_api_url.get()
+        if intelligence:
+            MODULE_INFO = intelligence.voice.get_module_lists(parse_local_url(configure['settings']['local']['gsv']))
         configure['settings']['local']['rec']['tool'] = self.recognition_api_tool.get()
         configure['settings']['local']['rec']['url'] = self.recognition_api_url.get()
         configure['settings']['cloud']['aliyun'] = self.aliyun_apikey_entry.get()
@@ -1722,7 +1852,14 @@ class Setting(tk.Tk):
         configure['model'][self.model_list.get()]['action'][
             self.animation_binder.get()]['position'] = position
         configure['model'][self.model_list.get()]['action'][
-            self.animation_binder.get()]['motion'] = f"{self.motion_binder.get()}:{self.motion_index_binder.get()}"
+            self.animation_binder.get()]['expression'] = self.expression_binder.get()
+        try:
+            configure['model'][self.model_list.get()]['action'][
+                self.animation_binder.get()]['motion'] = (
+                f"{self.motion_binder.get()}:{self.motion_name_binder.get()}:"
+                f"{self.parameter_dict[self.motion_binder.get()].index(self.motion_name_binder.get())}")
+        except KeyError:
+            configure['model'][self.model_list.get()]['action'][self.animation_binder.get()]['motion'] = "::"
         configure['model'][self.model_list.get()]['action'][
             self.animation_binder.get()]['play'] = self.audio_binder.get()
         configure['model'][self.model_list.get()]['action'][
@@ -1732,6 +1869,59 @@ class Setting(tk.Tk):
             json.dump(configure, sf, indent=3, ensure_ascii=False)
             sf.close()
 
+    def delete_character(self):
+        if not messagebox.askyesno(
+                "确认？Sure?",
+                "将删除所有含有角色的信息（模型、语音、设定，配置），并且无法恢复。请谨慎操作！\n\n"
+                "It will delete all information related to the character (model, voice, prompts, configuration), "
+                "and cannot be recovered. Please operate with caution!"):
+            return
+        delete_character(self.pet_character.get())
+        clist = os.listdir("./resources/model")
+        clist.append("origin")
+        self.pet_character['values'] = clist
+        self.model_list.current(0)
+        configure['default'] = clist[0]
+        with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+            json.dump(configure, sf, indent=3, ensure_ascii=False)
+            sf.close()
+        ex.exit_program()
+
+    def change_character(self, character):
+        global configure_default, ex
+        if character in configure['model'].keys() or character == "origin":
+            configure['default'] = character
+        else:
+            messagebox.showwarning("警告 Warning",
+                                   f"资源中没有{character}。请前往动画绑定进行绑定后重试！\n"
+                                   f"{character} not found in resources. Please bind it first!")
+            return
+        configure['name'] = self.pet_nickname_entry.get()
+        configure['voice_model'] = self.voice_model_lists.get()
+
+        intelligence.text.reload_memories(character)
+
+        with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+            json.dump(configure, sf, indent=3, ensure_ascii=False)
+            sf.close()
+
+        configure_default = character
+        live2d.dispose()
+        live2d.init()
+        ex.close()
+        ex = DesktopTop()
+        ex.show()
+
+    def change_refer_text(self, event):
+        refer_text = MODULE_INFO[self.voice_model_lists.get()][3]
+        self.voice_text_entry.delete(0, tk.END)
+        self.voice_text_entry.insert(0, refer_text)
+        configure['voice_model'] = self.voice_model_lists.get()
+
+        with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+            json.dump(configure, sf, indent=3, ensure_ascii=False)
+            sf.close()
+            
     def change_opacity(self, event=None):
         opacity_value = float(self.opacity_scale.get())
         self.change_configure(opacity_value, "settings.transparency")
@@ -1831,10 +2021,12 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         self.resize(width, height)
 
         # 基础变量和开关 Variables and Switches
-        self.speaking_lists: list[bool] = []
-        self.turn_count = self.among = 0
+        self.fps_refresh = int(1000 / 900)
+        self.turn_count = self.among = self.expression_count = 0
+        self.model_json_path: str = ""
         self.click_in_area = self.click_x = self.click_y = -1
-        self.is_penetration = self.is_playing_animation = self.is_movement = False
+        self.speaking_lists: list[bool] = []
+        self.is_playing_expression = self.is_penetration = self.is_playing_animation = self.is_movement = False
         self.enter_position = self.drag_position = None
         self.random_cancel_penetration = self.image_path = self.direction = self.last_pos = None
         self.pet_model: live2d.LAppModel | None = None
@@ -1901,10 +2093,11 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                     configure['settings']['understand']['max'] // 2) * 1000)
 
         # 桌宠预备 Pet Preparation
-        if configure_voices['welcome']:
+        if configure['model'][configure['default']]['voice']['welcome']:
             SpeakThread(
                 self,
-                f"./resources/voice/{configure_default}/welcome/{random.choice(configure_voices['welcome'])}"
+                f"./resources/voice/{configure_default}/welcome/"
+                f"{random.choice(configure['model'][configure['default']]['voice']['welcome'])}"
             ).start()
 
         self.show()
@@ -2065,6 +2258,8 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                         self.chat_box.setVisible(True)
                         self.chat_box.setText(str(self.chat_box.toPlainText()) + common_text[text_begin:text_begin + 1])
                         self.chat_box.moveCursor(self.chat_box.textCursor().End)
+                        if common_text[text_begin:text_begin + 2] in rules.keys():
+                            self.playAnimationEvent(rules[common_text[text_begin:text_begin + 2]], "expr")
                         # 处理括号之间的表情等内容 Process the contents between brackets
                         if common_text[text_begin:text_begin + 1] in (")", "]", "）", "】") and is_emotion:
                             is_emotion = False
@@ -2078,7 +2273,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                         text_begin = "END"
                         flot_timer.start(1000 + (
                             max(0, int(information[1] - (time.time() - start_time) * 1000))
-                            if intelligence.VoiceSwitch else
+                            if VoiceSwitch else
                             100
                             )
                         )
@@ -2119,10 +2314,16 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             flot_timer.timeout.connect(__closure)
             flot_timer.start(5)
 
+        if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
+            open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8").close()
+        with open(f"./intelligence/rules/{configure['default']}.json", "r", encoding="utf-8") as rf:
+            rules = json.load(rf)
+            rf.close()
+
         common_text = text[0]
         markdown_text = __processor(text[1])
 
-        if ((intelligence.VoiceSwitch and configure['settings']['tts']['way'] == "local") or
+        if ((VoiceSwitch and configure['settings']['tts']['way'] == "local") or
                 configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts']:
             VGT = VoiceGenerateThread(self, common_text)
             VGT.result.connect(__exec)
@@ -2177,6 +2378,61 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             if param == configure['watermark'].split(";")[0]:
                 continue
             self.pet_model.SetParameterValue(param, values['default'], 1)
+
+    # 加载模型事件 Load model event
+    def loadModelEvent(self, model):
+        try:
+            if os.path.exists(f"./resources/model/"
+                              f"{model}/"
+                              f"{model.title()}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}"):
+                self.model_json_path = (f"./resources/model/"
+                                        f"{model}/{model.title()}."
+                                        f"model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
+                self.pet_model.LoadModelJson(self.model_json_path)
+            else:
+                self.model_json_path = (
+                    f"./resources/model/{model}/"
+                    f"{model}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
+                self.pet_model.LoadModelJson(self.model_json_path)
+        except (KeyError, FileNotFoundError):
+            messagebox.showerror("模型错误 Model Error",
+                                 "模型可能不支持Live2D Cubism 2.0 Core。\n"
+                                 "如果是2.0 Core则可能使用64位应用程序建模。不支持32位应用程序\n\n"
+                                 "Model is not supported for Live2D Cubism 2.0 Core\n"
+                                 "If the model is 2.0 Core, it may use 64-bits application built. "
+                                 "It's not supported for 32-bits application")
+            if messagebox.askyesno("兼容模型 Compatible Model",
+                                   "您的模型不支持Live2D Cubism 2.0 Core，程序内置2.0 Core的模型，是否启用？"
+                                   "\n\nYour model is not supported for Live2D Cubism 2.0 Core, "
+                                   "The program built-in 2.0 Core model, "
+                                   "do you want to enable it?"):
+                configure['default'] = 'kasumi2'
+                load_template_model(configure['default'])
+                messagebox.showinfo("兼容模型 Compatible Model",
+                                    "需要重启程序，以启用兼容模型\n"
+                                    "You need to restart the program to enable the compatible model")
+                with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+                    json.dump(configure, sf, indent=3, ensure_ascii=False)
+                    sf.close()
+            self.exit_program()
+    
+    # 播放动画事件 Play animation event
+    def playAnimationEvent(self, animation_name: str, play_type: typing.Literal['expr', 'anime', 'event'] = 'event'):
+        self.is_playing_expression = True
+        if play_type != 'event':
+            if play_type == 'expr':
+                self.pet_model.SetExpression(animation_name)
+            else:
+                self.pet_model.StartMotion(
+                    animation_name.split(":")[0], int(animation_name.split(":")[1]),
+                    live2d.MotionPriority.FORCE, onFinishMotionHandler=self.finishedAnimationEvent)
+            return
+        if (exp := get_configure_actions()[animation_name]['expression'].strip()) != "":
+            self.pet_model.SetExpression(exp)
+        else:
+            group, _, index = get_configure_actions()[animation_name]['motion'].split(":")
+            self.pet_model.StartMotion(group, int(index), live2d.MotionPriority.FORCE,
+                                       onFinishMotionHandler=self.finishedAnimationEvent)
 
     # 事件 Events
     # 右键菜单事件 Right-click menu events
@@ -2329,11 +2585,11 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
         # 成人模式菜单 Adult content menu
         adult_content_menu = QMenu("成人模式 Adult Content", self)
-        for level in range(configure_adults['AdultLevelMinimum'],
-                           configure_adults['AdultLevelMaximum'] + 1):
+        for level in range(configure['model'][configure['default']]['adult']['AdultLevelMinimum'],
+                           configure['model'][configure['default']]['adult']['AdultLevelMaximum'] + 1):
             adult_content_action = QAction(
                 f"{'√' if configure['adult_level'] == level else ' '} 等级 Level {level} - "
-                f"{configure_adults['AdultDescribe'][str(level)]}", self)
+                f"{configure['model'][configure['default']]['adult']['AdultDescribe'][str(level)]}", self)
             adult_content_menu.addAction(adult_content_action)
             adult_content_action.triggered.connect(lambda checked, lev=level: change_configure("adult_level", lev))
         if configure['adult_level']:
@@ -2459,6 +2715,14 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         if self.among > 100:
             self.among = 0
         self.among += 1
+        # 检查表情 Check Expression
+        if self.expression_count >= 300 * self.fps_refresh:
+            self.is_playing_expression = False
+            self.pet_model.ResetExpression()
+        if self.is_playing_expression:
+            self.expression_count += self.fps_refresh
+        else:
+            self.expression_count = 0
 
         # 检查点击区域 Check the click area
         if self.is_in_live2d_area(local_x, local_y) and not self.is_penetration:
@@ -2474,7 +2738,10 @@ class DesktopTop(shader.ADPOpenGLCanvas):
     def is_in_live2d_area(self, click_x, click_y):
         """检查是否在模型内 Check whether the mouse is in the model"""
         h = self.height()
-        alpha = GL.glReadPixels(click_x * 1.0, (h - click_y) * 1.0, 1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)[3]
+        try:
+            alpha = GL.glReadPixels(click_x * 1.0, (h - click_y) * 1.0, 1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)[3]
+        except GL.error.GLError:
+            alpha = 0
         return alpha > 0
 
     # 鼠标拖动事件 Mouse drag events
@@ -2537,6 +2804,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
             self.last_pos = current_pos
 
+            # 互动事件/动画 Interaction events/animation
             if self.click_in_area and not self.is_movement:
                 # 摸头互动 Touch interaction
                 if checker('ActionTouchHead', 4):
@@ -2544,9 +2812,19 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                     self.click_in_area = False
                     self.is_playing_animation = True
                     # 播放动画 Play animation
-                    group, index = get_configure_actions()['ActionTouchHead']['motion'].split(":")
-                    self.pet_model.StartMotion(group, int(index), live2d.MotionPriority.FORCE,
-                                               onFinishMotionHandler=self.finishedAnimationEvent)
+                    self.playAnimationEvent('ActionTouchHead')
+                # 摸腿互动 Touch leg interaction
+                if checker('ActionTouchLeg', 4):
+                    SpeakThread(self, get_audio_path('ActionTouchLeg')).start()
+                    self.click_in_area = False
+                    self.is_playing_animation = True
+                    self.playAnimationEvent('ActionTouchLeg')
+                # 自定义互动 Custom interaction
+                if checker('ActionTouchCustom', 4):
+                    SpeakThread(self, get_audio_path('ActionTouchCustom')).start()
+                    self.click_in_area = False
+                    self.is_playing_animation = True
+                    self.playAnimationEvent('ActionTouchCustom')
 
         super().mouseMoveEvent(event)
 
@@ -2568,12 +2846,11 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                     configure['record']['position'][2:] = [click_x, click_y]
                     configure['record']['enable_position'] = False
 
+            # 点击事件/动画 Click event/animation
             # 胸部点击行为 Chest click behavior
             if checker("ActionClickChest"):
                 self.is_playing_animation = True
-                group, index = get_configure_actions()['ActionClickChest']['motion'].split(":")
-                self.pet_model.StartMotion(group, int(index), live2d.MotionPriority.FORCE,
-                                           onFinishMotionHandler=self.finishedAnimationEvent)
+                self.playAnimationEvent('ActionClickChest')
                 if configure['adult_level'] > 0:
                     dir_, voice_list = AdultEngine.voice()
                     SpeakThread(self,
@@ -2581,6 +2858,15 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                                 f"{random.choice(voice_list)}").start()
                 else:
                     SpeakThread(self, get_audio_path("ActionClickChest")).start()
+            # 帽点击行为 Hat click behavior
+            elif checker("ActionClickCap"):
+                self.is_playing_animation = True
+                self.playAnimationEvent('ActionClickCap')
+                SpeakThread(self, get_audio_path("ActionClickCap")).start()
+            elif checker("ActionClickCustom"):
+                self.is_playing_animation = True
+                self.playAnimationEvent('ActionClickCustom')
+                SpeakThread(self, get_audio_path("ActionClickCustom")).start()
             event.accept()
         self.is_movement = False
 
@@ -2599,45 +2885,13 @@ class DesktopTop(shader.ADPOpenGLCanvas):
     def on_init(self):
         live2d.glewInit()
         self.pet_model = live2d.LAppModel()
-        try:
-            if os.path.exists(f"./resources/model/"
-                              f"{configure_default}/"
-                              f"{configure_default.title()}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}"):
-                self.pet_model.LoadModelJson(
-                    f"./resources/model/"
-                    f"{configure_default}/{configure_default.title()}."
-                    f"model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
-            else:
-                self.pet_model.LoadModelJson(
-                    f"./resources/model/{configure_default}/"
-                    f"{configure_default}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
-        except (KeyError, FileNotFoundError):
-            messagebox.showerror("模型错误 Model Error",
-                                 "模型可能不支持Live2D Cubism 2.0 Core。\n"
-                                 "如果是2.0 Core则可能使用64位应用程序建模。不支持32位应用程序\n\n"
-                                 "Model is not supported for Live2D Cubism 2.0 Core\n"
-                                 "If the model is 2.0 Core, it may use 64-bits application built. "
-                                 "It's not supported for 32-bits application")
-            if messagebox.askyesno("兼容模型 Compatible Model",
-                                   "您的模型不支持Live2D Cubism 2.0 Core，程序内置2.0 Core的模型，是否启用？"
-                                   "\n\nYour model is not supported for Live2D Cubism 2.0 Core, "
-                                   "The program built-in 2.0 Core model, "
-                                   "do you want to enable it?"):
-                configure['default'] = 'kasumi2'
-                load_template_model(configure['default'])
-                messagebox.showinfo("兼容模型 Compatible Model",
-                                    "需要重启程序，以启用兼容模型\n"
-                                    "You need to restart the program to enable the compatible model")
-                with open("./resources/configure.json", "w", encoding="utf-8") as sf:
-                    json.dump(configure, sf, indent=3, ensure_ascii=False)
-                    sf.close()
-            self.exit_program()
+        self.loadModelEvent(configure['default'])
         for i in range(self.pet_model.GetParameterCount()):
             param = self.pet_model.GetParameter(i)
             param_dict.update({str(param.id): {
                 "value": param.value, "max": param.max, "min": param.min, "default": param.default,
             }})
-        self.startTimer(int(1000 / 900))
+        self.startTimer(self.fps_refresh)
 
     def on_resize(self, width, height):
         self.pet_model.Resize(width, height)

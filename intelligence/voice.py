@@ -16,10 +16,6 @@ from dashscope.api_entities.dashscope_response import SpeechSynthesisResponse
 from dashscope.audio.tts import ResultCallback, SpeechSynthesizer, SpeechSynthesisResult
 
 
-# API endpoint
-base_url = f"http://{socket.gethostbyname(socket.gethostname())}:{int(time.strftime("%Y")) + 1}"
-
-
 def play_audio_by_bytes(wav_bytes: bytes):
     p = pyaudio.PyAudio()
     with io.BytesIO(wav_bytes) as wav_file:
@@ -37,14 +33,19 @@ def play_audio_by_bytes(wav_bytes: bytes):
     p.terminate()
 
 
-def get_module_lists():
-    response = requests.post(f"{base_url}/get_module_lists")
+def get_module_lists(url):
+    try:
+        response = requests.post(f"{url}/get_module_lists")
+    except requests.exceptions.ConnectionError:
+        return {}
+    if response.status_code != 200:
+        return {}
     return response.json()
 
 
-def change_module(name: str, module_info: dict):
+def change_module(name: str, module_info: dict, url):
     response = requests.post(
-        f"{base_url}/change_module",
+        f"{url}/change_module",
         json={"module_name": name, "module_info": module_info})
     return response.json()
 
