@@ -1,0 +1,117 @@
+Desktop Pet Settings
+General
+Pet Character
+Delete Character
+Translation Tool
+Adult Mode
+Voice Module
+Audition
+Watermark
+Character Opacity
+Switches
+Switch Lists
+Capture Compatibility
+Speech Recognition
+AI Voice
+Online Search
+Translate
+Advanced Switches
+Understand Media
+Global Mouse Penetration
+When starting next time
+Random
+Left-click bottom
+Left-click top
+Right-click bottom
+Right-click top
+Taskbar Lock
+Artificial Intelligence
+Inference
+Cloud Infer
+Aliyun API-Key
+Local Inference
+Text Model
+Cloud
+Local
+Save Settings
+Bind Settings
+External Tools
+Source Python File Path
+Required Parameter
+Choose
+Compile into program
+Animation Bind
+Model
+Animation
+Parameter
+Coordinate
+Record
+Motion Groups
+Motion File
+Save
+Expression
+Audio
+Play Way
+Motion
+Bind Rules
+Rules
+Delete
+Add
+Character Sets
+Character
+Role
+Prompt
+Add Prompt
+Remove Prompt
+Refresh Prompts
+About
+AI Desktop Pet explanation
+Settings
+Have Conversations
+Change Character
+Auto Trans
+Trans Tools
+Exit
+Auto Blink
+Auto Breath
+Auto Drag
+Text Output
+Recognition
+is thinking...
+Chat
+Clear Memories
+Capture
+It will delete all information related to the character. Be careful! WARNING: Deleting the character cannot be undone!
+A random time between 5 ~ 30 minutes will be disabled. You can't recover it by restarting! When the software is closed, the timer will be refreshed and restarted!
+When moving the pet, the pet will never exceed the taskbar
+Formatting
+1. {year} means year now
+2. {ip} means your IP
+[BUG] This inference mode has serious problems, do not use! If you choose this mode, you will receive a Python Traceback, and if you can solve, please go to GitHub to submit a pull request to solve this problem
+Motion binding group name
+Motion binding group file name, from motions folder from top to bottom
+influence the probability of sampling (pull down to repeat, pull up to pure luck)
+influence the diversity of audio (pull down too stiff, pull up more variety)
+influence the randomness and variation of audio (pull down more fixed, pull up more variation)
+influence the speed of audio (pull down to slow, pull up to fast)
+influence the speed of inference(pull down to reduce GPU load, pull up to increase GPU load)
+performance optimization threshold (pull down to power performance, pull up to time short)
+influence the speed of inference (open faster consume high, close slower consume less)
+Help
+Start recording: You need to click on your character to record. Click twice, the first is the minimum value, the second is the maximum value
+Finish compling
+Select File
+Sure?
+It will delete all information related to the character (model, voice, prompts, configuration), and cannot be recovered. Please operate with caution!
+资源中没有{character}。请前往动画绑定进行绑定后重试！
+is waiting for chatting
+Model Error
+Compatible Model
+Model is not supported for Live2D Cubism 2.0 Core. If the model is 2.0 Core, it may use 64-bits application built. It's not supported for 32-bits application
+Your model is not supported for Live2D Cubism 2.0 Core, The program built-in 2.0 Core model, do you want to enable it?
+You need to restart the program to enable the compatible model
+Plugin
+Folder Path
+Run Code
+Stop Running
+Language

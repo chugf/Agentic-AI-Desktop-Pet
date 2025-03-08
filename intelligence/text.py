@@ -2,7 +2,7 @@ import re
 import json
 import importlib
 
-from . import plugin
+from . import external
 
 import markdown
 import dashscope
@@ -40,7 +40,7 @@ def reload_memories(model):
 
 def reload_tools():
     global tools, tool_names, properties
-    importlib.reload(plugin)
+    importlib.reload(external)
     with open("./resources/functions.json", "r", encoding="utf-8") as ff:
         tools = json.load(ff)
         tool_names = []
@@ -99,7 +99,7 @@ class TextGenerator:
             to_be_called_tool = assistant_output.tool_calls[0]['function']
             tool_info = {"name": to_be_called_tool['name'], "role": "tool"}
             compound_parameters = json.loads(to_be_called_tool['arguments'])
-            to_be_called_function = getattr(plugin, to_be_called_tool['name'])
+            to_be_called_function = getattr(external, to_be_called_tool['name'])
             tool_info['content'] = to_be_called_function(**compound_parameters)
 
             memories.append(tool_info)

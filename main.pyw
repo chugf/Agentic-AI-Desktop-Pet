@@ -23,6 +23,9 @@ import wave
 import pyaudio
 import io
 
+# 接口 Interface
+import interface.subscribe as interface_subscribe
+
 # 着色器加载 load shader
 import shader
 
@@ -44,6 +47,7 @@ except ImportError:
     runtime = None
 
 # WindowsAPI
+import locale
 import ctypes
 import win32gui
 import win32con
@@ -98,12 +102,27 @@ with open("./resources/configure.json", "r", encoding="utf-8") as f:
     configure['model'][configure['default']]['voice'] = configure['model'][configure_default]['voice']
 
     f.close()
-if intelligence:
-    intelligence.text.reload_memories(configure['default'])
-    intelligence.ALI_API_KEY = configure["settings"]['cloud']['aliyun']
-    intelligence.XF_API_ID = configure["settings"]['cloud']['xunfei']['id']
-    intelligence.XF_API_KEY = configure["settings"]['cloud']['xunfei']['key']
-    intelligence.XF_API_SECRET = configure["settings"]['cloud']['xunfei']['secret']
+    # 写入接口 Write into interface
+    interface_subscribe.Register().SetCharacter(configure['default'])
+    interface_subscribe.Register().SetVoiceModel(configure['voice_model'])
+    interface_subscribe.Register().SetName(configure['name'])
+
+# 语言 language
+_language = locale.getlocale()[0]
+# 自动选择语言 Auto select language
+if not configure['settings']['language'].strip():
+    configure['settings']['language'] = _language
+# 配置语言 Config language
+if configure['settings']['language'] in os.listdir("./resources/languages"):
+    _language = configure['settings']['language']
+else:
+    messagebox.showwarning("Language Not Found",
+                           f"The auther or community has not translated your language '{_language}'")
+    _language = "Chinese (Simplified)_China"
+    configure['settings']['language'] = "Chinese (Simplified)_China"
+with open(f"./resources/languages/{_language}", "r", encoding="utf-8") as lf:
+    languages: list[str] = lf.read().split("\n")
+    lf.close()
 
 
 def logger(text, father_dir):
@@ -194,7 +213,15 @@ def get_configure_actions():
 
 
 if intelligence:
-    MODULE_INFO = intelligence.voice.get_module_lists(parse_local_url(configure['settings']['local']['gsv']))
+    intelligence.text.reload_memories(configure['default'])
+    intelligence.ALI_API_KEY = configure["settings"]['cloud']['aliyun']
+    intelligence.XF_API_ID = configure["settings"]['cloud']['xunfei']['id']
+    intelligence.XF_API_KEY = configure["settings"]['cloud']['xunfei']['key']
+    intelligence.XF_API_SECRET = configure["settings"]['cloud']['xunfei']['secret']
+    try:
+        MODULE_INFO = intelligence.voice.get_module_lists(parse_local_url(configure['settings']['local']['gsv']))
+    except __import__("requests").exceptions.ReadTimeout:
+        MODULE_INFO = {}
     if MODULE_INFO:
         VoiceSwitch = True
     else:
@@ -507,6 +534,30 @@ class RemoveFunctionTransformer(ast.NodeTransformer):
         return ast.unparse(new_tree)
 
 
+class ThreadExceptionEnd(threading.Thread):
+    """结束线程 End Thread"""
+    def __init__(self, func: callable):
+        threading.Thread.__init__(self)
+        self.func = func
+
+    def run(self):
+        self.func()
+
+    def stop_thread(self):
+        thread_id = self._get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+                                                         ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+
+    def _get_id(self):
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id_, thread in threading._active.items():
+            if thread is self:
+                return id_
+
+
 class Balloon:
     """
     气泡 Balloon
@@ -665,7 +716,7 @@ class Setting(tk.Tk):
     def __init__(self):
         super().__init__()
         self.iconbitmap("logo.ico")
-        self.title("AI-Agent  桌面宠物设置 | Desktop Pet Settings")
+        self.title(languages[0])
         self.geometry("600x460")
         self.attributes("-alpha", 0.9)
         self.attributes("-topmost", True)
@@ -673,6 +724,7 @@ class Setting(tk.Tk):
         self.required_check_button_value = {}
         self.function_names = []
         self.is_selected_file = False
+        self.run_thread = None
 
         self.note = ttk.Notebook(self)
 
@@ -682,8 +734,8 @@ class Setting(tk.Tk):
         self.bind_frame = tk.Frame(self)
         self.character_frame = tk.Frame(self)
         self.about_frame = tk.Frame(self)
-        self.note.add(self.general_frame, text="常规 General")
-        tk.Label(self.general_frame, text="宠物形象 Pet Character：").place(x=5, y=5)
+        self.note.add(self.general_frame, text=languages[1])
+        tk.Label(self.general_frame, text=languages[2]).place(x=5, y=5)
         clist = os.listdir("./resources/model")
         clist.append("origin")
         self.pet_character = ttk.Combobox(self.general_frame, values=clist, state="readonly")
@@ -692,20 +744,26 @@ class Setting(tk.Tk):
                                 lambda event: self.change_character(self.pet_character.get()))
         self.pet_character.place(x=200, y=5)
 
-        self.delete_character_btn = ttk.Button(self.general_frame, text="删除角色 Delete Character",
+        tk.Label(self.general_frame, text=languages[116]).place(x=200, y=400)
+        self.language_select = ttk.Combobox(self.general_frame,
+                                            values=os.listdir("./resources/languages"), width=25,
+                                            state="readonly")
+        self.language_select.bind("<<ComboboxSelected>>",
+                                  lambda event: self.change_configure(self.language_select.get(), "settings.language"))
+        self.language_select.set(configure['settings']['language'])
+        self.language_select.place(x=270, y=400)
+
+        self.delete_character_btn = ttk.Button(self.general_frame, text=languages[3],
                                                command=self.delete_character)
-        Balloon(self.delete_character_btn, "将删除所有含有该角色的信息。谨慎操作！删除角色后无法恢复！\n\n"
-                                           "It will delete all information related to the character. Be careful!"
-                                           " WARNING: Deleting the character cannot be undone!",
-                fg="yellow", bg="red")
-        self.delete_character_btn.place(x=420, y=400)
+        Balloon(self.delete_character_btn, languages[83], fg="yellow", bg="red")
+        self.delete_character_btn.place(x=480, y=400)
 
         self.pet_nickname_entry = ttk.Entry(self.general_frame, width=23)
         self.pet_nickname_entry.insert(0, configure['name'])
         self.pet_nickname_entry.bind("<Key>", lambda event: self.change_character(self.pet_character.get()))
         self.pet_nickname_entry.place(x=380, y=5)
 
-        tk.Label(self.general_frame, text="翻译工具 Translation Tool：").place(x=5, y=35)
+        tk.Label(self.general_frame, text=languages[4]).place(x=5, y=35)
         self.translation_class = ttk.Combobox(self.general_frame, values=["爬虫 Spider", "人工智能 AI"], state="readonly")
         self.translation_class.current(0)
         if "spider" in configure["settings"]['translate']:
@@ -728,7 +786,7 @@ class Setting(tk.Tk):
             self.translation_tool.current(0)
         self.translation_tool.place(x=380, y=35)
 
-        tk.Label(self.general_frame, text="成人模式 Adult Mode: ").place(x=5, y=70)
+        tk.Label(self.general_frame, text=languages[5]).place(x=5, y=70)
         self.adult_lists = ttk.Combobox(self.general_frame, values=list(configure['model'][configure[
             'default']]['adult']['AdultDescribe'].values()),
                                         state="readonly")
@@ -743,19 +801,19 @@ class Setting(tk.Tk):
                          'adult']['AdultDescribe'].values()).index(self.adult_lists.get()) + 1, "adult_level"))
         self.adult_lists.place(x=200, y=70)
 
-        tk.Label(self.general_frame, text="语音模型 Voice Module：").place(x=5, y=100)
+        tk.Label(self.general_frame, text=languages[6]).place(x=5, y=100)
         self.voice_text_entry = ttk.Entry(self.general_frame, width=65)
         self.voice_text_entry.place(x=5, y=130)
         self.voice_model_lists = ttk.Combobox(self.general_frame, values=list(MODULE_INFO.keys()),
                                               state="readonly")
         self.voice_model_lists.set(configure['voice_model'])
         self.voice_model_lists.place(x=200, y=100)
-        self.play_refer_audio = ttk.Button(self.general_frame, text="试听 Audition",
+        self.play_refer_audio = ttk.Button(self.general_frame, text=languages[7],
                                            command=self.play_refer_audio)
         self.play_refer_audio.place(x=380, y=100)
         self.voice_model_lists.bind("<<ComboboxSelected>>", self.change_refer_text)
 
-        tk.Label(self.general_frame, text="水印 Watermark").place(x=5, y=180)
+        tk.Label(self.general_frame, text=languages[8]).place(x=5, y=180)
         self.watermark_combo = ttk.Combobox(self.general_frame, values=list(param_dict.keys()),
                                             state="readonly")
         self.watermark_combo.set(configure['watermark'].split(";")[0])
@@ -767,20 +825,20 @@ class Setting(tk.Tk):
         self.watermark_scale.set(float(configure['watermark'].split(";")[1]))
         self.watermark_scale.place(x=380, y=180)
 
-        tk.Label(self.general_frame, text="常规透明度 General Opacity: ").place(x=5, y=210)
+        tk.Label(self.general_frame, text=languages[9]).place(x=5, y=210)
         self.opacity_scale = ttk.Scale(self.general_frame, length=200, from_=0.1, to=1,
                                        command=self.change_opacity)
         self.opacity_scale.set(configure['settings']['transparency'])
         self.opacity_scale.place(x=200, y=210)
 
-        self.note.add(self.switch_frame, text="开关 Switch")
+        self.note.add(self.switch_frame, text=languages[10])
 
-        self.switches = tk.LabelFrame(self.switch_frame, text="开关列表 Switch Lists", width=590, height=100)
+        self.switches = tk.LabelFrame(self.switch_frame, text=languages[11], width=590, height=100)
         self.switches.place(x=5, y=5)
 
         self.compatible_value = tk.BooleanVar(self)
         self.compatible_value.set(configure['settings']['compatibility'])
-        self.compatible_button = ttk.Checkbutton(self.switches, text="录屏兼容 Capture Compatibility",
+        self.compatible_button = ttk.Checkbutton(self.switches, text=languages[12],
                                                  variable=self.compatible_value, onvalue=True, offvalue=False,
                                                  command=lambda: self.io_configure(
                                                      "{compatibility}", "settings.compatibility", bool))
@@ -788,17 +846,17 @@ class Setting(tk.Tk):
 
         self.adult_value = tk.IntVar(self)
         self.adult_value.set(configure['adult_level'])
-        self.adult_button = ttk.Checkbutton(self.switches, text="成人模式 Adult Mode",
+        self.adult_button = ttk.Checkbutton(self.switches, text=languages[5],
                                             variable=self.adult_value,
                                             onvalue=1 if configure['adult_level'] == 0 else configure['adult_level'],
                                             offvalue=0,
                                             command=lambda: self.io_configure(
                                                 "{adult}", "adult_level", int))
-        self.adult_button.place(x=400, y=5)
+        self.adult_button.place(x=200, y=5)
 
         self.speech_recognition_value = tk.BooleanVar(self)
         self.speech_recognition_value.set(configure['settings']['enable']['rec'])
-        self.speech_recognition_button = ttk.Checkbutton(self.switches, text="语音识别 Speech Recognition",
+        self.speech_recognition_button = ttk.Checkbutton(self.switches, text=languages[13],
                                                          variable=self.speech_recognition_value, onvalue=True,
                                                          offvalue=False,
                                                          command=lambda: self.io_configure("rec"))
@@ -806,31 +864,31 @@ class Setting(tk.Tk):
 
         self.ai_voice_value = tk.BooleanVar(self)
         self.ai_voice_value.set(configure['settings']['enable']['tts'])
-        self.ai_voice_button = ttk.Checkbutton(self.switches, text="AI语音 AI Voice",
+        self.ai_voice_button = ttk.Checkbutton(self.switches, text=languages[14],
                                                variable=self.ai_voice_value, onvalue=True, offvalue=False,
                                                command=lambda: self.io_configure("tts"))
-        self.ai_voice_button.place(x=400, y=30)
+        self.ai_voice_button.place(x=200, y=30)
 
         self.online_search_value = tk.BooleanVar(self)
         self.online_search_value.set(configure['settings']['enable']['online'])
-        self.online_search_button = ttk.Checkbutton(self.switches, text="在线搜索 Online Search",
+        self.online_search_button = ttk.Checkbutton(self.switches, text=languages[15],
                                                     variable=self.online_search_value, onvalue=True, offvalue=False,
                                                     command=lambda: self.io_configure("online"))
         self.online_search_button.place(x=10, y=55)
 
         self.translate_value = tk.BooleanVar(self)
         self.translate_value.set(configure['settings']['enable']['trans'])
-        self.translate_button = ttk.Checkbutton(self.switches, text="翻译 Translate",
+        self.translate_button = ttk.Checkbutton(self.switches, text=languages[16],
                                                 variable=self.translate_value, onvalue=True, offvalue=False,
                                                 command=lambda: self.io_configure("trans"))
-        self.translate_button.place(x=400, y=55)
+        self.translate_button.place(x=200, y=55)
 
         self.advanced_switch_frame = tk.LabelFrame(self.switch_frame,
-                                                   text="高级开关 Advanced Switch", width=590, height=200)
+                                                   text=languages[17], width=590, height=200)
         tk.Label(self.advanced_switch_frame, text="从\t        到\t\t 之间随机选取作为时间间隔").place(x=230, y=5)
         self.media_understand_value = tk.BooleanVar(self)
         self.media_understand_value.set(configure['settings']['enable']['media'])
-        self.media_understand_button = ttk.Checkbutton(self.advanced_switch_frame, text="媒体理解 Media Understand",
+        self.media_understand_button = ttk.Checkbutton(self.advanced_switch_frame, text=languages[18],
                                                        variable=self.media_understand_value, onvalue=True,
                                                        offvalue=False,
                                                        command=lambda: self.io_configure("media"))
@@ -854,7 +912,7 @@ class Setting(tk.Tk):
         self.globe_mouse_penetration_value.set(configure['settings']['penetration']['enable'])
         self.globe_mouse_penetration_button = ttk.Checkbutton(
             self.advanced_switch_frame,
-            text="全局鼠标穿透 Global Mouse Penetration",
+            text=languages[19],
             variable=self.globe_mouse_penetration_value, onvalue=True,
             offvalue=False,
             command=lambda: self.change_configure(
@@ -871,7 +929,7 @@ class Setting(tk.Tk):
             self.penetration_start_value.set("next")
         self.penetration_start_next_time = ttk.Radiobutton(
             self.advanced_switch_frame,
-            text="下次启动时 When starting next time",
+            text=languages[20],
             variable=self.penetration_start_value,
             value="next",
             command=lambda: self.change_configure(
@@ -882,23 +940,19 @@ class Setting(tk.Tk):
 
         self.penetration_start_random = ttk.Radiobutton(
             self.advanced_switch_frame,
-            text="随机 Random",
+            text=languages[21],
             variable=self.penetration_start_value,
             value="random",
             command=lambda: self.change_configure(
                 self.penetration_start_value.get(),
                 "settings.penetration.start"
             ))
-        Balloon(self.penetration_start_random,
-                "一旦启用就会有5 ~ 30分钟的时间无法操作。并且无法靠重启恢复！当软件关闭后会刷新计时器重新计时！\n"
-                "A random time between 5 ~ 30 minutes will be disabled. You can't recover it by restarting! "
-                "When the software is closed, the timer will be refreshed and restarted!",
-                fg="yellow", bg="red")
-        self.penetration_start_random.place(x=380, y=55)
+        Balloon(self.penetration_start_random, languages[84], fg="yellow", bg="red")
+        self.penetration_start_random.place(x=210, y=55)
 
         self.penetration_start_left_click_bottom = ttk.Radiobutton(
             self.advanced_switch_frame,
-            text="左击底部 Left-click bottom",
+            text=languages[22],
             variable=self.penetration_start_value,
             value="left-bottom",
             command=lambda: self.change_configure(
@@ -909,18 +963,18 @@ class Setting(tk.Tk):
 
         self.penetration_start_left_click_top = ttk.Radiobutton(
             self.advanced_switch_frame,
-            text="左击顶部 Left-click top",
+            text=languages[23],
             variable=self.penetration_start_value,
             value="left-top",
             command=lambda: self.change_configure(
                 self.penetration_start_value.get(),
                 "settings.penetration.start"
             ))
-        self.penetration_start_left_click_top.place(x=380, y=80)
+        self.penetration_start_left_click_top.place(x=210, y=80)
 
         self.penetration_start_right_click_bottom = ttk.Radiobutton(
             self.advanced_switch_frame,
-            text="右击底部 Right-click bottom",
+            text=languages[24],
             variable=self.penetration_start_value,
             value="right-bottom",
             command=lambda: self.change_configure(
@@ -931,29 +985,27 @@ class Setting(tk.Tk):
 
         self.penetration_start_right_click_top = ttk.Radiobutton(
             self.advanced_switch_frame,
-            text="右击顶部 Right-click top",
+            text=languages[25],
             variable=self.penetration_start_value,
             value="right-top",
             command=lambda: self.change_configure(
                 self.penetration_start_value.get(),
                 "settings.penetration.start"
             ))
-        self.penetration_start_right_click_top.place(x=380, y=105)
+        self.penetration_start_right_click_top.place(x=210, y=105)
 
         self.taskbar_lock_value = tk.BooleanVar(self)
         self.taskbar_lock_value.set(configure['settings']['enable']['locktsk'])
         self.taskbar_lock_button = ttk.Checkbutton(
             self.advanced_switch_frame,
-            text="任务栏锁定 Taskbar Lock",
+            text=languages[26],
             variable=self.taskbar_lock_value, onvalue=True, offvalue=False,
             command=lambda: self.change_configure(
                 self.taskbar_lock_value.get(),
                 "settings.enable.locktsk"
             ))
         self.taskbar_lock_button.place(x=5, y=140)
-        Balloon(self.taskbar_lock_button,
-                "当移动桌宠时，桌宠始终不会超过任务栏\n"
-                "When moving the pet, the pet will never exceed the taskbar",)
+        Balloon(self.taskbar_lock_button, languages[85])
         # self.penetration_want_custom = ttk.Radiobutton(
         #     self.advanced_switch_frame,
         #     text="我想什么时候 I want when",
@@ -967,11 +1019,11 @@ class Setting(tk.Tk):
 
         self.advanced_switch_frame.place(x=5, y=110)
 
-        self.live2d_switch_frame = tk.LabelFrame(self.switch_frame, text="Live2D 开关 Switch",
+        self.live2d_switch_frame = tk.LabelFrame(self.switch_frame, text=f"Live2D {languages[10]}",
                                                  width=590, height=60)
         self.autoblink_value = tk.BooleanVar(self)
         self.autoblink_value.set(configure['settings']['live2d']['enable']['AutoBlink'])
-        self.autoblink_check = ttk.Checkbutton(self.live2d_switch_frame, text="自动眨眼 Auto Blink",
+        self.autoblink_check = ttk.Checkbutton(self.live2d_switch_frame, text=languages[74],
                                                variable=self.autoblink_value, onvalue=True,
                                                offvalue=False,
                                                command=lambda: self.change_configure(
@@ -982,7 +1034,7 @@ class Setting(tk.Tk):
 
         self.autobreath_value = tk.BooleanVar(self)
         self.autobreath_value.set(configure['settings']['live2d']['enable']['AutoBlink'])
-        self.autobreath_check = ttk.Checkbutton(self.live2d_switch_frame, text="自动呼吸 Auto Breath",
+        self.autobreath_check = ttk.Checkbutton(self.live2d_switch_frame, text=languages[75],
                                                 variable=self.autobreath_value, onvalue=True,
                                                 offvalue=False,
                                                 command=lambda: self.change_configure(
@@ -993,7 +1045,7 @@ class Setting(tk.Tk):
 
         self.autodrag_value = tk.BooleanVar(self)
         self.autodrag_value.set(configure['settings']['live2d']['enable']['AutoDrag'])
-        self.autodrag_check = ttk.Checkbutton(self.live2d_switch_frame, text="自动拖拽 Auto Drag",
+        self.autodrag_check = ttk.Checkbutton(self.live2d_switch_frame, text=languages[76],
                                               variable=self.autodrag_value, onvalue=True,
                                               offvalue=False,
                                               command=lambda: self.change_configure(
@@ -1004,17 +1056,17 @@ class Setting(tk.Tk):
 
         self.live2d_switch_frame.place(x=5, y=310)
 
-        self.note.add(self.intelligence_frame, text="人工智能 AI")
+        self.note.add(self.intelligence_frame, text=languages[27])
 
         self.intelligence_note = ttk.Notebook(self.intelligence_frame)
 
         self.inference_frame = tk.Frame(self.intelligence_frame)
         self.tts_parameter_frame = tk.Frame(self.intelligence_frame)
-        self.intelligence_note.add(self.inference_frame, text="推理 Inference")
+        self.intelligence_note.add(self.inference_frame, text=languages[28])
 
-        self.cloud_infer = tk.LabelFrame(self.inference_frame, text="云端推理 Cloud Infer", width=590, height=150)
+        self.cloud_infer = tk.LabelFrame(self.inference_frame, text=languages[29], width=590, height=150)
 
-        tk.Label(self.cloud_infer, text="阿里云 API_KEY：").place(x=5, y=5)
+        tk.Label(self.cloud_infer, text=languages[30]).place(x=5, y=5)
         self.aliyun_apikey_entry = ttk.Entry(self.cloud_infer, width=30, show="*")
         self.aliyun_apikey_entry.insert(0, configure["settings"]['cloud']['aliyun'])
         self.aliyun_apikey_entry.place(x=150, y=5)
@@ -1045,19 +1097,19 @@ class Setting(tk.Tk):
 
         self.cloud_infer.place(x=5, y=5)
 
-        self.local_infer = tk.LabelFrame(self.inference_frame, text="本地推理 Local Infer", width=590, height=160)
+        self.local_infer = tk.LabelFrame(self.inference_frame, text=languages[31], width=590, height=160)
 
-        tk.Label(self.local_infer, text="文本模型 Text Model").place(x=5, y=5)
+        tk.Label(self.local_infer, text=languages[32]).place(x=5, y=5)
         self.qwen_api_url = ttk.Entry(self.local_infer, width=50)
         self.qwen_api_url.insert(0, configure["settings"]['local']['text'])
         self.qwen_api_url.place(x=150, y=5)
 
-        tk.Label(self.local_infer, text="GPT-SoVITS (TTS)").place(x=5, y=35)
+        tk.Label(self.local_infer, text=languages[14]).place(x=5, y=35)
         self.gsv_api_url = ttk.Entry(self.local_infer, width=50)
         self.gsv_api_url.insert(0, configure["settings"]['local']['gsv'])
         self.gsv_api_url.place(x=150, y=35)
 
-        tk.Label(self.local_infer, text="语音识别 Recognition").place(x=5, y=65)
+        tk.Label(self.local_infer, text=languages[13]).place(x=5, y=65)
         self.recognition_api_tool = ttk.Combobox(self.local_infer, width=10, values=['whisper'], state="readonly")
         self.recognition_api_tool.set(configure["settings"]['local']['rec']['tool'])
         self.recognition_api_tool.place(x=150, y=65)
@@ -1067,96 +1119,108 @@ class Setting(tk.Tk):
         self.recognition_api_url.place(x=250, y=65)
 
         tk.Label(self.local_infer,
-                 text="格式化说明：\n"
-                      "     1. {year}表当前年份"
-                      "\t 2. {ip}表当前设备IP", justify=tk.LEFT, anchor=tk.W, fg="green").place(x=5, y=95)
+                 text=f"{languages[86]}：\n"
+                      f"     {languages[87]}"
+                      f"\t {languages[88]}", justify=tk.LEFT, anchor=tk.W, fg="green").place(x=5, y=95)
 
         self.local_infer.place(x=5, y=160)
 
-        tk.Label(self.inference_frame, text="文本转语音 (TTS): ").place(x=5, y=320)
+        tk.Label(self.inference_frame, text=languages[14]).place(x=5, y=320)
         self.tts_value = tk.StringVar(self)
         self.tts_value.set(configure['settings']['tts']['way'])
-        self.tts_cloud = ttk.Radiobutton(self.inference_frame, text="云端 Cloud",
+        self.tts_cloud = ttk.Radiobutton(self.inference_frame, text=languages[33],
                                          variable=self.tts_value, value="cloud")
         self.tts_cloud.place(x=200, y=320)
 
-        self.tts_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
+        self.tts_local = ttk.Radiobutton(self.inference_frame, text=languages[34],
                                          variable=self.tts_value, value="local")
         self.tts_local.place(x=300, y=320)
 
-        tk.Label(self.inference_frame, text="文本输出 (Text)：").place(x=5, y=350)
+        tk.Label(self.inference_frame, text=languages[77]).place(x=5, y=350)
         self.text_value = tk.StringVar(self)
         self.text_value.set(configure['settings']['text']['way'])
-        self.text_cloud = ttk.Radiobutton(self.inference_frame, text="云端 Cloud",
+        self.text_cloud = ttk.Radiobutton(self.inference_frame, text=languages[33],
                                           variable=self.text_value, value="cloud")
         self.text_cloud.place(x=200, y=350)
 
-        self.text_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
+        self.text_local = ttk.Radiobutton(self.inference_frame, text=languages[34],
                                           variable=self.text_value, value="local")
         self.text_local.place(x=300, y=350)
 
-        tk.Label(self.inference_frame, text="语音识别 (Recognition)").place(x=5, y=380)
+        tk.Label(self.inference_frame, text=languages[78]).place(x=5, y=380)
         self.rec_value = tk.StringVar(self)
         self.rec_value.set(configure['settings']['rec'])
-        self.rec_cloud = ttk.Radiobutton(self.inference_frame, text="云端 Cloud",
+        self.rec_cloud = ttk.Radiobutton(self.inference_frame, text=languages[33],
                                          variable=self.rec_value, value="cloud")
         self.rec_cloud.place(x=200, y=380)
 
-        self.rec_local = ttk.Radiobutton(self.inference_frame, text="本地 Local",
+        self.rec_local = ttk.Radiobutton(self.inference_frame, text=languages[34],
                                          variable=self.rec_value, value="local")
-        Balloon(
-            self.rec_local,
-            "【BUG】此推理模式有严重问题，不要使用！如果您选择该模式，"
-            "您会收到一个Python Traceback，如果你可以解决，您可以前往GitHub发pull request来解决这个问题\n\n"
-            "[BUG] This inference mode has serious problems, do not use! "
-            "If you choose this mode, you will receive a Python Traceback, "
-            "and if you can solve, please go to GitHub to submit a pull request to solve this problem",
-            fg="yellow", bg="red")
+        Balloon(self.rec_local, languages[89], fg="yellow", bg="red")
         self.rec_local.place(x=300, y=380)
-        ttk.Button(self.local_infer, text="保存设置 Save Settings", command=self.save_settings).place(x=430, y=100)
+        ttk.Button(self.local_infer, text=languages[35], command=self.save_settings).place(x=430, y=100)
 
         self.bind_note = ttk.Notebook(self.bind_frame)
-        self.note.add(self.bind_frame, text="绑定设置 Bind Settings")
+        self.note.add(self.bind_frame, text=languages[36])
+        self.bind_external_frame = tk.Frame(self.bind_note)
         self.bind_plugin_frame = tk.Frame(self.bind_note)
         self.bind_animation_frame = tk.Frame(self.bind_note)
         self.bind_pagerules_frame = tk.Frame(self.bind_note)
-        self.bind_note.add(self.bind_plugin_frame, text="插件 Plugin")
+        self.bind_note.add(self.bind_external_frame, text=languages[37])
 
-        tk.Label(self.bind_plugin_frame, text="源Python文件路径 Source Python File Path").place(x=5, y=5)
-        self.source_python_file_path = ttk.Entry(self.bind_plugin_frame, width=64)
+        tk.Label(self.bind_external_frame, text=languages[38]).place(x=5, y=5)
+        self.source_python_file_path = ttk.Entry(self.bind_external_frame, width=64)
         self.source_python_file_path.place(x=20, y=35)
 
-        self.code_review = ScrolledText(self.bind_plugin_frame, width=80, height=5)
+        self.code_review = ScrolledText(self.bind_external_frame, width=80, height=5)
         self.code_review.place(x=5, y=65)
         colorizer.color_config(self.code_review)
         p = percolator.Percolator(self.code_review)
         d = colorizer.ColorDelegator()
         p.insertfilter(d)
 
-        tk.Label(self.bind_plugin_frame, text="入口 Entrance").place(x=5, y=140)
-        self.entrance_combo = ttk.Combobox(self.bind_plugin_frame, width=20, state="readonly")
+        tk.Label(self.bind_external_frame, text=languages[39]).place(x=5, y=140)
+        self.entrance_combo = ttk.Combobox(self.bind_external_frame, width=20, state="readonly")
         self.entrance_combo.bind("<<ComboboxSelected>>", lambda event: self.process_code())
         self.entrance_combo.place(x=100, y=140)
 
-        self.entrance_description = tk.Entry(self.bind_plugin_frame, width=30)
+        self.entrance_description = tk.Entry(self.bind_external_frame, width=30)
         self.entrance_description.insert(0, "Description 描述")
         self.entrance_description.place(x=280, y=140)
 
-        tk.Label(self.bind_plugin_frame, text="必选参数 Required Parameter：").place(x=5, y=175)
+        tk.Label(self.bind_external_frame, text=languages[39]).place(x=5, y=175)
 
-        ttk.Button(self.bind_plugin_frame,
-                   text="选择 Choose",
+        ttk.Button(self.bind_external_frame,
+                   text=languages[40],
                    command=lambda: self.select_file(self.source_python_file_path, self.code_review, self.process_code)
                    ).place(x=500, y=35)
 
-        ttk.Button(self.bind_plugin_frame,
-                   text="编译进程序中 Compile into program",
-                   command=self.complie_plugin, width=80
+        ttk.Button(self.bind_external_frame,
+                   text=languages[41],
+                   command=self.complie_external, width=80
                    ).pack(side=tk.BOTTOM)
 
-        self.bind_note.add(self.bind_animation_frame, text="动画绑定 Animation Bind")
+        self.bind_note.add(self.bind_plugin_frame, text=languages[112])
+        tk.Label(self.bind_plugin_frame, text=languages[113]).place(x=5, y=5)
+        self.plugin_folder_path = ttk.Entry(self.bind_plugin_frame, width=64)
+        self.plugin_folder_path.place(x=20, y=35)
+        ttk.Button(self.bind_plugin_frame,
+                   text=languages[40],
+                   command=lambda: self.select_folder(self.plugin_folder_path)
+                   ).place(x=500, y=35)
+        self.plugin_code_review = ScrolledText(self.bind_plugin_frame, width=80, height=13)
+        self.plugin_code_review.insert(1.0, open("./interface/subscribe/example", "r", encoding="utf-8").read())
+        self.plugin_code_review.place(x=5, y=65)
+        colorizer.color_config(self.plugin_code_review)
+        p = percolator.Percolator(self.plugin_code_review)
+        d = colorizer.ColorDelegator()
+        p.insertfilter(d)
+        self.run_plugin_btn = ttk.Button(self.bind_plugin_frame, text=languages[114], command=self.run_plugin)
+        self.run_plugin_btn.place(x=5, y=250)
 
-        tk.Label(self.bind_animation_frame, text="模型 Model").place(x=5, y=5)
+        self.bind_note.add(self.bind_animation_frame, text=languages[42])
+
+        tk.Label(self.bind_animation_frame, text=languages[43]).place(x=5, y=5)
         self.model_lists = os.listdir("./resources/model")
         self.model_list = ttk.Combobox(self.bind_animation_frame,
                                        width=20, state="readonly", values=self.model_lists)
@@ -1164,7 +1228,7 @@ class Setting(tk.Tk):
         self.model_list.set(configure['default'])
         self.model_list.place(x=100, y=5)
 
-        tk.Label(self.bind_animation_frame, text="动画 Animation").place(x=5, y=35)
+        tk.Label(self.bind_animation_frame, text=languages[44]).place(x=5, y=35)
         self.animation_lists = list(configure['model'][self.model_list.get()]['action'].keys())
         self.animation_binder = ttk.Combobox(self.bind_animation_frame,
                                              width=20, state="readonly", values=self.animation_lists)
@@ -1173,11 +1237,11 @@ class Setting(tk.Tk):
         self.animation_binder.place(x=100, y=35)
 
         self.bind_parameter_frame = tk.LabelFrame(self.bind_animation_frame,
-                                                  text="参数 Parameter",
+                                                  text=languages[45],
                                                   width=585, height=300,
                                                   )
 
-        tk.Label(self.bind_parameter_frame, text="坐标 Coordinate").place(x=5, y=0)
+        tk.Label(self.bind_parameter_frame, text=languages[46]).place(x=5, y=0)
         tk.Label(self.bind_parameter_frame, text="min(X)").place(x=25, y=20)
         self.min_x = ttk.Entry(self.bind_parameter_frame, width=10)
         self.min_x.place(x=25, y=40)
@@ -1191,12 +1255,12 @@ class Setting(tk.Tk):
         self.max_y = ttk.Entry(self.bind_parameter_frame, width=10)
         self.max_y.place(x=325, y=40)
         self.auto_record_btn = ttk.Button(self.bind_parameter_frame,
-                                          text="录入 Record",
+                                          text=languages[47],
                                           command=self.auto_record_position)
         self.auto_record_btn.place(x=450, y=30)
 
-        mg = tk.Label(self.bind_parameter_frame, text="动作组 Motion Groups")
-        Balloon(mg, text="绑定的动作组名\nMotion binding group name")
+        mg = tk.Label(self.bind_parameter_frame, text=languages[48])
+        Balloon(mg, text=languages[90])
         mg.place(x=140, y=150)
         self.parameter_dict = live2d_custom.Parameters(ex.model_json_path).get_motions
         self.motion_binder = ttk.Combobox(self.bind_parameter_frame,
@@ -1204,18 +1268,17 @@ class Setting(tk.Tk):
                                           width=18, state="readonly"
                                           )
         self.motion_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_motions())
-        mi = tk.Label(self.bind_parameter_frame, text="动作名 Motion File")
-        Balloon(mi, text="绑定的动作文件名字，从motions文件夹从上之下顺序\n"
-                         "Motion binding group file name, from motions folder from top to bottom")
+        mi = tk.Label(self.bind_parameter_frame, text=languages[49])
+        Balloon(mi, text=languages[91])
         mi.place(x=300, y=150)
         self.motion_name_binder = ttk.Combobox(self.bind_parameter_frame, width=30, state="readonly")
         self.motion_name_binder.bind("<<ComboboxSelected>>", lambda event: self.preview_motion())
         self.save_animation_btn = ttk.Button(self.bind_animation_frame,
-                                             text="保存 Save",
+                                             text=languages[50],
                                              width=400,
                                              command=self.save_settings)
 
-        tk.Label(self.bind_parameter_frame, text="表情 Expression").place(x=5, y=180)
+        tk.Label(self.bind_parameter_frame, text=languages[51]).place(x=5, y=180)
         self.expressions_lists = live2d_custom.Parameters(ex.model_json_path).get_expressions
         self.expression_binder = ttk.Combobox(self.bind_parameter_frame, values=self.expressions_lists,
                                               width=48, state="readonly")
@@ -1223,12 +1286,12 @@ class Setting(tk.Tk):
         self.expression_binder.place(x=140, y=180)
         self.save_animation_btn.pack(side=tk.BOTTOM)
 
-        tk.Label(self.bind_parameter_frame, text="音频 Audio").place(x=5, y=70)
+        tk.Label(self.bind_parameter_frame, text=languages[52]).place(x=5, y=70)
         self.audio_lists = os.listdir(f"./resources/voice/{configure_default}")
         self.audio_binder = ttk.Combobox(self.bind_parameter_frame,
                                          width=20, state="readonly", values=self.audio_lists)
 
-        tk.Label(self.bind_parameter_frame, text="播放方式 Play Way").place(x=5, y=100)
+        tk.Label(self.bind_parameter_frame, text=languages[53]).place(x=5, y=100)
         self.audio_type = ttk.Combobox(self.bind_parameter_frame,
                                        width=20, state="readonly", values=['random'])
         self.audio_type.current(0)
@@ -1238,15 +1301,15 @@ class Setting(tk.Tk):
         self.audio_binder.bind("<<ComboboxSelected>>", lambda event: self.fill_play_type())
         self.audio_binder.place(x=140, y=70)
 
-        tk.Label(self.bind_parameter_frame, text="动画 Motion").place(x=5, y=130)
+        tk.Label(self.bind_parameter_frame, text=languages[54]).place(x=5, y=130)
         self.motion_binder.place(x=140, y=130)
         self.motion_name_binder.place(x=300, y=130)
 
         self.bind_parameter_frame.place(x=5, y=60)
 
-        self.bind_note.add(self.bind_pagerules_frame, text="绑定规则 Bind Rules")
+        self.bind_note.add(self.bind_pagerules_frame, text=languages[55])
 
-        tk.Label(self.bind_pagerules_frame, text="模型 Model").place(x=5, y=5)
+        tk.Label(self.bind_pagerules_frame, text=languages[43]).place(x=5, y=5)
         self.rule_model_rules = ttk.Combobox(self.bind_pagerules_frame,
                                              width=20, state="readonly", values=list(configure['model'].keys()))
         self.rule_model_rules.set(self.pet_character.get())
@@ -1258,12 +1321,12 @@ class Setting(tk.Tk):
             show="headings")
         self.rule_treeview.column("rule", width=300, anchor="center")
         self.rule_treeview.column("expression", width=100, anchor="center")
-        self.rule_treeview.heading("rule", text="规则 Rules")
-        self.rule_treeview.heading("expression", text="表情 Expression")
+        self.rule_treeview.heading("rule", text=languages[56])
+        self.rule_treeview.heading("expression", text=languages[51])
         self.rule_treeview.place(x=5, y=60, w=590, h=200)
 
         self.delete_rule = ttk.Button(self.bind_pagerules_frame,
-                                      text="删除 Delete",
+                                      text=languages[57],
                                       command=self.delete_rule_from_treeview)
         self.delete_rule.place(x=5, y=300)
 
@@ -1273,25 +1336,23 @@ class Setting(tk.Tk):
                                                   width=20, state="readonly", values=self.expressions_lists)
         self.rule_expression_combo.place(x=170, y=350)
         self.add_rule = ttk.Button(self.bind_pagerules_frame,
-                                   text="添加 Add",
+                                   text=languages[58],
                                    command=self.add_rule_to_treeview)
         self.add_rule.place(x=350, y=350)
 
         self.bind_note.pack(fill=tk.BOTH, expand=True)
 
-        self.intelligence_note.add(self.tts_parameter_frame, text="TTS 参数 Parameter")
+        self.intelligence_note.add(self.tts_parameter_frame, text=f"TTS {languages[45]}")
 
         tpk = tk.Label(self.tts_parameter_frame, text="top_k: ")
-        Balloon(tpk, "影响采样的概率(拉小复读机，拉大纯运气)\n"
-                     "influence the probability of sampling (pull down to repeat, pull up to pure luck)")
+        Balloon(tpk, languages[92])
         tpk.place(x=5, y=25)
         self.top_k_scale = tk.Scale(self.tts_parameter_frame, from_=1, to=100, orient=tk.HORIZONTAL, length=300)
         self.top_k_scale.set(configure['settings']['tts']['top_k'])
         self.top_k_scale.place(x=100, y=5)
 
         tpp = tk.Label(self.tts_parameter_frame, text="top_p: ")
-        Balloon(tpp, "影响音频多样性(拉小太死板，拉大更多样)\n"
-                     "influence the diversity of audio (pull down too stiff, pull up more variety)")
+        Balloon(tpp, languages[93])
         tpp.place(x=5, y=65)
         self.top_p_scale = tk.Scale(self.tts_parameter_frame, from_=0.01, to=1.00,
                                     orient=tk.HORIZONTAL, length=300, resolution=0.01)
@@ -1299,9 +1360,7 @@ class Setting(tk.Tk):
         self.top_p_scale.place(x=100, y=45)
 
         tempt = tk.Label(self.tts_parameter_frame, text="temperature: ")
-        Balloon(tempt,
-                "影响音频随机性和变化度(拉小更固定，拉大更多变)\n"
-                "influence the randomness and variation of audio (pull down more fixed, pull up more variation)")
+        Balloon(tempt, languages[94])
         tempt.place(x=5, y=105)
         self.temperature_scale = tk.Scale(self.tts_parameter_frame, from_=0.01, to=1.00,
                                           orient=tk.HORIZONTAL, length=300, resolution=0.01)
@@ -1310,9 +1369,7 @@ class Setting(tk.Tk):
 
         sp = tk.Label(self.tts_parameter_frame, text="speed: ")
         sp.place(x=5, y=145)
-        Balloon(sp,
-                "影响音频速度(拉小变慢，拉大变快)\n"
-                "influence the speed of audio (pull down to slow, pull up to fast)")
+        Balloon(sp, languages[95])
         self.speed_scale = tk.Scale(self.tts_parameter_frame, from_=0.6, to=3.00,
                                     orient=tk.HORIZONTAL, length=300, resolution=0.01)
         self.speed_scale.set(configure['settings']['tts']['speed'])
@@ -1320,16 +1377,13 @@ class Setting(tk.Tk):
 
         batch_size = tk.Label(self.tts_parameter_frame, text="Batch Size: ")
         batch_size.place(x=5, y=205)
-        Balloon(batch_size,
-                "影响推理速度(拉低减少GPU负荷，拉高增加GPU负荷)\n"
-                "influence the speed of inference(pull down to reduce GPU load, pull up to increase GPU load)")
+        Balloon(batch_size, languages[96])
         self.batch_size_scale = tk.Scale(self.tts_parameter_frame, from_=1, to=50, orient=tk.HORIZONTAL, length=300)
         self.batch_size_scale.set(configure['settings']['tts']['batch_size'])
         self.batch_size_scale.place(x=100, y=185)
 
         bt = tk.Label(self.tts_parameter_frame, text="Batch Threshold: ")
-        Balloon(bt, "性能优化阈值(拉低吃性能，拉高时间短)\n"
-                    "performance optimization threshold (pull down to power performance, pull up to time short)")
+        Balloon(bt, languages[97])
         bt.place(x=5, y=245)
         self.batch_threshold_scale = tk.Scale(self.tts_parameter_frame,
                                               from_=0.01, to=1, orient=tk.HORIZONTAL, length=300, resolution=0.01)
@@ -1340,40 +1394,38 @@ class Setting(tk.Tk):
         self.parallel.set(configure['settings']['tts']['parallel'])
         self.parallel_check = ttk.Checkbutton(self.tts_parameter_frame, text="并行推理 Parallel Inference",
                                               variable=self.parallel)
-        Balloon(self.parallel_check,
-                "影响推理速度(开启更快消耗高，关闭更慢消耗少)\n"
-                "influence the speed of inference (open faster consume high, close slower consume less)")
+        Balloon(self.parallel_check, languages[98])
         self.parallel_check.place(x=5, y=350)
 
-        ttk.Button(self.tts_parameter_frame, text="保存设置 Save Settings", command=self.save_settings).place(x=430, y=350)
+        ttk.Button(self.tts_parameter_frame, text=languages[35], command=self.save_settings).place(x=430, y=350)
 
         self.intelligence_note.pack(fill=tk.BOTH, expand=True)
 
-        self.note.add(self.character_frame, text="角色设定 Character Sets")
+        self.note.add(self.character_frame, text=languages[59])
 
         self.sets_tree = ttk.Treeview(self.character_frame,
                                       columns=("Character", "Role", "Prompt"), show="headings",
                                       selectmode="browse")
-        self.sets_tree.heading("Character", text="角色 Characater", anchor='center')
+        self.sets_tree.heading("Character", text=languages[60], anchor='center')
         self.sets_tree.column("Character", width=70, anchor='center')
-        self.sets_tree.heading("Role", text="权限 Role")
+        self.sets_tree.heading("Role", text=languages[61])
         self.sets_tree.column("Role", width=40, anchor='center')
-        self.sets_tree.heading("Prompt", text="描述 Prompt")
+        self.sets_tree.heading("Prompt", text=languages[62])
         self.sets_tree.column("Prompt", width=390)
         self.sets_tree.bind("<Double-1>", self.on_double_click)
         self.sets_tree.place(x=5, y=5, w=590, h=300)
         self.add_one_prompt = ttk.Button(
-            self.character_frame, text="添加词条 Add Prompt", command=lambda: self.change_prompt("add"))
+            self.character_frame, text=languages[63], command=lambda: self.change_prompt("add"))
         self.add_one_prompt.place(x=5, y=310)
         self.remove_one_prompt = ttk.Button(
-            self.character_frame, text="删除词条 Remove Prompt", command=lambda: self.change_prompt("remove"))
+            self.character_frame, text=languages[64], command=lambda: self.change_prompt("remove"))
         self.remove_one_prompt.place(x=220, y=310)
         self.refresh_prompts_button = ttk.Button(
-            self.character_frame, text="刷新词条 Refresh Prompts", command=lambda: self.refresh_prompt())
+            self.character_frame, text=languages[65], command=lambda: self.refresh_prompt())
         self.refresh_prompts_button.place(x=435, y=310)
 
-        self.note.add(self.about_frame, text="关于 About")
-        tk.Label(self.about_frame, text="AI 桌宠相关说明 AI Desktop Pet explanation", font=('微软雅黑', 20)).pack()
+        self.note.add(self.about_frame, text=languages[66])
+        tk.Label(self.about_frame, text=languages[67], font=('微软雅黑', 20)).pack()
 
         self.use_open_sources = tk.LabelFrame(self.about_frame, text="引用开源库 Quote Open Sources", width=590, height=100)
         self.quote_live2d_py = tk.Label(self.use_open_sources, text='Live2D-Py(MIT)', fg="blue", font=('微软雅黑', 13))
@@ -1419,11 +1471,7 @@ class Setting(tk.Tk):
 
     @staticmethod
     def auto_record_position():
-        messagebox.showinfo(
-            "帮助 Help",
-            "开始录入：你需要在您的角色上点击录入。点击两次，第一次为最小值，第二次为最大值\n"
-            "Start recording: You need to click on your character to record. "
-            "Click twice, the first is the minimum value, the second is the maximum value")
+        messagebox.showinfo(languages[99], languages[100])
         configure['record']['enable_position'] = True
         configure['record']['position'] = [
             -1, -1, -1, -1
@@ -1478,7 +1526,7 @@ class Setting(tk.Tk):
         def cancel_e():
             self.after_cancel(id_)
             ex.pet_model.ResetExpression()
-            
+
         self.motion_binder.set("")
         self.motion_name_binder.set("")
         self.expression_binder.configure(values=self.expressions_lists)
@@ -1517,7 +1565,30 @@ class Setting(tk.Tk):
         if self.model_list.get() not in configure['model'].keys():
             load_template_model(self.model_list.get())
 
-    def complie_plugin(self):
+    def run_plugin(self):
+        def _wrapper():
+            codes = self.plugin_code_review.get(1.0, tk.END)
+            global_ = {
+                "subscribe": interface_subscribe,
+                'live2d': live2d,
+            }
+            try:
+                exec(codes, global_, locals())
+                self.run_plugin_btn['text'] = languages[114]
+                self.run_thread.stop_thread()
+            except Exception as e:
+                messagebox.showerror("error", str(e))
+                self.run_plugin_btn['text'] = languages[114]
+                self.run_thread.stop_thread()
+        if self.run_plugin_btn['text'] == languages[114]:
+            self.run_plugin_btn['text'] = languages[115]
+            self.run_thread = ThreadExceptionEnd(_wrapper)
+            self.run_thread.start()
+        else:
+            self.run_plugin_btn['text'] = languages[114]
+            self.run_thread.stop_thread()
+
+    def complie_external(self):
         template = {
             "type": "function",
             "function": {
@@ -1555,7 +1626,7 @@ class Setting(tk.Tk):
             json.dump(original, ff, indent=3, ensure_ascii=False)
             ff.close()
 
-        with open("./intelligence/plugin/__init__.py", "r", encoding="utf-8") as of:
+        with open("intelligence/external/__init__.py", "r", encoding="utf-8") as of:
             original_code = of.read()
             of.close()
         to_be_complied_code = self.code_review.get(1.0, tk.END)
@@ -1573,11 +1644,11 @@ class Setting(tk.Tk):
                 original_code = match + original_code + '\n'
             to_be_complied_code = to_be_complied_code.replace(match, '')
         original_code += f"\n\n{to_be_complied_code}"
-        with open("./intelligence/plugin/__init__.py", "w", encoding="utf-8") as wnf:
+        with open("intelligence/external/__init__.py", "w", encoding="utf-8") as wnf:
             wnf.write(original_code)
             wnf.close()
         intelligence.text.reload_tools()
-        messagebox.showinfo("编译完成 Finish compling", "编译完成！Finished compling")
+        messagebox.showinfo(languages[101], languages[101])
 
     def process_code(self):
         self.entrance_combo.configure(state=tk.NORMAL)
@@ -1648,19 +1719,19 @@ class Setting(tk.Tk):
                         selected_function != function_name):
                     continue
                 check = ttk.Checkbutton(
-                    self.bind_plugin_frame,
+                    self.bind_external_frame,
                     text=param_name,
                     variable=required_value,
                     onvalue=True, offvalue=False
                 )
                 type_combo = ttk.Combobox(
-                    self.bind_plugin_frame,
+                    self.bind_external_frame,
                     values=['string', 'integer', 'float', 'boolean'],
                     width=6, state='readonly',
                 )
                 if param_type != "unknown":
                     type_combo.set(param_type)
-                value_description = tk.Entry(self.bind_plugin_frame, width=10)
+                value_description = tk.Entry(self.bind_external_frame, width=10)
                 value_description.insert(0, "描述 Description")
                 self.required_check_button_value.update(
                     {param_name: {'check': check,
@@ -1688,14 +1759,16 @@ class Setting(tk.Tk):
         self.entrance_description.delete(0, tk.END)
         self.entrance_description.insert(0, function_doc_string)
 
+    @staticmethod
+    def select_folder(fill_box: tk.Entry | tk.Text):
+        fill_box.delete(0, tk.END)
+        fill_box.insert(0, filedialog.askdirectory(title=languages[103]))
+
     def select_file(self,
                     fill_box: tk.Entry | tk.Text, content_box: ScrolledText, running_func=None):
         self.is_selected_file = True
         fill_box.delete(0, tk.END)
-        fill_box.insert(0, filedialog.askopenfilename(
-            filetypes=[("Python Source", "*.py")],
-            title="选择文件 Select File"
-        ))
+        fill_box.insert(0, filedialog.askopenfilename(filetypes=[("Python Source", "*.py")], title=languages[102]))
         content_box.delete(0.0, tk.END)
         with open(fill_box.get(), "r", encoding="utf-8") as cf:
             content_box.insert(0.0, cf.read())
@@ -1870,11 +1943,7 @@ class Setting(tk.Tk):
             sf.close()
 
     def delete_character(self):
-        if not messagebox.askyesno(
-                "确认？Sure?",
-                "将删除所有含有角色的信息（模型、语音、设定，配置），并且无法恢复。请谨慎操作！\n\n"
-                "It will delete all information related to the character (model, voice, prompts, configuration), "
-                "and cannot be recovered. Please operate with caution!"):
+        if not messagebox.askyesno(languages[103], languages[104]):
             return
         delete_character(self.pet_character.get())
         clist = os.listdir("./resources/model")
@@ -1892,9 +1961,7 @@ class Setting(tk.Tk):
         if character in configure['model'].keys() or character == "origin":
             configure['default'] = character
         else:
-            messagebox.showwarning("警告 Warning",
-                                   f"资源中没有{character}。请前往动画绑定进行绑定后重试！\n"
-                                   f"{character} not found in resources. Please bind it first!")
+            messagebox.showwarning(languages[104], languages[105].format(character=character))
             return
         configure['name'] = self.pet_nickname_entry.get()
         configure['voice_model'] = self.voice_model_lists.get()
@@ -1921,7 +1988,7 @@ class Setting(tk.Tk):
         with open("./resources/configure.json", "w", encoding="utf-8") as sf:
             json.dump(configure, sf, indent=3, ensure_ascii=False)
             sf.close()
-            
+
     def change_opacity(self, event=None):
         opacity_value = float(self.opacity_scale.get())
         self.change_configure(opacity_value, "settings.transparency")
@@ -2044,19 +2111,19 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         # 对话输入框 Conversation input box
         self.conversation_entry = QTextEdit(self)
         self.conversation_entry.installEventFilter(self)
-        self.conversation_entry.setPlaceholderText(f"{configure['name']}等待您的聊天……")
+        self.conversation_entry.setPlaceholderText(f"{configure['name']} {languages[106]}")
         self.conversation_entry.setGeometry(QRect((width - 350) // 2, height - 75, 200, 75))
         # 发送聊天按钮 Send chat button
         self.conversation_button = QPushButton(self)
-        self.conversation_button.setText("聊天(Shift + Enter)")
+        self.conversation_button.setText(f"{languages[80]}")
         self.conversation_button.setGeometry(QRect((width - 350) // 2 + 200, height - 75, 150, 25))
         # 清除记忆的按钮 Clear memories button
         self.clear_memories_button = QPushButton(self)
-        self.clear_memories_button.setText("清除记忆(Alt + C)")
+        self.clear_memories_button.setText(f"{languages[81]}")
         self.clear_memories_button.setGeometry(QRect((width - 350) // 2 + 200, height - 50, 150, 25))
         # 媒体按钮 Media button
         self.media_button = QPushButton(self)
-        self.media_button.setText("截屏(Alt + S)")
+        self.media_button.setText(f"{languages[82]}")
         self.media_button.setGeometry(QRect((width - 350) // 2 + 200, height - 25, 150, 25))
         # 聊天框 Chat box
         self.chat_box = QTextEdit(self)
@@ -2124,17 +2191,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             SetWindowLong(window_handle, GWL_EXSTYLE, new_exstyle)
         except Exception as e:
             self.is_transparent_raise = True
-            QMessageBox.warning(
-                self,
-                "警告 Warning",
-                "无法开启透明部分鼠标穿透\n请将此错误报告给作者 \n"
-                f"Failed to set window transparent for mouse events\n"
-                f"Please report this error to the author\n\n"
-                f"=====================================\n"
-                f"错误信息 Error information： \n{type(e).__name__}: {e}\n"
-                f"=====================================\n\n"
-                f"你将不能点击透明部分的区域！\n"
-                f"You will not be able to click on the transparent area!\n")
+            QMessageBox.warning(self, languages[105], f"{type(e).__name__}: {e}")
 
     def set_window_below_taskbar(self):
         """设置低于任务栏(高于其它除了任务栏的应用)"""
@@ -2341,7 +2398,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         self.conversation_button.setVisible(False)
         self.media_button.setVisible(False)
         self.clear_memories_button.setVisible(False)
-        self.chat_box.setText(f"{configure['name']}思考中...\n{configure['name']} is thinking...")
+        self.chat_box.setText(f"{configure['name']} {languages[79]}")
 
         if self.image_path is None and "$[图片]$" not in self.conversation_entry.toPlainText():
             text_generate = TextGenerateThread(
@@ -2395,22 +2452,11 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                     f"{model}.model{'3' if live2d.LIVE2D_VERSION == 3 else ''}.json")
                 self.pet_model.LoadModelJson(self.model_json_path)
         except (KeyError, FileNotFoundError):
-            messagebox.showerror("模型错误 Model Error",
-                                 "模型可能不支持Live2D Cubism 2.0 Core。\n"
-                                 "如果是2.0 Core则可能使用64位应用程序建模。不支持32位应用程序\n\n"
-                                 "Model is not supported for Live2D Cubism 2.0 Core\n"
-                                 "If the model is 2.0 Core, it may use 64-bits application built. "
-                                 "It's not supported for 32-bits application")
-            if messagebox.askyesno("兼容模型 Compatible Model",
-                                   "您的模型不支持Live2D Cubism 2.0 Core，程序内置2.0 Core的模型，是否启用？"
-                                   "\n\nYour model is not supported for Live2D Cubism 2.0 Core, "
-                                   "The program built-in 2.0 Core model, "
-                                   "do you want to enable it?"):
+            messagebox.showerror(languages[107], languages[109])
+            if messagebox.askyesno(languages[108], languages[110]):
                 configure['default'] = 'kasumi2'
                 load_template_model(configure['default'])
-                messagebox.showinfo("兼容模型 Compatible Model",
-                                    "需要重启程序，以启用兼容模型\n"
-                                    "You need to restart the program to enable the compatible model")
+                messagebox.showinfo(languages[108], languages[111])
                 with open("./resources/configure.json", "w", encoding="utf-8") as sf:
                     json.dump(configure, sf, indent=3, ensure_ascii=False)
                     sf.close()
@@ -2484,13 +2530,13 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
         content_menu = QMenu(self)
 
-        settings_action = QAction("设置 Settings", self)
+        settings_action = QAction(languages[68], self)
         settings_action.triggered.connect(lambda: Setting().mainloop())
         content_menu.addAction(settings_action)
 
         content_menu.addSeparator()
 
-        conversation_action = QAction("进行对话 Have Conversations", self)
+        conversation_action = QAction(languages[69], self)
         conversation_action.triggered.connect(self.open_close_conversation)
         content_menu.addAction(conversation_action)
 
@@ -2499,36 +2545,36 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         # IO控制 IO control
         # 录屏兼容模式 Capture compatibility mode
         compatibility_action = QAction(
-            f"{'√' if configure['settings']['compatibility'] else ''} 录屏兼容 Capture Compatible", self)
+            f"{'√' if configure['settings']['compatibility'] else ''} {languages[12]}", self)
         compatibility_action.triggered.connect(lambda: io_configure(
             "{compatibility}", "settings.compatibility", bool))
         content_menu.addAction(compatibility_action)
 
         globe_mouse_penetration_action = QAction(
-            f"{'√' if configure['settings']['penetration']['enable'] else ''} 全局鼠标穿透 Global Mouse Penetration", self)
+            f"{'√' if configure['settings']['penetration']['enable'] else ''} {languages[19]}", self)
         globe_mouse_penetration_action.triggered.connect(lambda: io_configure(
             "{penetration}", "settings.penetration.enable", bool))
         content_menu.addAction(globe_mouse_penetration_action)
 
         # 语音识别 Recognition
         recognition_action = QAction(
-            f"{'√' if configure['settings']['enable']['rec'] else ''} 语音识别 Recognition", self)
+            f"{'√' if configure['settings']['enable']['rec'] else ''} {languages[13]}", self)
         recognition_action.triggered.connect(lambda: io_configure("rec"))
         content_menu.addAction(recognition_action)
 
         # AI语音 AI voice
-        ai_voice = QAction(f"{'√' if configure['settings']['enable']['tts'] else ''} AI语音 AI Voice", self)
+        ai_voice = QAction(f"{'√' if configure['settings']['enable']['tts'] else ''} {languages[14]}", self)
         ai_voice.triggered.connect(lambda: io_configure("tts"))
         content_menu.addAction(ai_voice)
 
         # 联网搜索 Online search
         online_search = QAction(
-            f"{'√' if configure['settings']['enable']['online'] else ''} 联网搜索 Online Search", self)
+            f"{'√' if configure['settings']['enable']['online'] else ''} {languages[15]}", self)
         online_search.triggered.connect(lambda: io_configure("online"))
         content_menu.addAction(online_search)
 
         # 翻译 Translate
-        translate = QAction(f"{'√' if configure['settings']['enable']['trans'] else ''} 翻译 Translate",
+        translate = QAction(f"{'√' if configure['settings']['enable']['trans'] else ''} {languages[16]}",
                             self)
         translate.triggered.connect(lambda: io_configure("trans"))
         content_menu.addAction(translate)
@@ -2538,7 +2584,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
         # 选择菜单 Switch menu
         # 切换角色菜单 Switch character menu
-        change_character_menu = QMenu("切换角色 Change Character", self)
+        change_character_menu = QMenu(languages[70], self)
         for index, character in enumerate(os.listdir("./resources/model")):
             character_action = QAction(
                 f"{'√' if character == configure_default else ' '} {character}({configure['name']})", self)
@@ -2548,8 +2594,8 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         content_menu.addMenu(change_character_menu)
 
         # 自动翻译菜单 Auto translation menu
-        translation_menu = QMenu("自动翻译 Auto Trans", self)
-        translation_tool_menu = QMenu("翻译工具 Trans Tools", self)
+        translation_menu = QMenu(languages[71], self)
+        translation_tool_menu = QMenu(languages[72], self)
 
         # 爬虫翻译 Spider Translate
         translation_tool_spider_menu = QMenu(
@@ -2575,7 +2621,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         content_menu.addMenu(translation_menu)
 
         # 语音模型切换菜单 Voice model switch menu
-        voice_model_menu = QMenu("语音模型 Voice Model", self)
+        voice_model_menu = QMenu(languages[6], self)
         for model in MODULE_INFO.keys():
             model_action = QAction(f"{'√' if model == configure['voice_model'] else ' '} {model}", self)
             model_action.triggered.connect(lambda checked, m=model: change_configure("voice_model", m))
@@ -2584,7 +2630,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             content_menu.addMenu(voice_model_menu)
 
         # 成人模式菜单 Adult content menu
-        adult_content_menu = QMenu("成人模式 Adult Content", self)
+        adult_content_menu = QMenu(languages[5], self)
         for level in range(configure['model'][configure['default']]['adult']['AdultLevelMinimum'],
                            configure['model'][configure['default']]['adult']['AdultLevelMaximum'] + 1):
             adult_content_action = QAction(
@@ -2595,7 +2641,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         if configure['adult_level']:
             content_menu.addMenu(adult_content_menu)
 
-        exit_menu = QAction("退出 Exit", self)
+        exit_menu = QAction(languages[73], self)
         exit_menu.triggered.connect(self.exit_program)
         content_menu.addAction(exit_menu)
 

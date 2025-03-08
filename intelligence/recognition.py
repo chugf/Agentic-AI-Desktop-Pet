@@ -114,7 +114,7 @@ class XFRealTimeSpeechRecognizer:
         self.close_func = close_func
 
         self.CommonArgs = {"app_id": API_ID}
-        self.BusinessArgs = {"domain": "iat", "language": "zh_cn", "accent": "mandarin", "vinfo": 1, "vad_eos": 10000}
+        self.BusinessArgs = {"domain": "iat", "language": "Chinese (Simplified)_China", "accent": "mandarin", "vinfo": 1, "vad_eos": 10000}
 
     @staticmethod
     def create_url():

@@ -5,9 +5,10 @@
    "watermark": "ParamMouthUp;0.0",
    "adult_level": 0,
    "settings": {
+      "language": "",
       "transparency": 0.9,
       "compatibility": true,
-      "intelligence": "qwen-plus",
+      "intelligence": "deepseek-r1",
       "translate": "ai.tongyi",
       "live2d": {
          "enable": {
@@ -180,108 +181,6 @@
                "welcome2.wav",
                "welcome3.wav"
             ]
-         }
-      },
-      "Mao": {
-         "adult": {
-            "AdultContent": false,
-            "AdultLevelMinimum": 1,
-            "AdultLevelMaximum": 5,
-            "AdultDescribe": {
-               "1": "娇喘 Gasp",
-               "2": "裸露 Nudity",
-               "3": "行为 Sex",
-               "4": "互动 Interact",
-               "5": "模拟 Simulate"
-            },
-            "action": {
-               "ActionSex": []
-            },
-            "voice": {
-               "VoiceGasp": []
-            }
-         },
-         "action": {
-            "ActionTouchHead": {
-               "position": [
-                  177,
-                  225,
-                  66,
-                  85
-               ],
-               "motion": "TapBody:motions/mtn_03.motion3.json:1",
-               "play": "",
-               "play_type": "",
-               "expression": ""
-            },
-            "ActionTouchLeg": {
-               "position": [
-                  166,
-                  226,
-                  236,
-                  347
-               ],
-               "motion": "::",
-               "expression": "unstand",
-               "play": "",
-               "play_type": ""
-            },
-            "ActionClickCap": {
-               "position": [
-                  0,
-                  267,
-                  0,
-                  79
-               ],
-               "motion": "TapBody:motions/mtn_04.motion3.json:2",
-               "expression": "",
-               "play": "",
-               "play_type": ""
-            },
-            "ActionClickChest": {
-               "position": [
-                  175,
-                  226,
-                  142,
-                  167
-               ],
-               "motion": "::",
-               "play": "",
-               "play_type": "",
-               "expression": "redface"
-            },
-            "ActionTouchCustom": {
-               "position": [
-                  186,
-                  213,
-                  216,
-                  240
-               ],
-               "motion": "TapBody:motions/special_01.motion3.json:3",
-               "expression": "",
-               "play": "",
-               "play_type": ""
-            },
-            "ActionClickCustom": {
-               "position": [
-                  64,
-                  133,
-                  200,
-                  280
-               ],
-               "motion": "TapBody:motions/special_03.motion3.json:5",
-               "expression": "",
-               "play": "",
-               "play_type": ""
-            }
-         },
-         "voice": {
-            "angry": [],
-            "coquetry": [],
-            "happy": [],
-            "sad": [],
-            "stable": [],
-            "welcome": []
          }
       }
    },
