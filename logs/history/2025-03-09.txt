@@ -230,3 +230,15 @@ DesktopPet initialized successfully, Live2D initialized successfully.
  [LOGGING]: 
 程序退出 Program exit
 }
+{
+	[2025-03-09 16:14:19] 
+ [LOGGING]: 
+桌宠初始化完成 Live2D初始化完成
+DesktopPet initialized successfully, Live2D initialized successfully.
+
+}
+{
+	[2025-03-09 16:14:42] 
+ [LOGGING]: 
+程序退出 Program exit
+}

@@ -18,10 +18,10 @@
          }
       },
       "enable": {
-         "tts": true,
+         "tts": false,
          "media": false,
-         "online": true,
-         "trans": true,
+         "online": false,
+         "trans": false,
          "rec": false,
          "locktsk": true
       },
@@ -30,7 +30,7 @@
          "start": "next"
       },
       "cloud": {
-         "aliyun": "sk-95d641171ebf424a87e92afc943b8bb0",
+         "aliyun": "",
          "xunfei": {
             "id": "",
             "key": "",
@@ -46,7 +46,7 @@
          }
       },
       "tts": {
-         "way": "local",
+         "way": "cloud",
          "top_k": 20,
          "top_p": 0.8,
          "temperature": 0.8,
