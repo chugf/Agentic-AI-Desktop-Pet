@@ -70,6 +70,11 @@ def process_human_information(name: str, age: int, gender: str):
 | GetName           | subscribe.Character | null | 获取角色名称              |
 | GetVoiceModel     | subscribe.Model     | null | 获取声音模型名称            |
 
+| API名称          | 继承路径                    | 参数          | 用途描述             |
+|----------------|-------------------------|-------------|------------------|
+| InsertNotebook | subscribe.views.Setting | frame, text | 插入一个Frame进设置的选项卡 |
+| DeleteNotebook | subscribe.views.Setting | frame       | 删除一个Frame的选项卡    |
+
 ---
 
 ## 📦 支持的外置库

@@ -11,7 +11,10 @@
 
 ## 🌟 Project Overview
 
-This is an AI-driven desktop pet application that supports highly customizable character appearances, animations, and conversation features. It can interact with users through voice recognition and respond in real-time to touch operations. Whether you are a tech enthusiast or a regular user, you can easily get started and enjoy a personalized experience.
+This is an AI-driven desktop pet application that supports highly customizable character appearances, animations, and
+conversation features. It can interact with users through voice recognition and respond in real-time to touch
+operations. Whether you are a tech enthusiast or a regular user, you can easily get started and enjoy a personalized
+experience.
 
 > [!NOTE]
 > This is not just a desktop pet, but your digital assistant!
@@ -54,8 +57,8 @@ This is an AI-driven desktop pet application that supports highly customizable c
 Extension tools allow you to define new function call capabilities for the AI. For example:
 
 ```python 
-def process_human_information(name: str, age: int, gender: str): 
-    """ Example function to process human information. """ 
+def process_human_information(name: str, age: int, gender: str):
+    """ Example function to process human information. """
     return "Processing Complete!"
 ```
 
@@ -63,13 +66,18 @@ def process_human_information(name: str, age: int, gender: str):
 
 Using built-in API interfaces, you can quickly develop plugins. Here are some commonly used APIs:
 
-| API Name        | Inheritance Path           | Parameters | Description                          |
-|-----------------|----------------------------|------------|--------------------------------------|
-| GetLive2D       | subscribe.Live2D           | null       | Get Python properties of Live2D model|
-| GetWindowPosition| subscribe.Window           | null       | Get window position                  |
-| GetCharacter    | subscribe.Character         | null       | Get the name of the current Live2D model |
-| GetName         | subscribe.Character         | null       | Get character name                   |
-| GetVoiceModel   | subscribe.Model             | null       | Get voice model name                 |
+| API Name          | Inheritance Path    | Parameters | Description                              |
+|-------------------|---------------------|------------|------------------------------------------|
+| GetLive2D         | subscribe.Live2D    | null       | Get Python properties of Live2D model    |
+| GetWindowPosition | subscribe.Window    | null       | Get window position                      |
+| GetCharacter      | subscribe.Character | null       | Get the name of the current Live2D model |
+| GetName           | subscribe.Character | null       | Get character name                       |
+| GetVoiceModel     | subscribe.Model     | null       | Get voice model name                     |
+
+| API Name       | Inheritance Path        | Parameters  | Description      |
+|----------------|-------------------------|-------------|------------------|
+| InsertNotebook | subscribe.views.Setting | frame, text | 插入一个Frame进设置的选项卡 |
+| DeleteNotebook | subscribe.views.Setting | frame       | 删除一个Frame的选项卡    |
 
 ---
 
@@ -77,22 +85,22 @@ Using built-in API interfaces, you can quickly develop plugins. Here are some co
 
 The following is a list of core libraries this project depends on:
 
-| Library Name     | Version      |
-|------------------|--------------|
-| pyqt5            | latest       |
-| pyopengl         | latest       |
-| pypiwin32        | latest       |
-| live2d-py        | latest       |
-| dashscope        | latest       |
-| markdown         | latest       |
-| requests         | latest       |
-| pyaudio          | latest       |
-| numpy            | latest       |
-| websocket-client | latest       |
-| mss              | latest       |
-| pydantic         | latest       |
-| uvicorn          | latest       |
-| fastapi          | latest       |
+| Library Name     | Version |
+|------------------|---------|
+| pyqt5            | latest  |
+| pyopengl         | latest  |
+| pypiwin32        | latest  |
+| live2d-py        | latest  |
+| dashscope        | latest  |
+| markdown         | latest  |
+| requests         | latest  |
+| pyaudio          | latest  |
+| numpy            | latest  |
+| websocket-client | latest  |
+| mss              | latest  |
+| pydantic         | latest  |
+| uvicorn          | latest  |
+| fastapi          | latest  |
 
 ---
 
