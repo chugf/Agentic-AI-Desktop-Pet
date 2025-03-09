@@ -5,7 +5,17 @@
 		"Textures": [
 			"Vanilla.1024/texture_00.png"
 		],
-		"DisplayInfo": "Vanilla.cdi3.json"
+		"DisplayInfo": "Vanilla.cdi3.json",
+		"Motions": {
+			"Idle": [
+				{
+					"File": "motions/vanilla_armfold.motion3.json"
+				},
+				{
+					"File": "motions/vanilla_eardown.motion3.json"
+				}
+			]
+		}
 	},
 	"Groups": [
 		{
@@ -23,5 +33,6 @@
 				"ParamEyeROpen"
 			]
 		}
-	]
+	],
+	"HitAreas": []
 }
