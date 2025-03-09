@@ -21,12 +21,11 @@ def whisper_speech_recognition(success_func, error_func, close_func, url):
     return recognition.WhisperRealTimeSpeechRecognizer(url, success_func, error_func, close_func)
 
 
-def text_generator(prompt, model, is_search_online: bool, url: str | None = None):
+def text_generator(prompt, model, is_search_online: bool, func: callable, url: str | None = None):
     if url is None:
-        a = text.TextGenerator(ALI_API_KEY).generate_text(prompt, model, is_search_online)
+        return text.TextGenerator(ALI_API_KEY).generate_text(prompt, model, func, is_search_online)
     else:
-        a = text.TextGeneratorLocal(prompt, url)
-    return a
+        return text.TextGeneratorLocal(prompt, func, url)
 
 
 def gsv_voice_generator(texts, language, module_name, module_info, top_k=12, top_p=0.95, temperature=0.34, speed=1.0,

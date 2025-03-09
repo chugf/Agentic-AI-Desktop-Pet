@@ -2,13 +2,13 @@
    "name": "香草",
    "voice_model": "香草",
    "default": "vanilla",
-   "watermark": "ParamMouthUp;0.0",
+   "watermark": "ParamHairBack;0.0",
    "adult_level": 0,
    "settings": {
-      "language": "",
-      "transparency": 0.9,
-      "compatibility": true,
-      "intelligence": "deepseek-r1",
+      "language": "Chinese (Simplified)_China",
+      "transparency": 1.0,
+      "compatibility": false,
+      "intelligence": "qwen-max-latest",
       "translate": "ai.tongyi",
       "live2d": {
          "enable": {
@@ -21,7 +21,7 @@
          "tts": true,
          "media": false,
          "online": true,
-         "trans": false,
+         "trans": true,
          "rec": false,
          "locktsk": true
       },
@@ -30,7 +30,7 @@
          "start": "next"
       },
       "cloud": {
-         "aliyun": "",
+         "aliyun": "sk-95d641171ebf424a87e92afc943b8bb0",
          "xunfei": {
             "id": "",
             "key": "",
@@ -94,7 +94,7 @@
                   0,
                   62
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "Idle:motions/vanilla_eardown.motion3.json:1",
                "play": "coquetry",
                "play_type": "random",
                "expression": ""

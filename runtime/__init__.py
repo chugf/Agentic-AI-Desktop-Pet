@@ -2,6 +2,11 @@ import os
 import tempfile
 
 import mss
+import requests
+
+major = "2"
+minor = "1"
+patch = "0"
 
 
 def capture() -> str:
@@ -14,5 +19,9 @@ def capture() -> str:
     return f"{tempfile.gettempdir()}/screenshot.png".replace("\\", "/")
 
 
-def record_system():
-    ...
+def check_update() -> bool:
+    latest_version = requests.post("http://adp.nekocode.top/update/version.php")
+    if latest_version.text == f"{major}.{minor}.{patch}":
+        return False
+    else:
+        return True

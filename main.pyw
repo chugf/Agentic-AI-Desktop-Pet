@@ -15,7 +15,6 @@ import re
 import random
 import typing
 import ast
-import struct
 import shutil
 import json
 # 音频数据处理 audio data processing
@@ -312,7 +311,8 @@ class MediaUnderstandThread(QThread):
             self.texts = random.choice(["你觉得我在干什么？", "你有什么想法呀？", "你觉得这个图片怎么样？", "请评价一下这图片"])
         try:
             answer = intelligence.text_generator(f"{self.image_path}看着这个图片{self.texts}",
-                                                 configure['settings']['intelligence'], self.is_search_online)
+                                                 configure['settings']['intelligence'], self.result.emit,
+                                                 self.is_search_online)
         except Exception as e:
             logger(f"子应用 - 媒体文件理解 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
@@ -321,7 +321,6 @@ class MediaUnderstandThread(QThread):
             return
         logger("子应用 - AI图文理解 调用成功 Sub Application - AI Media Understand Call Success\n"
                f"   Message: {answer}", logs.HISTORY_PATH)
-        self.result.emit(answer)
 
 
 class TextGenerateThread(QThread):
@@ -338,23 +337,22 @@ class TextGenerateThread(QThread):
             answer = intelligence.text_generator(
                 self.text,
                 configure['settings']['intelligence'],
-                self.is_search_online,
+                self.is_search_online, self.result.emit,
                 url=parse_local_url(configure['settings']['local']['text']
-                                    ) if configure['settings']['text']['way'] == "local" else None)
+                                    ) if configure['settings']['text']['way'] == "local" else None,)
         except Exception as e:
             logger(f"子应用 - AI剧情问答 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
-            self.result.emit((f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}",
-                              f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}"))
+            self.result.emit((f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}", None))
             return
         logger(f"子应用 - AI剧情问答 调用成功\n"
                f"   Message: {answer}", logs.HISTORY_PATH)
-        self.result.emit(answer)
+        self.result.emit((answer, None))
 
 
 class VoiceGenerateThread(QThread):
     """AI 文字转语音 (GSV) AI text-to-speech (GSV) module"""
-    result = pyqtSignal(list)
+    result = pyqtSignal(bytes)
 
     def __init__(self, parent: QOpenGLWidget, text: str):
         super().__init__(parent)
@@ -362,8 +360,10 @@ class VoiceGenerateThread(QThread):
 
     def run(self):
         # 数据预处理 data pre-processing
+        # 移除Markdown Remove Markdown
+        text = re.sub(r'(!|)(\[.*?])\(.*?\)', r'', self.text)
         # 排除表情等无需发音的内容 Exclude expressions such as emotion
-        text = re.sub(r'(\(.*）\))', '', self.text)
+        text = re.sub(r'(\(.*）\))', '', text)
         text = re.sub(r'(（.*）)', '', text)
         text = re.sub(r'(\[.*])', '', text)
         text = re.sub(r'(【.*】)', '', text)
@@ -389,46 +389,11 @@ class VoiceGenerateThread(QThread):
                 configure['settings']['tts']['batch_size'], configure['settings']['tts']['batch_threshold'],
                 parallel_infer=configure['settings']['tts']['parallel'],
                 url=parse_local_url(configure['settings']['local']['gsv']))
-            # 计算长度 Calculate length
-            riff_header = wav_bytes[:12]
-            if not riff_header.startswith(b'RIFF') or not riff_header[8:12] == b'WAVE':
-                raise ValueError("Invalid RIFF/WAVE header")
-
-            pos = 12
-            fmt_chunk_data = None
-            data_chunk_size = None
-
-            # 遍历所有块直到找到fmt和data块 find fmt and data chunks
-            while pos < len(wav_bytes):
-                chunk_id = wav_bytes[pos:pos + 4]
-                chunk_size = struct.unpack_from('<I', wav_bytes, pos + 4)[0]
-                pos += 8  # 跳过chunk id和size Break past chunk id and size
-
-                if chunk_id == b'fmt ':
-                    fmt_chunk_data = wav_bytes[pos:pos + chunk_size]
-                elif chunk_id == b'data':
-                    data_chunk_size = chunk_size
-                    break  # 找到data块后可以停止搜索 stop searching
-
-                pos += chunk_size
-                if chunk_size % 2 != 0:
-                    pos += 1
-
-            if fmt_chunk_data is None or data_chunk_size is None:
-                raise ValueError("fmt or data chunk missing in WAV file")
-
-            # 解析fmt块数据 Parse fmt chunk data
-            _, channels, sample_rate, byte_rate, block_align, bits_per_sample = struct.unpack_from('<HHIIHH',
-                                                                                                   fmt_chunk_data)
-
-            # 计算音频长度（秒） Calculate audio duration
-            duration = int(data_chunk_size / (sample_rate * channels * (bits_per_sample / 8)) * 1000)
         else:
-            wav_bytes, duration = intelligence.ali_voice_generator(text)
+            wav_bytes, _ = intelligence.ali_voice_generator(text)
 
-        logger(f"子应用 - AI语音(GSV) 调用成功\n"
-               f"   Duration {duration}\n", logs.HISTORY_PATH)
-        self.result.emit([wav_bytes, duration])
+        logger(f"子应用 - AI语音(GSV) 调用成功\n", logs.HISTORY_PATH)
+        self.result.emit(wav_bytes)
 
 
 # 鼠标监听器 Mouse listener
@@ -1179,7 +1144,7 @@ class Setting(tk.Tk):
         d = colorizer.ColorDelegator()
         p.insertfilter(d)
 
-        tk.Label(self.bind_external_frame, text=languages[39]).place(x=5, y=140)
+        tk.Label(self.bind_external_frame, text=languages[119]).place(x=5, y=140)
         self.entrance_combo = ttk.Combobox(self.bind_external_frame, width=20, state="readonly")
         self.entrance_combo.bind("<<ComboboxSelected>>", lambda event: self.process_code())
         self.entrance_combo.place(x=100, y=140)
@@ -1206,10 +1171,10 @@ class Setting(tk.Tk):
         self.plugin_folder_path.place(x=20, y=35)
         ttk.Button(self.bind_plugin_frame,
                    text=languages[40],
-                   command=lambda: self.select_folder(self.plugin_folder_path)
+                   command=lambda: self.select_folder(self.plugin_folder_path, self.auto_select_entrance)
                    ).place(x=500, y=35)
         self.plugin_code_review = ScrolledText(self.bind_plugin_frame, width=80, height=13)
-        self.plugin_code_review.insert(1.0, open("./interface/subscribe/example", "r", encoding="utf-8").read())
+        self.plugin_code_review.insert(1.0, open("interface/subscribe/example_basic", "r", encoding="utf-8").read())
         self.plugin_code_review.place(x=5, y=65)
         colorizer.color_config(self.plugin_code_review)
         p = percolator.Percolator(self.plugin_code_review)
@@ -1217,6 +1182,9 @@ class Setting(tk.Tk):
         p.insertfilter(d)
         self.run_plugin_btn = ttk.Button(self.bind_plugin_frame, text=languages[114], command=self.run_plugin)
         self.run_plugin_btn.place(x=5, y=250)
+
+        self.complie_plugin = ttk.Button(self.bind_plugin_frame, text=languages[41], command=self.complie_plugin)
+        self.complie_plugin.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.bind_note.add(self.bind_animation_frame, text=languages[42])
 
@@ -1468,6 +1436,7 @@ class Setting(tk.Tk):
         self.fill_rule()
 
         self.note.pack(fill=tk.BOTH, expand=True)
+        self.protocol("WM_DELETE_WINDOW", self.withdraw)
 
     @staticmethod
     def auto_record_position():
@@ -1565,15 +1534,20 @@ class Setting(tk.Tk):
         if self.model_list.get() not in configure['model'].keys():
             load_template_model(self.model_list.get())
 
+    def auto_select_entrance(self):
+        if os.path.isfile(f"{self.plugin_folder_path.get()}/main.py"):
+            self.plugin_code_review.delete(1.0, tk.END)
+            with open(f"{self.plugin_folder_path.get()}/main.py", "r", encoding="utf-8") as pf:
+                self.plugin_code_review.insert(1.0, str(pf.read()))
+                pf.close()
+        else:
+            messagebox.showerror("Error", languages[118])
+
     def run_plugin(self):
         def _wrapper():
             codes = self.plugin_code_review.get(1.0, tk.END)
-            global_ = {
-                "subscribe": interface_subscribe,
-                'live2d': live2d,
-            }
             try:
-                exec(codes, global_, locals())
+                exec(codes, global_)
                 self.run_plugin_btn['text'] = languages[114]
                 self.run_thread.stop_thread()
             except Exception as e:
@@ -1587,6 +1561,14 @@ class Setting(tk.Tk):
         else:
             self.run_plugin_btn['text'] = languages[114]
             self.run_thread.stop_thread()
+
+    def complie_plugin(self):
+        try:
+            shutil.copytree(self.plugin_folder_path.get(),
+                            f"{os.getcwd()}/plugin/{os.path.basename(self.plugin_folder_path.get())}")
+            messagebox.showinfo(languages[101], languages[101])
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     def complie_external(self):
         template = {
@@ -1760,9 +1742,11 @@ class Setting(tk.Tk):
         self.entrance_description.insert(0, function_doc_string)
 
     @staticmethod
-    def select_folder(fill_box: tk.Entry | tk.Text):
+    def select_folder(fill_box: tk.Entry | tk.Text, run_after_selected=None):
         fill_box.delete(0, tk.END)
         fill_box.insert(0, filedialog.askdirectory(title=languages[103]))
+        if run_after_selected is not None:
+            run_after_selected()
 
     def select_file(self,
                     fill_box: tk.Entry | tk.Text, content_box: ScrolledText, running_func=None):
@@ -1961,7 +1945,7 @@ class Setting(tk.Tk):
         if character in configure['model'].keys() or character == "origin":
             configure['default'] = character
         else:
-            messagebox.showwarning(languages[104], languages[105].format(character=character))
+            messagebox.showwarning(languages[105], languages[117].format(character=character))
             return
         configure['name'] = self.pet_nickname_entry.get()
         configure['voice_model'] = self.voice_model_lists.get()
@@ -1973,14 +1957,19 @@ class Setting(tk.Tk):
             sf.close()
 
         configure_default = character
+        interface_subscribe.Register().SetCharacter(character)
+        interface_subscribe.Register().SetVoiceModel(self.voice_model_lists.get())
+        interface_subscribe.Register().SetName(self.pet_nickname_entry.get())
         live2d.dispose()
         live2d.init()
         ex.close()
         ex = DesktopTop()
+        interface_subscribe.AttributeRegister().SetWindow(ex)
         ex.show()
 
     def change_refer_text(self, event):
         refer_text = MODULE_INFO[self.voice_model_lists.get()][3]
+        interface_subscribe.Register().SetVoiceModel(self.voice_model_lists.get())
         self.voice_text_entry.delete(0, tk.END)
         self.voice_text_entry.insert(0, refer_text)
         configure['voice_model'] = self.voice_model_lists.get()
@@ -2167,8 +2156,6 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                 f"{random.choice(configure['model'][configure['default']]['voice']['welcome'])}"
             ).start()
 
-        self.show()
-
     # GUI功能性配置 GUI functional configuration
     def set_mouse_transparent(self, is_transparent: bool):
         """设置鼠标穿透 (透明部分可以直接穿过)"""
@@ -2299,77 +2286,19 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
                 return f'{original_tag} />'
 
-            return re.sub(r'(<img[^>]*)/', __closure, html_text)
+            try:
+                return re.sub(r'(<img[^>]*)/', __closure, html_text)
+            except TypeError:
+                return None
 
-        def __exec(information: list):
-            """
-            :param information: 0 -> wav_bytes 1 -> duration
-            """
-            def __closure():
-                # 闭包函数
-                nonlocal text_begin, is_emotion
-                flot_timer.stop()
-                if isinstance(text_begin, int):
-                    if text_begin < len(common_text) - 1:
-                        text_begin += 1
-                        self.chat_box.setVisible(True)
-                        self.chat_box.setText(str(self.chat_box.toPlainText()) + common_text[text_begin:text_begin + 1])
-                        self.chat_box.moveCursor(self.chat_box.textCursor().End)
-                        if common_text[text_begin:text_begin + 2] in rules.keys():
-                            self.playAnimationEvent(rules[common_text[text_begin:text_begin + 2]], "expr")
-                        # 处理括号之间的表情等内容 Process the contents between brackets
-                        if common_text[text_begin:text_begin + 1] in (")", "]", "）", "】") and is_emotion:
-                            is_emotion = False
-                        if common_text[text_begin:text_begin + 1] in ("(", "[", "（", "【") or is_emotion:
-                            is_emotion = True
-                            flot_timer.start(35)
-                        else:
-                            is_emotion = False
-                            flot_timer.start(125)
-                    else:
-                        text_begin = "END"
-                        flot_timer.start(1000 + (
-                            max(0, int(information[1] - (time.time() - start_time) * 1000))
-                            if VoiceSwitch else
-                            100
-                            )
-                        )
-
-                else:
-                    self.chat_box.clear()
-                    self.chat_box.setHtml(markdown_text)
-                    self.chat_box.moveCursor(self.chat_box.textCursor().End)
-                    if text_begin == "Endless":
-                        self.chat_box.setGeometry(QRect(25, 225, 350, 100))
-                        self.change_status_for_conversation("hide")
-                        self.chat_box.clear()
-                        text_begin = "END"
-                    elif text_begin == "Recover":
-                        self.chat_box.setGeometry(QRect(25, 225, 350, 100))
-                        self.change_status_for_conversation("show", False)
-                    elif "<img" in markdown_text:
-                        self.chat_box.setGeometry(QRect(0, 50, self.width(), self.height() - 125))
-                        if temp_action:
-                            text_begin = "Endless"
-                        else:
-                            text_begin = "Recover"
-                        flot_timer.start(20000)
-                    elif not temp_action:
-                        self.change_status_for_conversation("show", False)
-                    elif temp_action:
-                        text_begin = "Endless"
-                        flot_timer.start(3000)
-
+        def __exec():
             self.chat_box.clear()
-            start_time = time.time()
-            text_begin = -1
-            is_emotion = False
-            if information[0] is not None:
-                SpeakThread(self, information[0]).start()
-
-            flot_timer = QTimer(self)
-            flot_timer.timeout.connect(__closure)
-            flot_timer.start(5)
+            self.chat_box.setVisible(True)
+            self.chat_box.setHtml(markdown_text)
+            self.chat_box.moveCursor(self.chat_box.textCursor().End)
+            if common_text is not None:
+                if common_text[-2:] in rules.keys():
+                    self.playAnimationEvent(rules[common_text[-2:]], "expr")
 
         if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
             open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8").close()
@@ -2381,12 +2310,18 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         markdown_text = __processor(text[1])
 
         if ((VoiceSwitch and configure['settings']['tts']['way'] == "local") or
-                configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts']:
+                configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts'] and \
+                markdown_text is None:
             VGT = VoiceGenerateThread(self, common_text)
-            VGT.result.connect(__exec)
+            VGT.result.connect(lambda wave_bytes: SpeakThread(self, wave_bytes).start())
             VGT.start()
         else:
-            __exec([None, 0])
+            __exec()
+        if markdown_text is None:
+            self.conversation_entry.setVisible(True)
+            self.conversation_button.setVisible(True)
+            self.clear_memories_button.setVisible(True)
+            self.media_button.setVisible(True)
 
     def have_conversation(self, text: str | None = None, temp_action: bool = False):
         """进行聊天 Send conversation"""
@@ -2513,6 +2448,8 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                 cf.close()
 
         def change_configure(relative, value):
+            if "voice" in relative:
+                interface_subscribe.Register().SetVoiceModel(value)
             temp_dict = configure
 
             for key in relative.split(".")[:-1]:
@@ -2531,7 +2468,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         content_menu = QMenu(self)
 
         settings_action = QAction(languages[68], self)
-        settings_action.triggered.connect(lambda: Setting().mainloop())
+        settings_action.triggered.connect(lambda: Setting.deiconify())
         content_menu.addAction(settings_action)
 
         content_menu.addSeparator()
@@ -2583,16 +2520,6 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         content_menu.addSeparator()
 
         # 选择菜单 Switch menu
-        # 切换角色菜单 Switch character menu
-        change_character_menu = QMenu(languages[70], self)
-        for index, character in enumerate(os.listdir("./resources/model")):
-            character_action = QAction(
-                f"{'√' if character == configure_default else ' '} {character}({configure['name']})", self)
-            character_action.triggered.connect(lambda checked, c=character: change_configure("default", c))
-            change_character_menu.addAction(character_action)
-
-        content_menu.addMenu(change_character_menu)
-
         # 自动翻译菜单 Auto translation menu
         translation_menu = QMenu(languages[71], self)
         translation_tool_menu = QMenu(languages[72], self)
@@ -2781,7 +2708,11 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
         self.update()
 
-    def is_in_live2d_area(self, click_x, click_y):
+    def is_in_live2d_area(self, click_x: int | None = None, click_y: int | None = None):
+        if click_x is None:
+            click_x = QCursor.pos().x() - self.x()
+        if click_y is None:
+            click_y = QCursor.pos().y() - self.y()
         """检查是否在模型内 Check whether the mouse is in the model"""
         h = self.height()
         try:
@@ -2937,6 +2868,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             param_dict.update({str(param.id): {
                 "value": param.value, "max": param.max, "min": param.min, "default": param.default,
             }})
+        interface_subscribe.AttributeRegister().SetPet(self.pet_model)
         self.startTimer(self.fps_refresh)
 
     def on_resize(self, width, height):
@@ -2974,6 +2906,11 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
 
+global_ = {
+    "subscribe": interface_subscribe,
+    'live2d': live2d,
+}
+thread_exception_tool: list = []
 live2d.setLogEnable(False)
 live2d.init()
 MouseListener = MouseListener()
@@ -2983,4 +2920,17 @@ logger("桌宠初始化完成 Live2D初始化完成\n"
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = DesktopTop()
+    ex.show()
+    interface_subscribe.AttributeRegister().SetWindow(ex)
+
+    Setting = Setting()
+    interface_subscribe.views.RegisterSetting.register(Setting)
+    for to_be_loaded_plugin in os.listdir("./plugin"):
+        thread_exception_tool.append(ThreadExceptionEnd(
+            lambda: exec(open(f"./plugin/{to_be_loaded_plugin}/main.py").read(), global_)))
+    for thread in thread_exception_tool:
+        thread.start()
+    Setting.withdraw()
+    Setting.mainloop()
+
     sys.exit(app.exec_())

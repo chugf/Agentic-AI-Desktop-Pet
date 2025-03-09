@@ -104,7 +104,6 @@ def tts(param: TTS):
         "result": base64.b64encode(response.content).decode("utf-8")
     })
 
-
 if __name__ == "__main__":
     threading.Thread(target=subprocess.run, args=(rf".\runtime\python api_v2.py -a "
                                                   rf"{ip} -p {ttk_port}",)).start()

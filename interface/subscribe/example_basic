@@ -1,0 +1,14 @@
+import typing
+
+print(f"{'=' * 20} Supported {'=' * 20}")
+# Show Callable function
+for m in dir(subscribe):
+    if isinstance(getattr(subscribe, m), typing.Callable):
+        print(f"subscribe.{m}()")
+        print(dir(getattr(subscribe, m)()))
+print(f"{'=' * 20} Supported {'=' * 20}")
+# Request character model
+print(subscribe.Character().GetCharacter())
+# Start a motion
+subscribe.Live2D().GetLive2D().StartRandomMotion()
+
