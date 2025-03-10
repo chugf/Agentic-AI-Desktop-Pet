@@ -99,15 +99,11 @@
   },
   {
    "optionDest": "datas",
-   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/external;external/"
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/external;intelligence/external/"
   },
   {
    "optionDest": "datas",
    "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/interface;interface/"
-  },
-  {
-   "optionDest": "datas",
-   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/external;external/"
   }
  ],
  "nonPyinstallerOptions": {

@@ -11,7 +11,7 @@ import sys
 import os
 
 # 数据处理 Data Processing
-import re
+import re   
 import random
 import typing
 import ast
@@ -343,7 +343,8 @@ class TextGenerateThread(QThread):
         except Exception as e:
             logger(f"子应用 - AI剧情问答 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
-            self.result.emit((f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}", None))
+            self.result.emit((f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}",
+                              f"AI问答 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}"))
             return
         logger(f"子应用 - AI剧情问答 调用成功\n"
                f"   Message: {answer}", logs.HISTORY_PATH)
@@ -2291,14 +2292,9 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             except TypeError:
                 return None
 
-        def __exec():
-            self.chat_box.clear()
-            self.chat_box.setVisible(True)
-            self.chat_box.setHtml(markdown_text)
-            self.chat_box.moveCursor(self.chat_box.textCursor().End)
-            if common_text is not None:
-                if common_text[-2:] in rules.keys():
-                    self.playAnimationEvent(rules[common_text[-2:]], "expr")
+        def __temp():
+            _temp_timer.stop()
+            self.chat_box.setVisible(False)
 
         if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
             open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8").close()
@@ -2309,6 +2305,15 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         common_text = text[0]
         markdown_text = __processor(text[1])
 
+        if markdown_text is None:
+            if temp_action:
+                _temp_timer = QTimer(self)
+                _temp_timer.timeout.connect(__temp)
+                _temp_timer.start(5000)
+            else:
+                self.change_status_for_conversation("show", False)
+            return
+
         if ((VoiceSwitch and configure['settings']['tts']['way'] == "local") or
                 configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts'] and \
                 markdown_text is None:
@@ -2316,12 +2321,13 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             VGT.result.connect(lambda wave_bytes: SpeakThread(self, wave_bytes).start())
             VGT.start()
         else:
-            __exec()
-        if markdown_text is None:
-            self.conversation_entry.setVisible(True)
-            self.conversation_button.setVisible(True)
-            self.clear_memories_button.setVisible(True)
-            self.media_button.setVisible(True)
+            self.chat_box.clear()
+            self.chat_box.setVisible(True)
+            self.chat_box.setHtml(markdown_text)
+            self.chat_box.moveCursor(self.chat_box.textCursor().End)
+            if common_text is not None:
+                if common_text[-2:] in rules.keys():
+                    self.playAnimationEvent(rules[common_text[-2:]], "expr")
 
     def have_conversation(self, text: str | None = None, temp_action: bool = False):
         """进行聊天 Send conversation"""
