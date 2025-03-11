@@ -12,9 +12,9 @@
 > [!CAUTION]
 > The program is scheduled to undergo an architectural reconstruction starting from March 14, 2025. After the reconstruction, the architecture will be updated to `Version 3 (Active&Beauty)`. Please note that the new architecture may not be backward compatible with the previous versions...
 >
-> The update will transition the architectural version from Version 2 (Loader&Processor) to Version 3 (Active&Beauty)
+> The update will transition the architectural version from `Version 2 (Loader&Processor)` to `Version 3 (Active&Beauty)`
 > 
-> The program version will be upgraded from Stable Version 2.1.1 to Stable Version 2.2.0.
+> The program version will be upgraded from `Stable Version 2.1.1` to `Stable Version 2.2.0`.
 
 ---
 
