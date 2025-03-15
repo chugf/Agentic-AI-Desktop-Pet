@@ -1,4 +1,5 @@
 pyqt5
+PyQt-Fluent-Widgets[full]
 pyopengl
 pypiwin32
 live2d-py

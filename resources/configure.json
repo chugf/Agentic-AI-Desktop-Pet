@@ -2,12 +2,12 @@
    "name": "香草",
    "voice_model": "香草",
    "default": "vanilla",
-   "watermark": "ParamHairBack;0.0",
+   "watermark": "ParamMouthOpenY;1.0",
    "adult_level": 0,
    "settings": {
       "language": "",
       "transparency": 1.0,
-      "compatibility": false,
+      "compatibility": true,
       "intelligence": "qwen-max-latest",
       "translate": "ai.tongyi",
       "live2d": {

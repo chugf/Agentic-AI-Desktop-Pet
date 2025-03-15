@@ -6,7 +6,7 @@ import markdown
 import dashscope
 
 memories = []
-with open("./intelligence/prompts/vanilla.json", "r", encoding="utf-8") as f:
+with open("./sub_intelligence/prompts/vanilla.json", "r", encoding="utf-8") as f:
     prompts = json.load(f)
     for role, content in prompts.items():
         memories.append({"role": re.sub(r'\d+', '', role), "content": [{"text": content}]})
