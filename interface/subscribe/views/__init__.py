@@ -1,32 +1,16 @@
-import tkinter
+from .Config import _Config
+from . import setting
+from . import Register
 
 
-class _Config:
+class Setting(setting.Setting):
     def __init__(self):
-        self._config = {
-            "setting": None
-        }
-
-    def register(self, relative, callback):
-        self._config[relative] = callback
-
-    @property
-    def setting(self) -> callable:
-        return self._config["setting"]
+        super().__init__(_Config)
 
 
-class Setting:
-    def InsertNotebook(self, frame: tkinter.Frame, text: str):
-        _Config.setting.note.add(frame, text=text)
-
-    def DeleteNotebook(self, frame: tkinter.Frame):
-        _Config.setting.note.forget(frame)
-
-
-class RegisterSetting:
-    @staticmethod
-    def register(master):
-        _Config.register("setting", master)
+class RegisterSetting(Register.RegisterSetting):
+    def __init__(self):
+        super().__init__(_Config)
 
 
 _Config = _Config()

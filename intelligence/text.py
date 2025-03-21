@@ -144,6 +144,9 @@ class CustomGenerator:
                 "target_lang": "Japanese"
             }
         )
-        message = completion.output.choices[0].message.content
+        try:
+            message = completion.output.choices[0].message.content
+        except AttributeError:
+            message = None
         self.messages.append({"role": "assistant", "content": message})
         return message

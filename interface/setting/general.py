@@ -1,16 +1,15 @@
 import os
 import typing
 
-from . import constants
-from . import function
+from .customize import function, constants
 
 from PyQt5.Qt import QRect, Qt
 from PyQt5.QtWidgets import QFrame
-from qfluentwidgets import ComboBox, LineEdit, PushButton, Slider, BodyLabel
+from qfluentwidgets import ComboBox, LineEdit, PushButton, Slider, BodyLabel, InfoBar, InfoBarPosition
 
 
 class General(QFrame):
-    def __init__(self, languages, configure, module_info, param_dict):
+    def __init__(self, languages, configure, module_info, param_dict, **kwargs):
         super().__init__()
         self.languages = languages
         self.configure = configure
@@ -79,12 +78,15 @@ class General(QFrame):
         self.select_ai_speak = ComboBox(self)
         self.select_ai_speak.addItems(list(self.module_info.keys()))
         self.select_ai_speak.setCurrentText(self.configure['voice_model'])
+        self.select_ai_speak.currentTextChanged.connect(self.change_reference)
         self.select_ai_speak.setGeometry(QRect(100, 165, 230, 35))
         self.input_reference_text = LineEdit(self)
         self.input_reference_text.setPlaceholderText("Reference Text here")
         self.input_reference_text.setClearButtonEnabled(True)
         self.input_reference_text.setGeometry(QRect(5, 205, 470, 35))
         self.click_play_reference = PushButton(self.languages[7], self)
+        self.click_play_reference.clicked.connect(
+            lambda: kwargs.get("play")(self.input_reference_text.text()))
         self.click_play_reference.setGeometry(QRect(490, 205, 80, 35))
         # 水印 Watermark
         BodyLabel(self.languages[8], self).setGeometry(QRect(5, 245, 80, 35))
@@ -102,7 +104,7 @@ class General(QFrame):
         # 透明度 Opacity
         BodyLabel(self.languages[9], self).setGeometry(QRect(5, 295, 80, 35))
         self.scale_opacity = Slider(Qt.Horizontal, self)
-        self.scale_opacity.setRange(0, constants.OPACITY_PRECISION)
+        self.scale_opacity.setRange(5, constants.OPACITY_PRECISION)
         self.scale_opacity.setGeometry(QRect(100, 300, 230, 35))
         self.scale_opacity.setValue(int(self.configure['settings']['transparency'] * constants.OPACITY_PRECISION))
         self.scale_opacity.valueChanged.connect(
@@ -115,7 +117,13 @@ class General(QFrame):
         self.click_delete_character.setGeometry(QRect(550, 420, 80, 35))
 
         self.fill_information()
-    
+
+    def change_reference(self):
+        refer_text = self.module_info[self.select_ai_speak.currentText()][3]
+        self.input_reference_text.clear()
+        self.input_reference_text.setText(refer_text)
+        function.change_configure(self.select_ai_speak.currentText(), "voice_model", self.configure)
+
     def change_translation(self, value, type_: typing.Literal['object', 'method']):
         if type_ == "object":
             self.select_translation_tool.clear()
@@ -142,6 +150,6 @@ class General(QFrame):
                                       "watermark", self.configure)
 
     def fill_information(self):
-        self.scale_watermark.setRange(self.param_dict[self.select_watermark.currentText()]['min'] * 10,
-                                      self.param_dict[self.select_watermark.currentText()]['max'] * 10)
+        self.scale_watermark.setRange(int(self.param_dict[self.select_watermark.currentText()]['min'] * 10),
+                                      int(self.param_dict[self.select_watermark.currentText()]['max'] * 10))
         self.scale_watermark.setValue(int(float(self.configure['watermark'].split(";")[1]) * 10))

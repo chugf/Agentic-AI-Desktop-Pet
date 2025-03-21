@@ -1,0 +1,12 @@
+{
+    "Inference": {
+        "media": "cloud",
+        "recognition": "cloud",
+        "text_output": "cloud",
+        "voice": "local"
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff009faa",
+        "ThemeMode": "Light"
+    }
+}

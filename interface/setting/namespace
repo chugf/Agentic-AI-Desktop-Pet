@@ -6,7 +6,10 @@ All variable names follow the rules below.
   -  [Fixed]    ->   The widget that won't change
 * {*statements*}      :  The code blocks
 
-
+- Pivot             ->    pivot_<object>
+- [CARDS] Card      ->    card_<object>
+- RadioButton       ->    single_<object>
+- Checkbox          ->    check_<object>
 - Slider            ->    scale_<object>
 - LineEdit          ->    input_<object>
 - PushButton        ->    click_<object>

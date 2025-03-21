@@ -1,0 +1,28 @@
+# This is a sample to get available attributes
+# Go Plugin Logger to see the result of printing...
+# Go https://nekocode.top/?p=65 to see details
+
+import typing
+
+print(f"{'=' * 20} Basic Supported {'=' * 20}")
+# Show Callable function
+for m in dir(subscribe):
+    if callable(getattr(subscribe, m)):
+        print(f"subscribe.{m}()")
+        print(dir(getattr(subscribe, m)()))
+
+print(f"{'=' * 20} Views Supported {'=' * 20}")
+for m in dir(subscribe.views):
+    if callable(getattr(subscribe.views, m)):
+        print(f"subscribe.views.{m}()")
+        print(dir(getattr(subscribe.views, m)()))
+
+print(f"{'=' * 20} actions Supported {'=' * 20}")
+for m in dir(subscribe.actions):
+    if callable(getattr(subscribe.actions, m)):
+        print(f"subscribe.actions.{m}()")
+        print(dir(getattr(subscribe.actions, m)()))
+
+print(f"{'=' * 20} Supported {'=' * 20}")
+# Request character model
+print(subscribe.Character().GetCharacter())

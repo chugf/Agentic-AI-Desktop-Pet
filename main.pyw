@@ -1,6 +1,5 @@
 import time
-import datetime
-import threading
+import traceback
 
 # 系统信息 System Information
 import sys
@@ -10,7 +9,6 @@ import os
 import re
 import random
 import typing
-import ast
 import shutil
 import json
 # 音频数据处理 audio data processing
@@ -19,14 +17,12 @@ import pyaudio
 import io
 
 # 接口 Interface
-import interface.subscribe as interface_subscribe
-
+from interface import subscribe
+from interface.setting.customize import widgets
 # 着色器加载 load shader
 import shader
-
 # 日志数据 Logs data
 import logs
-
 # AI
 try:
     import intelligence
@@ -34,19 +30,16 @@ try:
 except ImportError:
     intelligence = None
     MODULE_INFO = {}
-
-try:
-    import runtime
-
-except ImportError:
-    runtime = None
+# 运行时 Runtime
+import runtime
+# 引擎 Engine
+import engine
 
 # WindowsAPI
 import locale
 import ctypes
 import win32gui
 import win32con
-import win32api
 
 # 引入live2d库 Import Live2D
 try:
@@ -57,16 +50,17 @@ except (OSError, SystemError, ImportError):
     import live2d_custom.v2 as live2d_custom
 
 # 界面库和OpenGL库 GUI
-import interface.setting as interface_setting
+from interface.setting import intelligence as ui_intelligence
+from interface.setting import general, switches, binding, about, plog
+from interface.setting.sub_intelligence import local, cloud
+from interface.setting.sub_binding import animation, plugin, rule, tools
 
 from OpenGL import GL
-
 from PyQt5.Qt import Qt, QTimerEvent, QCursor, QThread, pyqtSignal, QRect, QFont, QTimer, \
-    QIcon
+    QIcon, QMimeData
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QOpenGLWidget, QApplication, QMessageBox, QTextEdit, QPushButton
-from qfluentwidgets import RoundMenu, Action, FluentIcon, FluentWindow
-from qframelesswindow import StandardTitleBar
+from qfluentwidgets import RoundMenu, Action, FluentIcon, FluentWindow, NavigationItemPosition
 
 param_dict = {}
 GWL_EXSTYLE = -20
@@ -96,9 +90,13 @@ with open("./resources/configure.json", "r", encoding="utf-8") as f:
 
     f.close()
     # 写入接口 Write into interface
-    interface_subscribe.Register().SetCharacter(configure['default'])
-    interface_subscribe.Register().SetVoiceModel(configure['voice_model'])
-    interface_subscribe.Register().SetName(configure['name'])
+    subscribe.Register().SetCharacter(configure['default'])
+    subscribe.Register().SetVoiceModel(configure['voice_model'])
+    subscribe.Register().SetName(configure['name'])
+
+with open("./interface/setting/switch.json", "r", encoding="utf-8") as ccf:
+    switch_config = json.load(ccf)
+    ccf.close()
 
 # 语言 language
 _language = locale.getlocale()[0]
@@ -128,28 +126,6 @@ def logger(text, father_dir):
                  f" [LOGGING]: \n{text}\n"
                  f"}}\n")
         lf.close()
-
-
-def parse_local_url(url: str):
-    truly_url = url.format(
-        ip=__import__("socket").gethostbyname(__import__("socket").gethostname()),
-        year=time.strftime("%Y"),
-    )
-    cleaned_url = re.sub(r'\s*\+\s*', '+', truly_url)
-    pattern = r'^(http|https)://([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(:(.*?))?(/.*)?$'
-    match = re.match(pattern, cleaned_url)
-    if match:
-        request_header = match.group(1)
-        ip = match.group(2)
-        port_part = match.group(4) if match.group(4) else '80'
-        path = match.group(5) if match.group(5) else '/'
-        try:
-            port = str(eval(port_part)) if port_part else '80'
-        except Exception as e:
-            return url
-
-        return f"{request_header}://{ip}:{port}{path}"
-    return url
 
 
 def get_audio_path(action: str):
@@ -210,7 +186,7 @@ if intelligence:
     intelligence.XF_API_KEY = configure["settings"]['cloud']['xunfei']['key']
     intelligence.XF_API_SECRET = configure["settings"]['cloud']['xunfei']['secret']
     try:
-        MODULE_INFO = intelligence.voice.get_module_lists(parse_local_url(configure['settings']['local']['gsv']))
+        MODULE_INFO = intelligence.voice.get_module_lists(runtime.parse_local_url(configure['settings']['local']['gsv']))
     except __import__("requests").exceptions.ReadTimeout:
         MODULE_INFO = {}
     if MODULE_INFO:
@@ -282,7 +258,7 @@ class RecognitionThread(QThread):
             speech_rec = intelligence.whisper_speech_recognition(
                 self.result.emit,
                 self.parent().recognition_failure, self.parent().recognition_closure,
-                parse_local_url(configure['settings']['local']['rec']['url'])
+                runtime.parse_local_url(configure['settings']['local']['rec']['url'])
             )
         speech_rec.start_recognition()
 
@@ -303,13 +279,13 @@ class MediaUnderstandThread(QThread):
             self.texts = random.choice(["你觉得我在干什么？", "你有什么想法呀？", "你觉得这个图片怎么样？", "请评价一下这图片"])
         try:
             answer = intelligence.text_generator(f"{self.image_path}看着这个图片{self.texts}",
-                                                 configure['settings']['sub_intelligence'], self.result.emit,
+                                                 configure['settings']['`intelligence'], self.result.emit,
                                                  self.is_search_online)
         except Exception as e:
             logger(f"子应用 - 媒体文件理解 调用失败\n"
                    f"   Message: {e}", logs.HISTORY_PATH)
-            self.result.emit([f"AI媒体文件理解 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}",
-                              f"AI媒体文件理解 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}"])
+            self.result.emit((f"AI媒体文件理解 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}",
+                              f"AI媒体文件理解 调用失败 AI Answer failed to call\n{type(e).__name__}: {e}"))
             return
         logger("子应用 - AI图文理解 调用成功 Sub Application - AI Media Understand Call Success\n"
                f"   Message: {answer}", logs.HISTORY_PATH)
@@ -326,11 +302,12 @@ class TextGenerateThread(QThread):
 
     def run(self):
         try:
+            intelligence.ALI_API_KEY = configure["settings"]['cloud']['aliyun']
             answer = intelligence.text_generator(
                 self.text,
-                configure['settings']['sub_intelligence'],
+                configure['settings']['intelligence'],
                 self.is_search_online, self.result.emit,
-                url=parse_local_url(configure['settings']['local']['text']
+                url=runtime.parse_local_url(configure['settings']['local']['text']
                                     ) if configure['settings']['text']['way'] == "local" else None,)
         except Exception as e:
             logger(f"子应用 - AI剧情问答 调用失败\n"
@@ -346,10 +323,12 @@ class TextGenerateThread(QThread):
 class VoiceGenerateThread(QThread):
     """AI 文字转语音 (GSV) AI text-to-speech (GSV) module"""
     result = pyqtSignal(bytes)
+    error = pyqtSignal(bool)
 
-    def __init__(self, parent: QOpenGLWidget, text: str):
+    def __init__(self, parent: QOpenGLWidget, text: str, language: str = "auto"):
         super().__init__(parent)
         self.text = text
+        self.language = language
 
     def run(self):
         # 数据预处理 data pre-processing
@@ -363,157 +342,36 @@ class VoiceGenerateThread(QThread):
         # 翻译和语言 Translation and language
         language = "zh"
         if configure['settings']['tts']['way'] == "local":
-            if configure['settings']['enable']['trans']:
-                if "spider" in configure["settings"]['translate']:
-                    if "bing" in configure["settings"]['translate']:
-                        text = intelligence.machine_translate(text)
-                        language = "ja"
-                elif "ai" in configure["settings"]['translate']:
-                    if "tongyi" in configure["settings"]['translate']:
-                        text = intelligence.tongyi_translate(text)
-                        language = "ja"
+            if self.language not in ("zh", "en", "ja", "ko", "yue"):
+                if configure['settings']['enable']['trans']:
+                    if "spider" in configure["settings"]['translate']:
+                        if "bing" in configure["settings"]['translate']:
+                            text = intelligence.machine_translate(text)
+                            language = "ja"
+                    elif "ai" in configure["settings"]['translate']:
+                        if "tongyi" in configure["settings"]['translate']:
+                            text = intelligence.tongyi_translate(text)
+                            language = "ja"
+            else:
+                language = self.language
 
             intelligence.voice_change(configure['voice_model'], MODULE_INFO,
-                                      parse_local_url(configure['settings']['local']['gsv']))
+                                      runtime.parse_local_url(configure['settings']['local']['gsv']))
             wav_bytes = intelligence.gsv_voice_generator(
                 text, language, configure['voice_model'], MODULE_INFO,
                 configure['settings']['tts']['top_k'], configure['settings']['tts']['top_p'],
                 configure['settings']['tts']['temperature'], configure['settings']['tts']['speed'],
                 configure['settings']['tts']['batch_size'], configure['settings']['tts']['batch_threshold'],
                 parallel_infer=configure['settings']['tts']['parallel'],
-                url=parse_local_url(configure['settings']['local']['gsv']))
+                url=runtime.parse_local_url(configure['settings']['local']['gsv']))
         else:
+            intelligence.ALI_API_KEY = configure["settings"]['cloud']['aliyun']
             wav_bytes, _ = intelligence.ali_voice_generator(text)
-
+            if wav_bytes is None:
+                self.error.emit(False)
+                return
         logger(f"子应用 - AI语音(GSV) 调用成功\n", logs.HISTORY_PATH)
         self.result.emit(wav_bytes)
-
-
-# 鼠标监听器 Mouse listener
-class MouseListener:
-    """用于在全局鼠标穿透下进行监听 Used for global mouse penetration to listen"""
-    def __init__(self):
-        self.listener_thread = None
-        self.isListening = False
-        self.is_left_button_pressed = False
-        self.is_right_button_pressed = False
-
-    def start_listening(self):
-        self.isListening = True
-        self.listener_thread = threading.Thread(target=self.listen)
-        self.listener_thread.start()
-
-    def stop_listening(self):
-        self.__init__()
-
-    def listen(self):
-        state_left = 0
-        state_right = 0
-        while self.isListening:
-            current_state_left = win32api.GetKeyState(win32con.VK_LBUTTON)
-            current_state_right = win32api.GetKeyState(win32con.VK_RBUTTON)
-            if current_state_left != state_left:
-                state_left = current_state_left
-                if current_state_left < 0:
-                    self.is_left_button_pressed = True
-                else:
-                    self.is_left_button_pressed = False
-            if current_state_right != state_right:
-                state_right = current_state_right
-                if current_state_right < 0:
-                    self.is_right_button_pressed = True
-                else:
-                    self.is_right_button_pressed = False
-            threading.Event().wait(0.01)
-
-
-class AdultEngine:
-    """成人内容加载引擎 Adult content loading engine"""
-    @staticmethod
-    def voice() -> tuple:
-        keywords = re.findall(r'\b[a-zA-Z]+\b', configure['model'][configure[
-            'default']]['adult']['AdultDescribe'][str(configure['adult_level'])])
-        keywords = ''.join(keywords)
-        return keywords.lower(), configure['model'][configure['default']]['adult']['voice'][f"Voice{keywords}"]
-
-
-class ExtractFunctionDocstring(ast.NodeVisitor):
-    """提取函数文档字符串 Extract function docstring"""
-    def __init__(self, function_name):
-        self.function_name = function_name
-        self.description = None
-
-    def visit_FunctionDef(self, node):
-        if isinstance(node.parent, ast.Module) and node.name == self.function_name:
-            docstring = ast.get_docstring(node)
-            if docstring:
-                lines = docstring.split('\n')
-                if lines:
-                    self.description = lines[0].strip()
-        return node
-
-    @staticmethod
-    def add_parents(tree):
-        for node in ast.walk(tree):
-            for child in ast.iter_child_nodes(node):
-                child.parent = node
-
-    def extract(self, code):
-        tree = ast.parse(code)
-        self.add_parents(tree)
-        visitor = ExtractFunctionDocstring(self.function_name)
-        visitor.visit(tree)
-
-        return visitor.description
-
-
-class RemoveFunctionTransformer(ast.NodeTransformer):
-    """移除函数 Remove function"""
-    def __init__(self, function_name):
-        self.function_name = function_name
-
-    def visit_FunctionDef(self, node):
-        if isinstance(node.parent, ast.Module) and node.name == self.function_name:
-            return None
-        return node
-
-    @staticmethod
-    def add_parents(tree):
-        for node in ast.walk(tree):
-            for child in ast.iter_child_nodes(node):
-                child.parent = node
-
-    def remove(self, code):
-        tree = ast.parse(code)
-        self.add_parents(tree)
-        transformer = RemoveFunctionTransformer(self.function_name)
-        new_tree = transformer.visit(tree)
-
-        return ast.unparse(new_tree)
-
-
-class ThreadExceptionEnd(threading.Thread):
-    """结束线程 End Thread"""
-    def __init__(self, func: callable):
-        threading.Thread.__init__(self)
-        self.func = func
-
-    def run(self):
-        self.func()
-
-    def stop_thread(self):
-        thread_id = self._get_id()
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
-                                                         ctypes.py_object(SystemExit))
-        if res > 1:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-
-    def _get_id(self):
-        if hasattr(self, '_thread_id'):
-            return self._thread_id
-        for id_, thread_ in threading._active.items():
-            if thread_ is self:
-                return id_
 
 
 # 设置界面 Setting Window
@@ -523,41 +381,38 @@ class Setting(FluentWindow):
         self.setWindowIcon(QIcon("logo.ico"))
         self.resize(700, 530)
         self.setWindowTitle(languages[0])
-        self.setWindowFlag(Qt.WindowStaysOnTopHint)
         desktop = QApplication.desktop().availableGeometry()
         w, h = desktop.width(), desktop.height()
+        self.run_thread = None
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
-        self.general_page = interface_setting.general.General(languages, configure, MODULE_INFO, param_dict)
-        self.switches_page = interface_setting.switches.Switches(languages, configure, MODULE_INFO, param_dict)
+        self.general_page = general.General(languages, configure, MODULE_INFO, param_dict, play=self.reference)
+        self.switches_page = switches.Switches(languages, switch_config, configure)
 
-        self.intelligence_page = interface_setting.intelligence.Intelligence(
-            languages, configure, MODULE_INFO, param_dict)
-        self.local_intelligence_page = interface_setting.intelligence_local.IntelligenceLocale(
-            languages, configure, MODULE_INFO, param_dict)
-        self.cloud_intelligence_page = interface_setting.intelligence_cloud.IntelligenceCloud(
-            languages, configure, MODULE_INFO, param_dict)
+        self.intelligence_page = ui_intelligence.Intelligence(languages, configure)
+        self.local_intelligence_page = local.IntelligenceLocale(languages, configure)
+        self.cloud_intelligence_page = cloud.IntelligenceCloud(languages, configure)
 
-        self.binding_page = interface_setting.binding.Binding(languages, configure, MODULE_INFO, param_dict)
-        self.animation_binding_page = interface_setting.binding_animation.AnimationBinding(
+        self.binding_page = binding.Binding(languages, configure, MODULE_INFO, param_dict)
+        self.animation_binding_page = animation.AnimationBinding(
             languages, configure, MODULE_INFO, param_dict)
-        self.rule_binding_page = interface_setting.binding_rule.RuleBinding(
+        self.rule_binding_page = rule.RuleBinding(
             languages, configure, MODULE_INFO, param_dict)
-        self.tools_binding_page = interface_setting.binding_tools.ToolsBinding(
+        self.tools_binding_page = tools.ToolsBinding(
             languages, configure, MODULE_INFO, param_dict)
-        self.plugin_binding_page = interface_setting.binding_plugin.PluginBinding(
-            languages, configure, MODULE_INFO, param_dict)
+        self.plugin_binding_page = plugin.PluginBinding(
+            self.run_code_for_plugin, languages, configure)
 
-        self.about_page = interface_setting.about.About(languages, configure, MODULE_INFO, param_dict)
+        self.about_page = about.About(languages, runtime)
 
         self.addSubInterface(self.general_page, FluentIcon.SETTING, languages[1])
         self.addSubInterface(self.switches_page, FluentIcon.DEVELOPER_TOOLS, languages[10])
 
         self.addSubInterface(self.intelligence_page, FluentIcon.EDUCATION, languages[27])
         self.addSubInterface(
-            self.local_intelligence_page, FluentIcon.DOWN, languages[31], parent=self.intelligence_page)
-        self.addSubInterface(
             self.cloud_intelligence_page, FluentIcon.CLOUD, languages[29], parent=self.intelligence_page)
+        self.addSubInterface(
+            self.local_intelligence_page, FluentIcon.DOWN, languages[31], parent=self.intelligence_page)
 
         self.addSubInterface(self.binding_page, FluentIcon.TRANSPARENT, languages[36])
         self.addSubInterface(
@@ -569,10 +424,88 @@ class Setting(FluentWindow):
         self.addSubInterface(
             self.plugin_binding_page, FluentIcon.IOT, languages[112], parent=self.binding_page)
 
-        self.addSubInterface(self.about_page, FluentIcon.INFO, languages[66])
+        self.addSubInterface(PluginLogCollector, FluentIcon.COMMAND_PROMPT, languages[141],
+                             position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.about_page, FluentIcon.INFO, languages[66], position=NavigationItemPosition.BOTTOM)
 
         self.switchTo(self.general_page)
 
+    def clear_thread(self, change_button_text):
+        self.run_thread = None
+        if change_button_text is not None:
+            change_button_text(languages[150])
+
+    def run_code_for_plugin(self, codes, change_button_text=None, run_type=-4):
+        def exception(e):
+            widgets.pop_error(self, "Exception Error",
+                              f"{type(e).__name__}: {e}", 3000)
+            widgets.pop_warning(self, "TraceBack", traceback.format_exc(), 5000)
+            if change_button_text is not None:
+                change_button_text(languages[150])
+            self.run_thread = None
+
+        def independent_run():
+            if change_button_text is not None:
+                change_button_text(languages[151])
+            try:
+                self.run_thread = runtime.ThreadExceptionEnd(lambda: exec(codes, global_),
+                                                             lambda: self.clear_thread(change_button_text))
+            except Exception as e:
+                exception(e)
+            self.run_thread.start()
+
+        # 自动选择 Automatic
+        if run_type == -4 and self.run_thread is None:
+            try:
+                parsed = runtime.PythonCodeParser(codes).has_subscribe_for_views or \
+                    runtime.PythonCodeParser(codes).has_subscribe_for_actions
+            except Exception as e:
+                exception(e)
+                return
+            if parsed:
+                try:
+                    exec(codes, global_)
+                except Exception as e:
+                    exception(e)
+            else:
+                independent_run()
+            return
+
+        # 程序增强 enhancement
+        if run_type == -2 and self.run_thread is None:
+            try:
+                exec(codes, global_)
+            except Exception as e:
+                exception(e)
+            return
+
+        # 独立程序 Independent
+        if run_type == -3 and self.run_thread is None:
+            independent_run()
+        elif self.run_thread is not None:
+            if change_button_text is not None:
+                change_button_text(languages[150])
+            result = self.run_thread.stop_thread()
+            if result:
+                widgets.pop_success(self, languages[149], languages[149])
+            else:
+                widgets.pop_error(self, languages[148], languages[148])
+            self.run_thread = None
+
+    # 测试语音合成组 Test Voice Synthesis Group
+    def reference(self, text):
+        voice_generator = VoiceGenerateThread(self, text.split(":")[-1], text.split(":")[0])
+        voice_generator.result.connect(self.play)
+        voice_generator.error.connect(self.error)
+        voice_generator.start()
+
+    def play(self, audio_bytes):
+        SpeakThread(self, audio_bytes).start()
+
+    def error(self, value):
+        if value is False:
+            self.pop_error(languages[140], languages[140])
+            
 
 # 主程序
 class DesktopTop(shader.ADPOpenGLCanvas):
@@ -588,20 +521,20 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         # 设置属性 Set Attribute
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        # self.setWindowOpacity(0.4)
         self.setMouseTracking(True)
+        self.setAcceptDrops(True)
         # 调整大小 Set Resize
         self.resize(width, height)
 
         # 基础变量和开关 Variables and Switches
         self.fps_refresh = int(1000 / 900)
-        self.turn_count = self.among = self.expression_count = 0
+        self.turn_count = self.expression_count = 0
         self.model_json_path: str = ""
-        self.click_in_area = self.click_x = self.click_y = -1
+        self.among = self.click_in_area = self.click_x = self.click_y = -1
         self.speaking_lists: list[bool] = []
         self.is_playing_expression = self.is_penetration = self.is_playing_animation = self.is_movement = False
         self.enter_position = self.drag_position = None
-        self.random_cancel_penetration = self.image_path = self.direction = self.last_pos = None
+        self.image_path = self.direction = self.last_pos = None
         self.pet_model: live2d.LAppModel | None = None
 
         # 屏幕中心坐标 Center of the screen
@@ -833,9 +766,10 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         if ((VoiceSwitch and configure['settings']['tts']['way'] == "local") or
                 configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts'] and \
                 markdown_text is None:
-            VGT = VoiceGenerateThread(self, common_text)
-            VGT.result.connect(lambda wave_bytes: SpeakThread(self, wave_bytes).start())
-            VGT.start()
+            if configure['settings']['enable']['tts']:
+                VGT = VoiceGenerateThread(self, common_text)
+                VGT.result.connect(lambda wave_bytes: SpeakThread(self, wave_bytes).start())
+                VGT.start()
         else:
             self.chat_box.clear()
             self.chat_box.setVisible(True)
@@ -910,10 +844,10 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                 self.pet_model.LoadModelJson(self.model_json_path)
         except (KeyError, FileNotFoundError):
             QMessageBox.critical(self, languages[107], languages[109])
-            if QMessageBox.question(languages[108], languages[110]) == QMessageBox.Yes:
+            if QMessageBox.question(self, languages[108], languages[110]) == QMessageBox.Yes:
                 configure['default'] = 'kasumi2'
                 load_template_model(configure['default'])
-                QMessageBox.information(languages[108], languages[112])
+                QMessageBox.information(self, languages[108], languages[112])
                 with open("./resources/configure.json", "w", encoding="utf-8") as sf:
                     json.dump(configure, sf, indent=3, ensure_ascii=False)
                     sf.close()
@@ -940,54 +874,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
     # 事件 Events
     # 右键菜单事件 Right-click menu events
     def contextMenuEvent(self, event):
-        def io_configure(value: str, relative=None, behave: object = int):
-            if "{" in value and "}" in value:
-                temp_dict = configure
-
-                for key in relative.split(".")[:-1]:
-                    if key not in temp_dict:
-                        temp_dict[key] = {}
-                    temp_dict = temp_dict[key]
-
-                if relative.split("."):
-                    last_key = relative.split(".")[-1]
-                    if temp_dict[last_key]:
-                        temp_dict[last_key] = 0 if behave == int else False
-                    else:
-                        temp_dict[last_key] = 1 if behave == int else True
-            else:
-                if configure['settings']['enable'][value]:
-                    configure['settings']['enable'][value] = False
-                    if relative is not None:
-                        relative()
-                else:
-                    configure['settings']['enable'][value] = True
-                    if relative is not None:
-                        relative()
-
-            with open("./resources/configure.json", "w", encoding="utf-8") as cf:
-                json.dump(configure, cf, ensure_ascii=False, indent=3)
-                cf.close()
-
-        def change_configure(relative, value):
-            if "voice" in relative:
-                interface_subscribe.Register().SetVoiceModel(value)
-            temp_dict = configure
-
-            for key in relative.split(".")[:-1]:
-                if key not in temp_dict:
-                    temp_dict[key] = {}
-                temp_dict = temp_dict[key]
-
-            if relative.split("."):
-                last_key = relative.split(".")[-1]
-                temp_dict[last_key] = value
-
-            with open("./resources/configure.json", "w", encoding="utf-8") as cf:
-                json.dump(configure, cf, ensure_ascii=False, indent=3)
-                cf.close()
-
-        content_menu = RoundMenu()
+        content_menu = RoundMenu("MENU", parent=self)
 
         settings_action = Action(FluentIcon.SETTING, languages[68], self)
         settings_action.triggered.connect(lambda: Setting.show())
@@ -995,105 +882,16 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
         content_menu.addSeparator()
 
-        conversation_action = Action(FluentIcon.EDIT, languages[69], self)
+        conversation_action = Action(FluentIcon.HELP, languages[69], self)
         conversation_action.triggered.connect(self.open_close_conversation)
         content_menu.addAction(conversation_action)
-
-        content_menu.addSeparator()
-
-        # IO控制 IO control
-        # 录屏兼容模式 Capture compatibility mode
-        compatibility_action = Action(
-            f"{'√' if configure['settings']['compatibility'] else ''} {languages[12]}", self)
-        compatibility_action.triggered.connect(lambda: io_configure(
-            "{compatibility}", "settings.compatibility", bool))
-        content_menu.addAction(compatibility_action)
-
-        globe_mouse_penetration_action = Action(
-            f"{'√' if configure['settings']['penetration']['enable'] else ''} {languages[19]}", self)
-        globe_mouse_penetration_action.triggered.connect(lambda: io_configure(
-            "{penetration}", "settings.penetration.enable", bool))
-        content_menu.addAction(globe_mouse_penetration_action)
-
-        # 语音识别 Recognition
-        recognition_action = Action(FluentIcon.ROBOT,
-            f"{'√' if configure['settings']['enable']['rec'] else ''} {languages[13]}", self)
-        recognition_action.triggered.connect(lambda: io_configure("rec"))
-        content_menu.addAction(recognition_action)
-
-        # AI语音 AI voice
-        ai_voice = Action(FluentIcon.VOLUME,
-            f"{'√' if configure['settings']['enable']['tts'] else ''} {languages[14]}", self)
-        ai_voice.triggered.connect(lambda: io_configure("tts"))
-        content_menu.addAction(ai_voice)
-
-        # 联网搜索 Online search
-        online_search = Action(FluentIcon.VIEW,
-            f"{'√' if configure['settings']['enable']['online'] else ''} {languages[15]}", self)
-        online_search.triggered.connect(lambda: io_configure("online"))
-        content_menu.addAction(online_search)
-
-        # 翻译 Translate
-        translate = Action(FluentIcon.LANGUAGE,
-                           f"{'√' if configure['settings']['enable']['trans'] else ''} {languages[16]}",
-                           self)
-        translate.triggered.connect(lambda: io_configure("trans"))
-        content_menu.addAction(translate)
 
         # 分割线
         content_menu.addSeparator()
 
-        # 选择菜单 Switch menu
-        # 自动翻译菜单 Auto translation menu
-        translation_menu = RoundMenu(languages[71], self)
-        translation_tool_menu = RoundMenu(languages[72], self)
-
-        # 爬虫翻译 Spider Translate
-        translation_tool_spider_menu = RoundMenu(
-            f"{'√' if 'spider' in configure['settings']['translate'] else ' '} 爬虫 Spider", self)
-        translation_tool_spider_bing = Action(
-            f"{'√' if 'bing' in configure['settings']['translate'] else ' '} 必应 Bing", self)
-        translation_tool_spider_menu.addAction(translation_tool_spider_bing)
-        translation_tool_spider_bing.triggered.connect(lambda: change_configure("settings.translate", "spider.bing"))
-        translation_tool_menu.addMenu(translation_tool_spider_menu)
-
-        translation_menu.addMenu(translation_tool_menu)
-
-        # AI翻译 AI Translate
-        translation_tool_ai_menu = RoundMenu(
-            f"{'√' if 'ai' in configure['settings']['translate'] else ' '} 人工智能 AI", self)
-        translation_tool_ai_qwen = Action(
-            f"{'√' if 'tongyi' in configure['settings']['translate'] else ' '} 通义 Tongyi", self)
-        translation_tool_ai_menu.addAction(translation_tool_ai_qwen)
-        translation_tool_ai_qwen.triggered.connect(lambda: change_configure("settings.translate", "ai.tongyi"))
-
-        translation_tool_menu.addMenu(translation_tool_ai_menu)
-        content_menu.addMenu(translation_menu)
-
-        # 语音模型切换菜单 Voice model switch menu
-        voice_model_menu = RoundMenu(languages[6], self)
-        for model in MODULE_INFO.keys():
-            model_action = Action(f"{'√' if model == configure['voice_model'] else ' '} {model}", self)
-            model_action.triggered.connect(lambda checked, m=model: change_configure("voice_model", m))
-            voice_model_menu.addAction(model_action)
-        if configure['settings']['enable']['tts']:
-            content_menu.addMenu(voice_model_menu)
-
-        # 成人模式菜单 Adult content menu
-        adult_content_menu = RoundMenu(languages[5], self)
-        for level in range(configure['model'][configure['default']]['adult']['AdultLevelMinimum'],
-                           configure['model'][configure['default']]['adult']['AdultLevelMaximum'] + 1):
-            adult_content_action = Action(
-                f"{'√' if configure['adult_level'] == level else ' '} 等级 Level {level} - "
-                f"{configure['model'][configure['default']]['adult']['AdultDescribe'][str(level)]}", self)
-            adult_content_menu.addAction(adult_content_action)
-            adult_content_action.triggered.connect(lambda checked, lev=level: change_configure("adult_level", lev))
-        if configure['adult_level']:
-            content_menu.addMenu(adult_content_menu)
-
-        exit_menu = Action(FluentIcon.CLOSE, languages[73], self)
-        exit_menu.triggered.connect(self.exit_program)
-        content_menu.addAction(exit_menu)
+        exit_action = Action(FluentIcon.CLOSE, languages[73], self)
+        exit_action.triggered.connect(self.exit_program)
+        content_menu.addAction(exit_action)
 
         content_menu.exec_(self.mapToGlobal(event.pos()))
 
@@ -1113,19 +911,20 @@ class DesktopTop(shader.ADPOpenGLCanvas):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         def save_change():
             self.is_penetration = False
-            configure['settings']['penetration']['start'] = "next"
-            configure['settings']['penetration']['enable'] = False
-            with open("./resources/configure.json", "w", encoding="utf-8") as sf:
-                json.dump(configure, sf, indent=3, ensure_ascii=False)
-                sf.close()
+            # 刷新设置的缓存文件 Refresh the cache file
+            switch_config['Advanced']['penetration'] = "shut"
+            with open("./interface/setting/switch.json", "w", encoding="utf-8") as sccf:
+                json.dump(switch_config, sccf, indent=3, ensure_ascii=False)
+                sccf.close()
             self.set_mouse_transparent(False)
+            self.setCanvasOpacity(configure['settings']['transparency'])
 
         def check_mouse_pressed(left_condition: str, right_condition: str):
             if not MouseListener.isListening:
                 MouseListener.start_listening()
-            if configure['settings']['penetration']['start'] == left_condition:
+            if switch_config['Advanced']['penetration'] == left_condition:
                 pressed = MouseListener.is_left_button_pressed
-            elif configure['settings']['penetration']['start'] == right_condition:
+            elif switch_config['Advanced']['penetration'] == right_condition:
                 pressed = MouseListener.is_right_button_pressed
             else:
                 pressed = False
@@ -1174,38 +973,27 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         except SystemError:
             pass
         # 检查是否开启全局鼠标穿透 Check whether global mouse transparency is enabled
-        if configure['settings']['penetration']['enable']:
+        if switch_config['Advanced']['penetration'] != "shut":
             self.setCanvasOpacity(0.4)
             self.set_mouse_transparent(True)
             self.is_penetration = True
             # 如果start有以下几种情况，则取消全局鼠标穿透 if start has the following four situations, cancel global mouse transparency
-            # 当空的时候取消 When it is empty, cancel global mouse transparency
-            if configure['settings']['penetration']['start'].strip() == "" and self.among == 0:
-                save_change()
             # 下次启动时取消全局鼠标穿透 if the start is next, cancel global mouse transparency
-            elif configure['settings']['penetration']['start'] == "next" and self.among == 0:
+            if switch_config['Advanced']['penetration'] == "next" and self.among == -1:
                 save_change()
-            # 随机取消全局鼠标穿透 if the start is random, cancel global mouse transparency
-            elif configure['settings']['penetration']['start'] == 'random':
-                if self.random_cancel_penetration is not None:
-                    if self.random_cancel_penetration < datetime.datetime.now():
-                        save_change()
-                else:
-                    self.random_cancel_penetration = datetime.datetime.now() + datetime.timedelta(
-                        minutes=random.randint(5, 30))
             # 鼠标左键或右键在顶部按下时取消全局鼠标穿透 if the start is left-top or right-top, cancel global mouse transparency
-            elif configure['settings']['penetration']['start'] in ('left-top', 'right-top'):
+            elif switch_config['Advanced']['penetration'] in ('left-top', 'right-top'):
                 if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-top', 'right-top') and \
                         80 > local_y > 0:
                     MouseListener.stop_listening()
                     save_change()
             # 鼠标左键或右键在底部按下时取消全局鼠标穿透 if the start is left-bottom or right-bottom, cancel global mouse transparency
-            elif configure['settings']['penetration']['start'] in ('left-bottom', 'right-bottom'):
+            elif switch_config['Advanced']['penetration'] in ('left-bottom', 'right-bottom'):
                 if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-bottom', 'right-bottom') and \
                         self.height() > local_y > self.height() - 80:
                     MouseListener.stop_listening()
                     save_change()
-        else:
+        elif switch_config['Advanced']['penetration'] == "shut" and self.among == 0:
             save_change()
 
         if self.among > 100:
@@ -1276,6 +1064,8 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                     new_pos = event.globalPos() - self.drag_position
                     if configure['settings']['enable']['locktsk']:
                         new_pos.setY(max(self.screen_geometry.height() - self.height(), new_pos.y()))
+                    for action_item in subscribe.actions.Operate().GetMouseDragAction():
+                        action_item(x, y, new_pos)
                     self.move(new_pos)
                 event.accept()
 
@@ -1369,6 +1159,8 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                 self.is_playing_animation = True
                 self.playAnimationEvent('ActionClickCustom')
                 SpeakThread(self, get_audio_path("ActionClickCustom")).start()
+            for action_item in subscribe.actions.Operate().GetClckAction():
+                action_item()
             event.accept()
         self.is_movement = False
 
@@ -1383,6 +1175,12 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         self.enter_position = None
         self.is_playing_animation = False
 
+    # 拖拽事件 Drag event
+    def dragEnterEvent(self, event: QMimeData):
+        ActionsEngine.analyze_action(event.mimeData().text())
+        ActionsEngine.accept_action()
+        event.accept()
+
     # OpenGL 事件 OpenGL events
     def on_init(self):
         live2d.glewInit()
@@ -1393,7 +1191,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
             param_dict.update({str(param.id): {
                 "value": param.value, "max": param.max, "min": param.min, "default": param.default,
             }})
-        interface_subscribe.AttributeRegister().SetPet(self.pet_model)
+        subscribe.RegisterAttribute().SetPet(self.pet_model)
         self.startTimer(self.fps_refresh)
 
     def on_resize(self, width, height):
@@ -1431,15 +1229,13 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
 
-global_ = {
-    "subscribe": interface_subscribe,
-    'live2d': live2d,
-}
 thread_exception_tool: list = []
 live2d.setLogEnable(False)
 live2d.init()
-MouseListener = MouseListener()
-AdultEngine = AdultEngine()
+MouseListener = runtime.MouseListener()
+# 加载引擎
+AdultEngine = engine.adult.AdultEngine(configure)
+ActionsEngine = engine.actions.ActionsEngine(configure, languages, subscribe)
 logger("桌宠初始化完成 Live2D初始化完成\n"
        "DesktopPet initialized successfully, Live2D initialized successfully.\n", logs.HISTORY_PATH)
 if __name__ == '__main__':
@@ -1448,17 +1244,41 @@ if __name__ == '__main__':
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
+    # 加载桌宠页面 Load desktop pet page
     app = QApplication(sys.argv)
     ex = DesktopTop()
     ex.show()
-    interface_subscribe.AttributeRegister().SetWindow(ex)
+    subscribe.RegisterAttribute().SetWindow(ex)
 
+    # 插件日志收集器 Plugin log collector
+    PluginLogCollector = plog.PluginLogCollector()
+    global_ = {
+        "subscribe": subscribe,
+        "print": PluginLogCollector.print_,
+        "input": PluginLogCollector.input_,
+    }
     Setting = Setting()
-    interface_subscribe.views.RegisterSetting.register(Setting)
+    subscribe.views.RegisterSetting().register(Setting)
+
+    # 加载插件 Load plugins
+    with open("./plugin/desc.json", 'r', encoding="utf-8") as f:
+        plugin_desc = json.load(f)
+        f.close()
     for to_be_loaded_plugin in os.listdir("./plugin"):
-        thread_exception_tool.append(ThreadExceptionEnd(
-            lambda: exec(open(f"./plugin/{to_be_loaded_plugin}/main.py").read(), global_)))
+        if os.path.isfile(f"./plugin/{to_be_loaded_plugin}"): continue
+        execute_path = f"./plugin/{to_be_loaded_plugin}/{plugin_desc[to_be_loaded_plugin]["entrance"]}"
+        execute_code = (open(execute_path, "r", encoding="utf-8").read(), global_)
+        if plugin_desc[to_be_loaded_plugin]["type"] == "enhancement":
+            exec(*execute_code)
+        elif plugin_desc[to_be_loaded_plugin]["type"] == "assistant":
+            thread_exception_tool.append(runtime.ThreadExceptionEnd(lambda: exec(*execute_code)))
+        elif plugin_desc[to_be_loaded_plugin]["type"] == "auto":
+            if runtime.PythonCodeParser(execute_code[0]).has_subscribe_for_views:
+                thread_exception_tool.append(runtime.ThreadExceptionEnd(lambda: exec(*execute_code)))
+            else:
+                exec(*execute_code)
     for thread in thread_exception_tool:
         thread.start()
+    del plugin
 
     sys.exit(app.exec_())

@@ -104,6 +104,10 @@
   {
    "optionDest": "datas",
    "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/interface;interface/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/engine;engine/"
   }
  ],
  "nonPyinstallerOptions": {

@@ -1,0 +1,24 @@
+{
+   "General": {
+      "compatible": true,
+      "adult": false,
+      "recognition": false,
+      "speaker": false,
+      "search": false,
+      "translate": false
+   },
+   "Advanced": {
+      "penetration": "shut",
+      "locktsk": true,
+      "media": true
+   },
+   "Live2D": {
+      "AutoBlink": true,
+      "AutoBreath": true,
+      "AutoDrag": true
+   },
+   "QFluentWidgets": {
+      "ThemeColor": "#ff009faa",
+      "ThemeMode": "Light"
+   }
+}

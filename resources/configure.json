@@ -8,7 +8,7 @@
       "language": "",
       "transparency": 1.0,
       "compatibility": true,
-      "intelligence": "qwen-max-latest",
+      "intelligence": "qwen-plus-latest",
       "translate": "ai.tongyi",
       "live2d": {
          "enable": {
@@ -19,15 +19,11 @@
       },
       "enable": {
          "tts": false,
-         "media": false,
+         "media": true,
          "online": false,
          "trans": false,
          "rec": false,
          "locktsk": true
-      },
-      "penetration": {
-         "enable": false,
-         "start": "next"
       },
       "cloud": {
          "aliyun": "",
@@ -39,6 +35,7 @@
       },
       "local": {
          "text": "http://{ip}:{year}/chat",
+         "media": "https://{ip}:{year}/media",
          "gsv": "http://{ip}:{year} + 1",
          "rec": {
             "tool": "whisper",
@@ -46,20 +43,24 @@
          }
       },
       "tts": {
-         "way": "cloud",
+         "way": "local",
          "top_k": 20,
-         "top_p": 0.8,
-         "temperature": 0.8,
-         "speed": 1.0,
+         "top_p": 0.74,
+         "temperature": 0.77,
+         "speed": 1.09,
          "batch_size": 3,
          "batch_threshold": 0.75,
          "parallel": true
       },
       "text": {
-         "way": "cloud"
+         "way": "cloud",
+         "temperature": 0.8,
+         "top_p": 0.8,
+         "top_k": 20
       },
       "rec": "cloud",
       "understand": {
+         "way": "cloud",
          "min": 3600,
          "max": 7200
       }

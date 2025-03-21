@@ -1,7 +1,5 @@
 from typing import Literal
 
-import socket
-import time
 import base64
 import json
 
@@ -106,7 +104,7 @@ def ali_tts(text: str, api):
 
     if result.get_audio_data() is not None:
         return result.get_audio_data(), int(result_voice.get_timestamp()['end_time'])
-    return None
+    return None, None
 
 
 if __name__ == "__main__":
