@@ -62,18 +62,29 @@ def process_human_information(name: str, age: int, gender: str):
 
 利用内置API接口，可以快速开发插件。以下是一些常用API：
 
-| API名称             | 继承路径                | 参数   | 用途描述                |
-|-------------------|---------------------|------|---------------------|
-| GetLive2D         | subscribe.Live2D    | null | 获取Live2D模型的Python属性 |
-| GetWindowPosition | subscribe.Window    | null | 获取窗口位置              |
-| GetCharacter      | subscribe.Character | null | 获取当前角色的Live2D模型名称   |
-| GetName           | subscribe.Character | null | 获取角色名称              |
-| GetVoiceModel     | subscribe.Model     | null | 获取声音模型名称            |
+| API名称 | 继承路径 | 参数 | 用途 |
+| --- | --- | --- | --- |
+| GetLive2D | subscribe.Live2D | 无 | 获取Live2D属性（Live2D For Python） |
+| GetWindowPosition | subscribe.Window | 无 | 获取当前桌宠的相对位置 |
+| GetCharacter | subscribe.Character | 无 | 获取当前选择的角色 |
+| GetName | subscribe.Character | 无 | 获取角色的别名 |
+| GetVoiceModel | subscribe.Model | 无 | 获得语音模型 |
 
-| API名称          | 继承路径                    | 参数          | 用途描述             |
-|----------------|-------------------------|-------------|------------------|
-| InsertNotebook | subscribe.views.Setting | frame, text | 插入一个Frame进设置的选项卡 |
-| DeleteNotebook | subscribe.views.Setting | frame       | 删除一个Frame的选项卡    |
+| API名称 | 继承路径 | 参数 | 用途 |
+| --- | --- | --- | --- |
+| InsertInterface | subscribe.views.Setting | widget: QWidget icon: FluentIcon text: str | 插入一个选项卡接口进入设置界面。 |
+
+### InsertInterface (subscribe.views.Setting)
+
+- widget: 一个继承于QWidget界面，需要引用setObjectName才可以显示
+- icon: 一个FluentIcon的图标
+- text: 显示的文本
+
+| API名称 | 继承路径 | 参数 | 用途 |
+| --- | --- | --- | --- |
+| SetDragAction | subscribe.actions.Register | func: callable | 给程序设置一个MIME拖放事件（当鼠标拖放后执行对应函数） |
+| SetClickAction | subscribe.actions.Register | func: callable | 给程序设置一个点击事件（当鼠标点击桌宠后执行对应函数） |
+| SetMouseDragAction | subscribe.actions.Register | func: callable | 给程序设置一个鼠标拖动的事件（当鼠标拖放桌宠后执行对应函数） |
 
 ---
 
