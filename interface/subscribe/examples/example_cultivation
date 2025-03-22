@@ -1,0 +1,12 @@
+from PyQt5.Qt import QWidget
+from qfluentwidgets import FluentIcon
+
+
+class Cultivation(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setObjectName("Cultivation")
+
+
+ct = Cultivation()
+subscribe.views.Setting().InsertInterface(ct, FluentIcon.LEAF, "养成")

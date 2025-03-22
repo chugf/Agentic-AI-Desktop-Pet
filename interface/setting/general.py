@@ -15,6 +15,7 @@ class General(QFrame):
         self.configure = configure
         self.module_info = module_info
         self.param_dict = param_dict
+        self.kwargs = kwargs
         self.setObjectName("General")
         # 默认值 Default Value
         character_lists = os.listdir("./resources/model")
@@ -33,8 +34,7 @@ class General(QFrame):
         self.select_character.addItems(character_lists)
         self.select_character.setCurrentText(self.configure['default'])
         self.select_character.setGeometry(QRect(100, 45, 230, 35))
-        self.select_character.currentTextChanged.connect(
-            lambda value: function.change_configure(value, "default", self.configure))
+        self.select_character.currentTextChanged.connect(self.change_character)
         # 宠物昵称 Pet Nickname
         self.input_pet_nickname = LineEdit(self)
         self.input_pet_nickname.setText(self.configure['name'])
@@ -86,7 +86,7 @@ class General(QFrame):
         self.input_reference_text.setGeometry(QRect(5, 205, 470, 35))
         self.click_play_reference = PushButton(self.languages[7], self)
         self.click_play_reference.clicked.connect(
-            lambda: kwargs.get("play")(self.input_reference_text.text()))
+            lambda: self.kwargs.get("play")(self.input_reference_text.text()))
         self.click_play_reference.setGeometry(QRect(490, 205, 80, 35))
         # 水印 Watermark
         BodyLabel(self.languages[8], self).setGeometry(QRect(5, 245, 80, 35))
@@ -117,6 +117,10 @@ class General(QFrame):
         self.click_delete_character.setGeometry(QRect(550, 420, 80, 35))
 
         self.fill_information()
+
+    def change_character(self, value):
+        function.change_configure(value, "default", self.configure)
+        self.kwargs.get("reload")(value)
 
     def change_reference(self):
         refer_text = self.module_info[self.select_ai_speak.currentText()][3]

@@ -2,7 +2,7 @@
 # Go Plugin Logger to see the result of printing
 # Go https://nekocode.top/?p=65 to see details
 
-from PyQt5.Qt import QRect
+from PyQt5.Qt import QRect, QPoint
 from PyQt5.QtWidgets import QWidget, QLabel
 from qfluentwidgets import FluentIcon
 
@@ -24,7 +24,7 @@ def execute_file_dragging(original_mime: str, analyzed_mime: list):
     print(original_mime, analyzed_mime)
 
 
-def execute_mouse_dragging(x: int, t: int, new_pos):
+def execute_mouse_dragging(x: int, y: int, new_pos: QPoint):
     print(x, y, new_pos)
 
 

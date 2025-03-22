@@ -4,7 +4,6 @@ pyopengl
 pypiwin32
 live2d-py
 dashscope
-markdown
 requests
 pyaudio
 numpy

@@ -9,7 +9,7 @@
    },
    "Advanced": {
       "penetration": "shut",
-      "locktsk": true,
+      "locktsk": false,
       "media": true
    },
    "Live2D": {

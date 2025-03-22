@@ -31,7 +31,8 @@ class PluginBinding(QFrame):
         self.input_codes = widgets.CodeEdit(self)
         self.input_codes.setFont(jetbrains_mono)
         self.input_codes.setLineWrapMode(0)
-        self.input_codes.setText(open("./interface/subscribe/examples/example_getattr").read())
+        self.input_codes.setText(open("./interface/subscribe/examples/example_getattr",
+                                      "r", encoding="utf-8").read())
         self.input_codes.setPlaceholderText("Emm. The developer is slacking off again")
         self.input_codes.setGeometry(QRect(10, 60, 620, 320))
         self.highlighter = highlight.PythonSyntaxHighlighter(self.input_codes.document())
@@ -43,7 +44,8 @@ class PluginBinding(QFrame):
         self.select_examples.setCurrentIndex(1)
         self.select_examples.currentTextChanged.connect(
             lambda: self.input_codes.setText(
-                open(f"./interface/subscribe/examples/{examples[self.select_examples.currentIndex()]}").read()))
+                open(f"./interface/subscribe/examples/{examples[self.select_examples.currentIndex()]}",
+                     "r", encoding="utf-8").read()))
 
         self.click_running = PushButton(self.languages[114], self)
         self.click_running.setIcon(FluentIcon.CARE_RIGHT_SOLID)

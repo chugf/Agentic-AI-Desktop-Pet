@@ -29,17 +29,17 @@ VSVersionInfo(
       [
       StringTable(
         '040904b0',
-        [StringStruct('CompanyName', 'GrassTech'),
+        [StringStruct('CompanyName', 'HeavyNotFat'),
         StringStruct('FileDescription', '人工智能桌面宠物'),
         StringStruct('FileVersion', '3.0.0.0'),
         StringStruct('InternalName', 'Ai Desktop Pet'),
-        StringStruct('LegalCopyright', 'Copyright © 2025 All Rights Reserved. GrassTech. 版权所有'),
+        StringStruct('LegalCopyright', 'Copyright © 2025 All Rights Reserved. HeavyNotFat(肥波不肥). 版权所有'),
         StringStruct('OriginalFilename', 'Ai Desktop Pet'),
         StringStruct('ProductName', 'Ai Desktop Pet'),
         StringStruct('ProductVersion', '3.0.0.0'),
         StringStruct('SquirrelAwareVersion', '3.0'),
         StringStruct('', ''),
-        StringStruct('lTrademarks', 'GrassTech')])
+        StringStruct('lTrademarks', 'HeavyNotFat')])
       ]), 
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]

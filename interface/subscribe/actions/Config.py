@@ -12,6 +12,12 @@ class Config:
         elif isinstance(self._config[relative], list):
             self._config[relative].append(value)
 
+    def unregister(self, relative: str):
+        if isinstance(self._config[relative], str):
+            self._config[relative] = ""
+        elif isinstance(self._config[relative], list):
+            self._config[relative].clear()
+
     @property
     def drag_action(self):
         return self._config["drag_action"]

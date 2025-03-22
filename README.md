@@ -10,9 +10,6 @@
 ---
 
 > [!CAUTION]
-> The repo will upload some backup. *It can't run in common*
-
-> [!CAUTION]
 > The program is scheduled to undergo an architectural reconstruction starting from March 14, 2025. After the reconstruction, the architecture will be updated to `Version 3 (Active&Beauty)`. Please note that the new architecture may not be backward compatible with the previous versions...
 >
 > The update will transition the architectural version from `Version 2 (Loader&Processor)` to `Version 3 (Active&Beauty)`

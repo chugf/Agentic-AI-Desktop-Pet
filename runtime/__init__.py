@@ -11,6 +11,16 @@ import requests
 import win32api
 import win32con
 
+
+class PassedNoneContent(object):
+    pass
+
+
+SENSITIVE_CONTENT = [
+    "/resources/configure.json",
+    PassedNoneContent(),  # 占位符
+    PassedNoneContent(),  # 占位符
+]
 major = "3"
 minor = "0"
 patch = "0"
@@ -177,6 +187,129 @@ class PythonCodeParser(ast.NodeVisitor):
                     self.called[1] = True
                 if full_call_path[0] == "subscribe" and full_call_path[1] == "actions":
                     self.called[2] = True
+        self.generic_visit(node)
+
+
+class PythonCodeExaminer(ast.NodeVisitor):
+    """
+    内容审计 用于检查插件代码安全（用户可以自行开启）
+    分为5个等级:
+     L1: 轻微保护（
+                    仅审计读取./resources/configure.json
+                    有支持有云访问能力的插件。
+                用户自行判断是否运行）
+     L2: 轻度保护（
+                    仅审计读取./resources/configure.json文件。
+                用户自行判断是否运行）
+     L3: 中度保护（
+                    审计以上内容
+                    是否调用(
+                        exec, eval
+                    )，
+                程序先阻止运行用户可以手动运行）
+     L4: 高度保护（
+                    审计所有内容
+                    库导入内容(
+                        os, sys
+                    )
+                程序直接阻止，无法运行）
+     L5: 重度保护（
+                    审计所有内容
+                    库导入内容(
+                        pickle, subprocess, shutil,
+                        importlib, ctypes, cffi
+                    )，
+                程序直接阻止，无法运行）
+    """
+    def __init__(self, code):
+        self.code = code
+        self.exists = [False] * 10
+        self.imported_modules = set()
+        self.analyze()
+
+    @property
+    def is_quoted_config(self):
+        return self.exists[0]
+
+    @property
+    def is_executed_or_evaluated(self):
+        return self.exists[1]
+
+    @property
+    def is_executed_compile(self):
+        return self.exists[2]
+
+    @property
+    def is_imported_requests(self):
+        return "requests" in self.imported_modules
+
+    @property
+    def is_imported_os_or_sys(self):
+        return "os" in self.imported_modules or "sys" in self.imported_modules
+
+    @property
+    def is_imported_ctypes_or_cffi(self):
+        return "ctypes" in self.imported_modules or "cffi" in self.imported_modules
+
+    @property
+    def is_imported_pickle(self):
+        return "pickle" in self.imported_modules
+
+    @property
+    def is_imported_subprocess(self):
+        return "subprocess" in self.imported_modules
+
+    @property
+    def is_imported_shutil(self):
+        return "shutil" in self.imported_modules
+
+    @property
+    def is_imported_importlib(self):
+        return "importlib" in self.imported_modules
+
+    def custom_examine_library(self, module):
+        return module in self.imported_modules
+
+    def analyze(self):
+        tree = ast.parse(self.code)
+        self.visit(tree)
+
+    def visit_Call(self, node):
+        """审计函数调用"""
+        if isinstance(node.func, ast.Name):
+            if node.func.id == 'exec':
+                self.exists[1] = True
+            elif node.func.id == 'eval':
+                self.exists[1] = True
+            elif node.func.id == 'compile':
+                self.exists[2] = True
+        self.generic_visit(node)
+
+    def visit_Str(self, node):
+        """审计字符串"""
+        for index, content in enumerate(SENSITIVE_CONTENT):
+            if content in node.s:
+                self.exists[index] = True
+        self.generic_visit(node)
+
+    def visit_Constant(self, node):
+        """审计字符串"""
+        if isinstance(node.value, str):
+            for index, content in enumerate(SENSITIVE_CONTENT):
+                if content in node.value:
+                    self.exists[index] = True
+        self.generic_visit(node)
+
+    def visit_Import(self, node):
+        """审计 以import导入的库"""
+        for alias in node.names:
+            self.imported_modules.add(alias.name)
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node):
+        """审计 以from导入的库"""
+        if node.module:
+            self.imported_modules.add(node.module)
         self.generic_visit(node)
 
 

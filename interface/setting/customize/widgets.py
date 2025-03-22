@@ -1,5 +1,5 @@
 from PyQt5.Qt import Qt, QKeyEvent
-from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition
+from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox
 
 
 class CodeEdit(TextEdit):
@@ -22,6 +22,18 @@ class CodeEdit(TextEdit):
                 self.insertPlainText("\n" + " " * indent)
         else:
             super().keyPressEvent(event)
+
+
+def pop_message(parent, title: str, content: str, yes_text: str = "OK", no_text: str = "Cancel"):
+    w = MessageBox(
+        title,
+        content,
+        parent
+    )
+    w.yesButton.setText(yes_text)
+    w.cancelButton.setText(no_text)
+
+    return w.exec()
 
 
 def pop_warning(parent, title, content, duration=1200):

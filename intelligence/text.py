@@ -4,7 +4,6 @@ import importlib
 
 from . import external
 
-import markdown
 import dashscope
 import requests
 
@@ -56,8 +55,7 @@ def TextGeneratorLocal(prompt, func, url):
     response = requests.post(url, json={"model": "deepseek-r1:8b", "messages": memories})
     answer = response.json()
     memories.append({'role': 'assistant', 'content': answer['message']['content']})
-    func(answer['message']['content'],
-            markdown.markdown(answer['message']['content']))
+    func(answer['message']['content'])
 
 
 class TextGenerator:
@@ -111,15 +109,14 @@ class TextGenerator:
                     memories_.append(chunk_message)
                     if 'reasoning_content' in chunk_message.keys() and \
                             not chunk_message.content.strip() and chunk_message['reasoning_content'].strip():
-                        func((None, markdown.markdown(f"<think>\n{chunk_message['reasoning_content']}\n</think>")))
+                        func(f"<think>\n{chunk_message['reasoning_content']}\n</think>")
                     else:
-                        func((chunk_message.content, markdown.markdown(chunk_message.content)))
+                        func(chunk_message.content)
             return chunk_message
 
         extra_body = {}
         extra_body.update({"enable_search": is_search_online})
         memories.append({"role": "user", "content": prompt})
-
         completion = self.get_response(extra_body, model)
         check_answer = process_chunks(completion, memories, extra_body, model, external)
         if check_answer is not False:
