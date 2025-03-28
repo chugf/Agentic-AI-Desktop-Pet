@@ -28,7 +28,7 @@ from OpenGL import GL
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect
 from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout
 from qfluentwidgets import FluentIcon, NavigationItemPosition, \
-    BodyLabel, TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface
+    TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface
 from qframelesswindow import FramelessWindow, TitleBar
 
 # 初始化变量常亮和配置
@@ -368,7 +368,7 @@ if __name__ == '__main__':
     PLUGIN_GLOBAL['input'] = PluginLogCollector.input_
 
     desktop = DesktopPet()
-    desktop.show()
+    # desktop.show()
     setting = Setting()
     conversation = Conversation()
     setting.show()

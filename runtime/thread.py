@@ -93,15 +93,15 @@ class RecognitionThread(QThread):
 
     def run(self):
         if self.configure['settings']['rec'] == "cloud":
-            speech_rec = intelligence.xf_speech_recognition(
+            self.speech_rec = intelligence.recognition.XFRealTimeSpeechRecognizer(
                 self.result.emit, self.parent().recognition_failure,
                 self.parent().recognition_closure)
         else:
-            speech_rec = intelligence.whisper_speech_recognition(
+            self.speech_rec = intelligence.recognition.WhisperRealTimeSpeechRecognizer(
                 self.result.emit, self.parent().recognition_failure,
                 self.parent().recognition_closure,
                 runtime.parse_local_url(self.configure['settings']['local']['rec']['url']))
-        speech_rec.start_recognition()
+        self.speech_rec.start_recognition()
 
 
 class MediaUnderstandThread(QThread):
@@ -196,18 +196,19 @@ class VoiceGenerateThread(QThread):
                 if self.configure['settings']['enable']['trans']:
                     if "spider" in self.configure["settings"]['translate']:
                         if "bing" in self.configure["settings"]['translate']:
-                            text = intelligence.machine_translate(text)
+                            text = intelligence.translate.machine_translate(text)
                             language = "ja"
                     elif "ai" in self.configure["settings"]['translate']:
                         if "tongyi" in self.configure["settings"]['translate']:
-                            text = intelligence.tongyi_translate(text)
+                            text = intelligence.translate.tongyi_translate(text)
                             language = "ja"
             else:
                 language = self.language
 
-            intelligence.voice_change(self.configure['voice_model'], self.module_info,
-                                      runtime.parse_local_url(self.configure['settings']['local']['gsv']))
-            wav_bytes = intelligence.gsv_voice_generator(
+            intelligence.voice.change_module(
+                self.configure['voice_model'], self.module_info,
+                runtime.parse_local_url(self.configure['settings']['local']['gsv']))
+            wav_bytes = intelligence.voice.take_a_tts(
                 text, language, self.configure['voice_model'],
                 self.module_info, self.configure['settings']['tts']['top_k'],
                 self.configure['settings']['tts']['top_p'], self.configure['settings']['tts']['temperature'],
@@ -216,7 +217,7 @@ class VoiceGenerateThread(QThread):
                 parallel_infer=self.configure['settings']['tts']['parallel'],
                 url=runtime.parse_local_url(self.configure['settings']['local']['gsv']))
         else:
-            wav_bytes, _ = intelligence.ali_voice_generator(text)
+            wav_bytes, _ = intelligence.voice.ali_tts(text)
             if wav_bytes is None:
                 self.error.emit(False)
                 return
