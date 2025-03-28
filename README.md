@@ -7,18 +7,6 @@
     <br/>
 </div>
 
----
-
-> [!CAUTION]
-> The program is scheduled to undergo an architectural reconstruction starting from March 14, 2025. After the reconstruction, the architecture will be updated to `Version 3 (Active&Beauty)`. Please note that the new architecture may not be backward compatible with the previous versions...
->
-> The update will transition the architectural version from `Version 2 (Loader&Processor)` to `Version 3 (Active&Beauty)`
-> 
-> The program version will be upgraded from `Stable Version 2.1.1` to `Stable Version 2.2.0`.
-
----
-
-
 ## 🌟 Project Overview
 
 This is an AI-driven desktop pet application that supports highly customizable character appearances, animations, and
@@ -76,19 +64,29 @@ def process_human_information(name: str, age: int, gender: str):
 
 Using built-in API interfaces, you can quickly develop plugins. Here are some commonly used APIs:
 
-| API Name          | Inheritance Path    | Parameters | Description                              |
-|-------------------|---------------------|------------|------------------------------------------|
-| GetLive2D         | subscribe.Live2D    | null       | Get Python properties of Live2D model    |
-| GetWindowPosition | subscribe.Window    | null       | Get window position                      |
-| GetCharacter      | subscribe.Character | null       | Get the name of the current Live2D model |
-| GetName           | subscribe.Character | null       | Get character name                       |
-| GetVoiceModel     | subscribe.Model     | null       | Get voice model name                     |
+| Name | Inheritance Path | Parameters | Purpose |
+| --- | --- | --- | --- |
+| GetLive2D | subscribe.Live2D | N/A | Get Live2D attributes (Live2D For Python) |
+| GetWindowPosition | subscribe.Window | N/A | Get the relative position of the current desktop pet |
+| GetCharacter | subscribe.Character | N/A | Get the currently selected character |
+| GetName | subscribe.Character | N/A | Get the alias of the character |
+| GetVoiceModel | subscribe.Model | N/A | Obtain the voice model |
 
-| API Name       | Inheritance Path        | Parameters  | Description      |
-|----------------|-------------------------|-------------|------------------|
-| InsertNotebook | subscribe.views.Setting | frame, text | 插入一个Frame进设置的选项卡 |
-| DeleteNotebook | subscribe.views.Setting | frame       | 删除一个Frame的选项卡    |
+| Name | Inheritance Path | Parameters | Purpose |
+| --- | --- | --- | --- |
+| InsertInterface | subscribe.views.Setting | *widget: QWidget* *icon: FluentIcon* *text: str* | Insert a tab interface into the settings panel. |
 
+### InsertInterface (subscribe.views.Setting)
+
+- widget: A QWidget-inherited interface needs to reference setObjectName to be displayed.
+- icon: A FluentIcon
+- text: Display text
+
+| Name | Inheritance Path | Parameters | Purpose |
+| --- | --- | --- | --- |
+| SetDragAction | subscribe.actions.Register | *func: callable* | Set a MIME drag-and-drop event for the program (execute corresponding function upon mouse drag-and-drop) |
+| SetClickAction | subscribe.actions.Register | *func: callable* | Set a click event for the program (execute corresponding function when clicking on the desktop pet) |
+| SetMouseDragAction | subscribe.actions.Register | *func: callable* | Set a mouse drag event for the program (execute corresponding function when dragging the desktop pet) |
 ---
 
 ## 📦 Supported External Libraries
