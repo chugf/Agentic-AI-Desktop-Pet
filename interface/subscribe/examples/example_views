@@ -10,5 +10,5 @@ class Test(QWidget):
         super().__init__()
         self.setObjectName('TestInterface')
 
-subscribe.views.Setting().InsertInterface(Test(), FluentIcon.SETTING, "test")
+interface.subscribe.views.Setting.InsertInterface(Test(), FluentIcon.SETTING, "test")
 

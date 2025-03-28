@@ -1,14 +1,15 @@
 {
    "name": "香草",
-   "voice_model": "香草",
+   "voice_model": "艾莲",
    "default": "vanilla",
    "watermark": "ParamHairBack;-1.0",
    "adult_level": 0,
    "settings": {
-      "language": "",
+      "language": "Chinese (Simplified)_China",
       "transparency": 1.0,
       "compatibility": true,
-      "intelligence": "qwen-plus-latest",
+      "safety": "l5",
+      "intelligence": "qwen-max-latest",
       "translate": "ai.tongyi",
       "live2d": {
          "enable": {
@@ -23,7 +24,7 @@
          "online": false,
          "trans": false,
          "rec": false,
-         "locktsk": false
+         "locktsk": true
       },
       "cloud": {
          "aliyun": "",
@@ -88,15 +89,15 @@
          "action": {
             "ActionTouchHead": {
                "position": [
-                  -1,
-                  -1,
-                  -1,
-                  -1
+                  149,
+                  234,
+                  2,
+                  62
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "Idle:motions/vanilla_eardown.motion3.json:1",
                "expression": "",
-               "play": "",
-               "play_type": ""
+               "play": "coquetry",
+               "play_type": "grunt.wav"
             },
             "ActionTouchLeg": {
                "position": [
@@ -185,10 +186,10 @@
    },
    "record": {
       "position": [
-         -1,
-         -1,
-         -1,
-         -1,
+         149,
+         2,
+         234,
+         62
       ],
       "enable_position": false
    }

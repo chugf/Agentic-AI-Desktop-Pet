@@ -40,8 +40,8 @@ def machine_translate(words):
     return translated_text
 
 
-def tongyi_translate(words, API_KEY):
-    CustomGenerate = text.CustomGenerator(API_KEY, [{'role': 'user', 'content': words}], True)
+def tongyi_translate(words):
+    CustomGenerate = text.CustomGenerator([{'role': 'user', 'content': words}], True)
     return CustomGenerate.generate_text()
 
 

@@ -1,7 +1,0 @@
-fastapi
-websocket-client
-websockets
-req
-uvicorn
-pyadntic
-pyaudio

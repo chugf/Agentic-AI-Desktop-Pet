@@ -1,4 +1,3 @@
-import time
 from urllib.parse import urlencode
 import datetime
 import hashlib

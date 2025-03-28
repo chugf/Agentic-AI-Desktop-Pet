@@ -14,3 +14,5 @@ class RegisterSetting(Register.RegisterSetting):
 
 
 _Config = _Config()
+Setting = Setting()
+RegisterSetting = RegisterSetting()

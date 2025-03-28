@@ -36,11 +36,11 @@ def pop_message(parent, title: str, content: str, yes_text: str = "OK", no_text:
     return w.exec()
 
 
-def pop_warning(parent, title, content, duration=1200):
+def pop_warning(parent, title, content, duration=1200, orient=Qt.Horizontal):
     InfoBar.warning(
         title=title,
         content=content,
-        orient=Qt.Horizontal,
+        orient=orient,
         isClosable=True,
         position=InfoBarPosition.TOP,
         duration=duration,
@@ -60,11 +60,11 @@ def pop_success(parent, title, content, duration=1200):
     )
 
 
-def pop_error(parent, title, content, duration=2000):
+def pop_error(parent, title, content, duration=2000, orient=Qt.Horizontal):
     InfoBar.error(
         title=title,
         content=content,
-        orient=Qt.Horizontal,
+        orient=orient,
         isClosable=True,
         position=InfoBarPosition.TOP,
         duration=duration,

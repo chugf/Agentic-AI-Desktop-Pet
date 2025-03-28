@@ -1,1 +1,399 @@
-{}
+{
+   "name": "香草",
+   "voice_model": "艾莲",
+   "default": "vanilla",
+   "watermark": "ParamHairBack;-1.0",
+   "adult_level": 0,
+   "settings": {
+      "language": "Chinese (Simplified)_China",
+      "transparency": 1.0,
+      "compatibility": true,
+      "intelligence": "qwen-max-latest",
+      "translate": "ai.tongyi",
+      "live2d": {
+         "enable": {
+            "AutoBlink": true,
+            "AutoBreath": true,
+            "AutoDrag": true
+         }
+      },
+      "enable": {
+         "tts": false,
+         "media": true,
+         "online": false,
+         "trans": false,
+         "rec": false,
+         "locktsk": true
+      },
+      "cloud": {
+         "aliyun": "sk-95d641171ebf424a87e92afc943b8bb0",
+         "xunfei": {
+            "id": "",
+            "key": "",
+            "secret": ""
+         }
+      },
+      "local": {
+         "text": "http://{ip}:{year}/chat",
+         "media": "https://{ip}:{year}/media",
+         "gsv": "http://{ip}:{year} + 1",
+         "rec": {
+            "tool": "whisper",
+            "url": "ws://{ip}:{year} + 3"
+         }
+      },
+      "tts": {
+         "way": "local",
+         "top_k": 15,
+         "top_p": 0.74,
+         "temperature": 0.77,
+         "speed": 1.09,
+         "batch_size": 3,
+         "batch_threshold": 0.75,
+         "parallel": true
+      },
+      "text": {
+         "way": "cloud",
+         "temperature": 0.8,
+         "top_p": 0.8,
+         "top_k": 20
+      },
+      "rec": "cloud",
+      "understand": {
+         "way": "cloud",
+         "min": 3600,
+         "max": 7200
+      }
+   },
+   "model": {
+      "vanilla": {
+         "adult": {
+            "AdultContent": false,
+            "AdultLevelMinimum": 1,
+            "AdultLevelMaximum": 5,
+            "AdultDescribe": {
+               "1": "娇喘 Gasp",
+               "2": "裸露 Nudity",
+               "3": "行为 Sex",
+               "4": "互动 Interact",
+               "5": "模拟 Simulate"
+            },
+            "action": {
+               "ActionSex": []
+            },
+            "voice": {
+               "VoiceGasp": []
+            }
+         },
+         "action": {
+            "ActionTouchHead": {
+               "position": [
+                  149,
+                  234,
+                  2,
+                  62
+               ],
+               "motion": "Idle:motions/vanilla_eardown.motion3.json:1",
+               "expression": "",
+               "play": "coquetry",
+               "play_type": "grunt.wav"
+            },
+            "ActionTouchLeg": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickCap": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickChest": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionTouchCustom": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickCustom": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            }
+         },
+         "voice": {
+            "angry": [
+               "refuse1.wav"
+            ],
+            "coquetry": [
+               "grunt.wav",
+               "master1.wav",
+               "meow1.wav"
+            ],
+            "happy": [],
+            "sad": [],
+            "stable": [
+               "meow1.wav"
+            ],
+            "welcome": [
+               "greet_afternoon.wav",
+               "greet_morning.wav",
+               "welcome1.wav",
+               "welcome2.wav",
+               "welcome3.wav"
+            ]
+         }
+      },
+      "Hiyori": {
+         "adult": {
+            "AdultContent": false,
+            "AdultLevelMinimum": 1,
+            "AdultLevelMaximum": 5,
+            "AdultDescribe": {
+               "1": "娇喘 Gasp",
+               "2": "裸露 Nudity",
+               "3": "行为 Sex",
+               "4": "互动 Interact",
+               "5": "模拟 Simulate"
+            },
+            "action": {
+               "ActionSex": []
+            },
+            "voice": {
+               "VoiceGasp": []
+            }
+         },
+         "action": {
+            "ActionTouchHead": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionTouchLeg": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickCap": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickChest": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionTouchCustom": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickCustom": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            }
+         },
+         "voice": {
+            "angry": [],
+            "coquetry": [],
+            "happy": [],
+            "sad": [],
+            "stable": [],
+            "welcome": []
+         }
+      },
+      "kasumi2": {
+         "adult": {
+            "AdultContent": false,
+            "AdultLevelMinimum": 1,
+            "AdultLevelMaximum": 5,
+            "AdultDescribe": {
+               "1": "娇喘 Gasp",
+               "2": "裸露 Nudity",
+               "3": "行为 Sex",
+               "4": "互动 Interact",
+               "5": "模拟 Simulate"
+            },
+            "action": {
+               "ActionSex": []
+            },
+            "voice": {
+               "VoiceGasp": []
+            }
+         },
+         "action": {
+            "ActionTouchHead": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionTouchLeg": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickCap": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickChest": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionTouchCustom": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            },
+            "ActionClickCustom": {
+               "position": [
+                  -1,
+                  -1,
+                  -1,
+                  -1
+               ],
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            }
+         },
+         "voice": {
+            "angry": [],
+            "coquetry": [],
+            "happy": [],
+            "sad": [],
+            "stable": [],
+            "welcome": []
+         }
+      }
+   },
+   "record": {
+      "position": [
+         149,
+         2,
+         234,
+         62
+      ],
+      "enable_position": false
+   }
+}

@@ -7,4 +7,3 @@ class Character:
 
     def GetName(self):
         return self.config.name
-    

@@ -17,12 +17,12 @@ class PluginBinding(QFrame):
         self.configure = configure
         self.setObjectName("PluginBinding")
 
-        BodyLabel(self.languages[113], self).setGeometry(QRect(20, 10, 200, 30))
+        BodyLabel(self.languages[113], self).setGeometry(QRect(20, 52, 200, 30))
         self.input_plugin_folder = LineEdit(self)
-        self.input_plugin_folder.setGeometry(QRect(120, 10, 400, 30))
+        self.input_plugin_folder.setGeometry(QRect(120, 52, 400, 30))
 
         self.click_select_folder = PushButton(self.languages[40], self)
-        self.click_select_folder.setGeometry(QRect(530, 10, 100, 35))
+        self.click_select_folder.setGeometry(QRect(530, 52, 100, 35))
         self.click_select_folder.clicked.connect(self.fill_plugin_information)
 
         font_id = QFontDatabase.addApplicationFont("./interface/setting/JetBrainsMono-Bold.ttf")
@@ -34,13 +34,13 @@ class PluginBinding(QFrame):
         self.input_codes.setText(open("./interface/subscribe/examples/example_getattr",
                                       "r", encoding="utf-8").read())
         self.input_codes.setPlaceholderText("Emm. The developer is slacking off again")
-        self.input_codes.setGeometry(QRect(10, 60, 620, 320))
+        self.input_codes.setGeometry(QRect(10, 102, 620, 320))
         self.highlighter = highlight.PythonSyntaxHighlighter(self.input_codes.document())
 
         self.select_examples = ComboBox(self)
         examples = os.listdir("./interface/subscribe/examples")
         self.select_examples.addItems(examples)
-        self.select_examples.setGeometry(QRect(500, 60, 130, 30))
+        self.select_examples.setGeometry(QRect(500, 102, 130, 30))
         self.select_examples.setCurrentIndex(1)
         self.select_examples.currentTextChanged.connect(
             lambda: self.input_codes.setText(
@@ -49,7 +49,7 @@ class PluginBinding(QFrame):
 
         self.click_running = PushButton(self.languages[114], self)
         self.click_running.setIcon(FluentIcon.CARE_RIGHT_SOLID)
-        self.click_running.setGeometry(QRect(10, 390, 100, 30))
+        self.click_running.setGeometry(QRect(10, 432, 100, 30))
         self.click_running.clicked.connect(self.run)
 
         self.button_groups = QButtonGroup(self)
@@ -57,18 +57,15 @@ class PluginBinding(QFrame):
         self.single_independent = RadioButton(self.languages[153], self)
         self.single_automatic = RadioButton(self.languages[154], self)
         self.single_automatic.setChecked(True)
-        self.single_enhancement.setGeometry(QRect(130, 390, 150, 30))
-        self.single_independent.setGeometry(QRect(280, 390, 150, 30))
-        self.single_automatic.setGeometry(QRect(430, 390, 150, 30))
+        self.single_enhancement.setGeometry(QRect(130, 432, 150, 30))
+        self.single_independent.setGeometry(QRect(280, 432, 150, 30))
+        self.single_automatic.setGeometry(QRect(430, 432, 150, 30))
         self.button_groups.addButton(self.single_enhancement)
         self.button_groups.addButton(self.single_independent)
         self.button_groups.addButton(self.single_automatic)
 
         self.click_compile = PushButton(self.languages[41], self)
-        self.click_compile.setGeometry(QRect(10, 430, 620, 30))
-
-    def change_button_text(self, text):
-        self.click_running.setText(text)
+        self.click_compile.setGeometry(QRect(10, 472, 620, 30))
 
     def fill_plugin_information(self):
         folder_path = function.select_folder(self, self.languages[40], self.input_plugin_folder)
@@ -81,4 +78,4 @@ class PluginBinding(QFrame):
             widgets.pop_error(self, self.languages[112], self.languages[118])
 
     def run(self):
-        self.run_function(self.input_codes.toPlainText(), self.change_button_text, self.button_groups.checkedId())
+        self.run_function(self.input_codes.toPlainText(), self.button_groups.checkedId())

@@ -21,6 +21,9 @@ class Config(QConfig):
         OptionsValidator(["shut", "next", "left-bottom", "left-top", "right-bottom", "right-top"]), restart=True)
     taskbar_lock = OptionsConfigItem("Advanced", "locktsk", True, BoolValidator())
     media_understanding = OptionsConfigItem("Advanced", "media", False, BoolValidator())
+    safety_examine = OptionsConfigItem(
+        "Advanced", "safety", "shut",
+        OptionsValidator(["shut", "l1", "l2", "l3", "l4", "l5"]), restart=True)
 
     live2d_blink = OptionsConfigItem("Live2D", "AutoBlink", True, BoolValidator())
     live2d_breath = OptionsConfigItem("Live2D", "AutoBreath", True, BoolValidator())
@@ -160,6 +163,22 @@ class Switches(ScrollArea):
             ))
         self.advanced_group.addSettingCard(self.card_taskbar_lock)
 
+        self.card_safety_examine = OptionsSettingCard(
+            configItem=Config.safety_examine,
+            icon=FluentIcon.SEARCH,
+            title=self.languages[166],
+            content=self.languages[165],
+            texts=[self.languages[20], self.languages[160], self.languages[161],
+                   self.languages[162], self.languages[163], self.languages[164]],
+            parent=self.advanced_group
+        )
+        self.card_safety_examine.optionChanged.connect(
+            lambda value: self.change_configure(
+                value.value, "settings.safety",
+                value.value, "Advanced.safety"
+            ))
+        self.advanced_group.addSettingCard(self.card_safety_examine)
+
         # Live2D 设置
         self.live2d_group = SettingCardGroup(f"Live2D {self.languages[10]}", self.scroll_widgets)
         self.card_auto_blink = SwitchSettingCard(
@@ -203,7 +222,7 @@ class Switches(ScrollArea):
         self.live2d_group.addSettingCard(self.card_auto_drag)
 
         self.expand_layout.setSpacing(28)
-        self.expand_layout.setContentsMargins(36, 10, 36, 0)
+        self.expand_layout.setContentsMargins(36, 52, 36, 0)
         self.expand_layout.addWidget(self.general_group)
         self.expand_layout.addWidget(self.advanced_group)
         self.expand_layout.addWidget(self.live2d_group)

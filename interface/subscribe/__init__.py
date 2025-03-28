@@ -1,6 +1,7 @@
 # 此行用于接口调用！
 from . import views
 from . import actions
+from . import standards
 
 from .Config import _Config
 from . import Register as _Register
@@ -41,3 +42,9 @@ class RegisterAttribute(_Register.AttributeRegister):
 
 
 _Config = _Config()
+Character = Character()
+Window = Window()
+Live2D = Live2D()
+Model = Model()
+Register = Register()
+RegisterAttribute = RegisterAttribute()

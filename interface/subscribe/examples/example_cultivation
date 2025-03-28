@@ -1,5 +1,18 @@
-from PyQt5.Qt import QWidget
-from qfluentwidgets import FluentIcon
+import json
+import random
+
+from PyQt5.Qt import QWidget, QRect
+from qfluentwidgets import FluentIcon, BodyLabel, LineEdit
+
+with open("./resources/plugin/cultivation/config.json", "r", encoding="utf-8") as cf:
+    config = json.load(cf)
+    cf.close()
+
+
+def save_config(configure):
+    with open("./resources/plugin/cultivation/config.json", "w", encoding="utf-8") as scf:
+        config = json.dump(configure, scf, ensure_ascii=False, indent=3)
+        scf.close()
 
 
 class Cultivation(QWidget):
@@ -7,6 +20,19 @@ class Cultivation(QWidget):
         super().__init__()
         self.setObjectName("Cultivation")
 
+        self.coin_label = BodyLabel("金币数量：", self)
+        self.coin_label.setGeometry(QRect(10, 10, 100, 20))
 
-ct = Cultivation()
-subscribe.views.Setting().InsertInterface(ct, FluentIcon.LEAF, "养成")
+        self.text_coin = LineEdit(self)
+        self.text_coin.setGeometry(QRect(120, 5, 100, 20))
+        self.text_coin.setReadOnly(True)
+
+    def clickEvent(self, config):
+        config['coin'] += random.randint(1, 5)
+        self.text_coin.setText(str(config['coin']))
+        save_config(config)
+
+
+Cultivation = Cultivation()
+interface.subscribe.views.Setting.InsertInterface(Cultivation, FluentIcon.LEAF, "养成")
+interface.subscribe.actions.Register.SetClickAction(Cultivation.clickEvent, config)

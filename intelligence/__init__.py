@@ -4,16 +4,24 @@ from . import recognition
 from . import voice
 from . import translate
 
-ALI_API_KEY = ""
-XF_API_ID = ""
-XF_API_KEY = ""
-XF_API_SECRET = ""
+
+def reload_api(ifly_api_id, ifly_api_key, ifly_api_secret, ali_api_key) -> None:
+    recognition.API_ID = ifly_api_id
+    recognition.API_KEY = ifly_api_key
+    recognition.API_SECRET = ifly_api_secret
+
+    text.reload_api(ali_api_key)
+
+
+def load_gpt_sovits(url: str) -> dict:
+    try:
+        module_info = voice.get_module_lists(url)
+    except __import__("requests").exceptions.ReadTimeout:
+        module_info = {}
+    return module_info
 
 
 def xf_speech_recognition(success_func, error_func, close_func):
-    recognition.API_ID = XF_API_ID
-    recognition.API_KEY = XF_API_KEY
-    recognition.API_SECRET = XF_API_SECRET
     return recognition.XFRealTimeSpeechRecognizer(success_func, error_func, close_func)
 
 
@@ -23,7 +31,7 @@ def whisper_speech_recognition(success_func, error_func, close_func, url):
 
 def text_generator(prompt, model, is_search_online: bool, func: callable, url: str | None = None):
     if url is None:
-        return text.TextGenerator(ALI_API_KEY).generate_text(prompt, model, func, is_search_online)
+        return text.TextGenerator().generate_text(prompt, model, func, is_search_online)
     else:
         return text.TextGeneratorLocal(prompt, func, url)
 
@@ -37,7 +45,7 @@ def gsv_voice_generator(texts, language, module_name, module_info, top_k=12, top
 
 
 def ali_voice_generator(texts):
-    return voice.ali_tts(texts, ALI_API_KEY)
+    return voice.ali_tts(texts)
 
 
 def voice_change(name, modules, url):
@@ -49,4 +57,4 @@ def machine_translate(prompt):
 
 
 def tongyi_translate(words):
-    return translate.tongyi_translate(words, ALI_API_KEY)
+    return translate.tongyi_translate(words)

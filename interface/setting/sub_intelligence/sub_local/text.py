@@ -13,44 +13,44 @@ class TextParameter(QWidget):
         self.setObjectName("TextParameter")
 
         # top_k
-        BodyLabel("top_k", self).setGeometry(QRect(10, 0, 60, 35))
+        BodyLabel("top_k", self).setGeometry(QRect(10, 42, 60, 35))
         self.show_top_k = BodyLabel(top_k := str(configure['settings']['text']['top_k']), self)
         self.top_k = Slider(Qt.Horizontal, self)
         self.top_k.setRange(1, 100)
-        self.top_k.setGeometry(QRect(100, 10, 300, 35))
+        self.top_k.setGeometry(QRect(100, 52, 300, 35))
         self.top_k.setValue(int(configure['settings']['text']['top_k']))
         self.top_k.setToolTip(top_k)
         self.top_k.valueChanged.connect(
             lambda value: self.value_changed(
                 value, "settings.text.top_k", self.top_k, self.show_top_k))
-        self.show_top_k.setGeometry(QRect(420, 0, 60, 35))
+        self.show_top_k.setGeometry(QRect(420, 42, 60, 35))
 
         # top_p
-        BodyLabel("top_p", self).setGeometry(QRect(10, 35, 60, 35))
+        BodyLabel("top_p", self).setGeometry(QRect(10, 77, 60, 35))
         self.show_top_p = BodyLabel(top_p := str(configure['settings']['text']['top_p']), self)
         self.top_p = Slider(Qt.Horizontal, self)
         self.top_p.setRange(1, constants.TOP_P_PRECISION)
-        self.top_p.setGeometry(QRect(100, 45, 300, 35))
+        self.top_p.setGeometry(QRect(100, 87, 300, 35))
         self.top_p.setValue(int(configure['settings']['text']['top_p'] * constants.TOP_P_PRECISION))
         self.top_p.setToolTip(top_p)
         self.top_p.valueChanged.connect(
             lambda value: self.value_changed(
                 value, "settings.text.top_p", self.top_p, self.show_top_p, constants.TOP_P_PRECISION))
-        self.show_top_p.setGeometry(QRect(420, 45, 60, 35))
+        self.show_top_p.setGeometry(QRect(420, 87, 60, 35))
 
         # temperature
-        BodyLabel("temperature", self).setGeometry(QRect(10, 75, 80, 35))
+        BodyLabel("temperature", self).setGeometry(QRect(10, 117, 80, 35))
         self.show_temperature = BodyLabel(temperature := str(configure['settings']['text']['temperature']), self)
         self.temperature = Slider(Qt.Horizontal, self)
         self.temperature.setRange(1, constants.TEMPERATURE_PRECISION)
-        self.temperature.setGeometry(QRect(100, 85, 300, 35))
+        self.temperature.setGeometry(QRect(100, 127, 300, 35))
         self.temperature.setValue(int(configure['settings']['text']['temperature'] * constants.TEMPERATURE_PRECISION))
         self.temperature.setToolTip(temperature)
         self.temperature.valueChanged.connect(
             lambda value: self.value_changed(
                 value, "settings.text.temperature",
                 self.temperature, self.show_temperature, constants.TEMPERATURE_PRECISION))
-        self.show_temperature.setGeometry(QRect(420, 75, 60, 35))
+        self.show_temperature.setGeometry(QRect(420, 117, 60, 35))
 
     def value_changed(self, value, relative, slider_widget, label_widget, precision=1):
         # 判断是否是整数

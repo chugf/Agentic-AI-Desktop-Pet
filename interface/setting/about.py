@@ -50,15 +50,15 @@ class About(QWidget):
             parent=self,
         )
         self.check_update.clicked.connect(self.check_if_latest)
-        self.check_update.setGeometry(QRect(10, 10, 630, 100))
+        self.check_update.setGeometry(QRect(10, 52, 630, 100))
         self.show_notice_board = TextEdit(self)
         self.show_notice_board.setLineWrapMode(0)
         self.show_notice_board.setReadOnly(True)
-        self.show_notice_board.setGeometry(QRect(10, 90, 630, 300))
+        self.show_notice_board.setGeometry(QRect(10, 132, 630, 300))
 
         self.license_text = TextEdit(self)
         self.license_text.setReadOnly(True)
-        self.license_text.setGeometry(QRect(10, 400, 630, 80))
+        self.license_text.setGeometry(QRect(10, 442, 630, 80))
         self.license_text.setText(open("./resources/license", "r", encoding="utf-8").read())
 
         refresh_notice_board = RefreshNoticeBoard(self, self.runtime_module)

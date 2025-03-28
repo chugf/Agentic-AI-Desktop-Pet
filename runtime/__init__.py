@@ -1,3 +1,7 @@
+# 为外部导入做好准备
+from . import thread
+from . import file
+
 import os
 import tempfile
 import ast
@@ -24,35 +28,6 @@ SENSITIVE_CONTENT = [
 major = "3"
 minor = "0"
 patch = "0"
-
-
-class ThreadExceptionEnd(threading.Thread):
-    """结束线程 End Thread"""
-    def __init__(self, func: callable, finished=None):
-        threading.Thread.__init__(self)
-        self.func = func
-        self.finished = finished
-
-    def run(self):
-        self.func()
-        if self.finished is not None:
-            self.finished()
-
-    def stop_thread(self):
-        thread_id = self._get_id()
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
-                                                         ctypes.py_object(SystemExit))
-        if res > 1:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            return False
-        return True
-
-    def _get_id(self):
-        if hasattr(self, '_thread_id'):
-            return self._thread_id
-        for id_, thread_ in threading._active.items():
-            if thread_ is self:
-                return id_
 
 
 class ExtractFunctionDocstring(ast.NodeVisitor):
@@ -181,11 +156,11 @@ class PythonCodeParser(ast.NodeVisitor):
             if isinstance(current_node, ast.Name):
                 parts.append(current_node.id)
                 full_call_path = '.'.join(reversed(parts)).split(".")
-                if full_call_path[0] == "subscribe":
+                if full_call_path[0] == "interface":
                     self.called[0] = True
-                if full_call_path[0] == "subscribe" and full_call_path[1] == "views":
+                if full_call_path[0] == "interface" and full_call_path[2] == "views":
                     self.called[1] = True
-                if full_call_path[0] == "subscribe" and full_call_path[1] == "actions":
+                if full_call_path[0] == "interface" and full_call_path[2] == "actions":
                     self.called[2] = True
         self.generic_visit(node)
 
@@ -193,13 +168,14 @@ class PythonCodeParser(ast.NodeVisitor):
 class PythonCodeExaminer(ast.NodeVisitor):
     """
     内容审计 用于检查插件代码安全（用户可以自行开启）
+    开启：死循环检测 (无法关闭)
     分为5个等级:
      L1: 轻微保护（
                     仅审计读取./resources/configure.json
-                    有支持有云访问能力的插件。
                 用户自行判断是否运行）
      L2: 轻度保护（
                     仅审计读取./resources/configure.json文件。
+                    有支持有云访问能力的插件。
                 用户自行判断是否运行）
      L3: 中度保护（
                     审计以上内容
@@ -224,20 +200,59 @@ class PythonCodeExaminer(ast.NodeVisitor):
     def __init__(self, code):
         self.code = code
         self.exists = [False] * 10
+        self.code_optimise = [False] * 10
         self.imported_modules = set()
         self.analyze()
 
+    def analyze(self):
+        code = re.sub(r'^.*interface\.subscribe.*$\n?', '', self.code, flags=re.MULTILINE)
+        tree = ast.parse(code)
+        self.visit(tree)
+
+    # 判断
+    @property
+    def is_l1(self):
+        return self.is_quoted_config
+
+    @property
+    def is_l2(self):
+        return self.is_l1 or self.is_imported_requests or self.is_imported_websocket
+
+    @property
+    def is_l3(self):
+        return self.is_l2 or self.is_called_execute_or_evaluate
+
+    @property
+    def is_l4(self):
+        return self.is_l3 or self.is_imported_os_or_sys
+
+    @property
+    def is_l5(self):
+        return self.is_l4 or \
+                self.is_imported_ctypes_or_cffi or self.is_imported_pickle or self.is_imported_subprocess or \
+                self.is_imported_shutil, self.is_imported_importlib
+
+    # 代码优化建议
+    @property
+    def optimize_infinite_loop(self):
+        return self.code_optimise[0]
+
+    # 子
     @property
     def is_quoted_config(self):
         return self.exists[0]
 
     @property
-    def is_executed_or_evaluated(self):
+    def is_called_execute_or_evaluate(self):
         return self.exists[1]
 
     @property
-    def is_executed_compile(self):
+    def is_called_compile(self):
         return self.exists[2]
+
+    @property
+    def is_imported_websocket(self):
+        return "websocket" in self.imported_modules
 
     @property
     def is_imported_requests(self):
@@ -270,10 +285,6 @@ class PythonCodeExaminer(ast.NodeVisitor):
     def custom_examine_library(self, module):
         return module in self.imported_modules
 
-    def analyze(self):
-        tree = ast.parse(self.code)
-        self.visit(tree)
-
     def visit_Call(self, node):
         """审计函数调用"""
         if isinstance(node.func, ast.Name):
@@ -296,6 +307,8 @@ class PythonCodeExaminer(ast.NodeVisitor):
         """审计字符串"""
         if isinstance(node.value, str):
             for index, content in enumerate(SENSITIVE_CONTENT):
+                if isinstance(content, PassedNoneContent):
+                    continue
                 if content in node.value:
                     self.exists[index] = True
         self.generic_visit(node)
@@ -310,6 +323,19 @@ class PythonCodeExaminer(ast.NodeVisitor):
         """审计 以from导入的库"""
         if node.module:
             self.imported_modules.add(node.module)
+        self.generic_visit(node)
+
+    def visit_While(self, node):
+        """审计 while关键字是否存在死循环"""
+        is_condition = False
+        if isinstance(node.test, ast.Constant) and node.test.value in (True, 1):
+            is_condition = True
+        elif isinstance(node.test, ast.NameConstant) and node.test.value is True:
+            is_condition = True
+        if is_condition:
+            has_break = any(isinstance(n, ast.Break) for n in ast.walk(node))
+            if not has_break:
+                self.code_optimise[0] = True
         self.generic_visit(node)
 
 

@@ -3,7 +3,8 @@ class Config:
         self._config = {
             "drag_action": [],
             "click_action": [],
-            "mouse_drag_action": []
+            "mouse_drag_action": [],
+            "ai_output": []
         }
 
     def register(self, relative: str, value: str):
@@ -29,3 +30,7 @@ class Config:
     @property
     def mouse_drag_action(self):
         return self._config["mouse_drag_action"]
+
+    @property
+    def ai_output(self):
+        return self._config["ai_output"]

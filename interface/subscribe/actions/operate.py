@@ -10,3 +10,6 @@ class Operate:
 
     def GetMouseDragAction(self):
         return self.config.mouse_drag_action
+
+    def GetAIOutput(self):
+        return self.config.ai_output

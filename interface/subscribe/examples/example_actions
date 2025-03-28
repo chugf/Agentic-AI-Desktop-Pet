@@ -31,7 +31,7 @@ def execute_mouse_dragging(x: int, y: int, new_pos: QPoint):
 # Initialize the widget (SubInterface)
 ShowDraggingResult = ShowDraggingResult()
 # Register functions into Pre-Executed config
-subscribe.actions.Register().SetDragAction(execute_file_dragging)
-subscribe.actions.Register().SetMouseDragAction(execute_mouse_dragging)
+interface.subscribe.actions.Register.SetDragAction(execute_file_dragging)
+interface.subscribe.actions.Register.SetMouseDragAction(execute_mouse_dragging)
 # Register the widget into Setting
-subscribe.views.Setting().InsertInterface(ShowDraggingResult, FluentIcon.HOME, 'ShowDraggingResult')
+interface.subscribe.views.Setting.InsertInterface(ShowDraggingResult, FluentIcon.HOME, 'ShowDraggingResult')

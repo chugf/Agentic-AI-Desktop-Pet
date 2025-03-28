@@ -1,0 +1,153 @@
+import time
+import shutil
+import os
+import json
+import locale
+import random
+
+
+def logger(text: str, father_dir: str) -> None:
+    """日志记录"""
+    current_file = f"{father_dir}/{time.strftime('%Y-%m-%d')}.txt"
+    if not os.path.exists(father_dir):
+        os.mkdir(father_dir)
+    if not os.path.isfile(current_file):
+        open(current_file, "w", encoding="utf-8").close()
+    with open(f"{current_file}", "a", encoding="utf-8") as f:
+        f.write(f"{{\n"
+                f"\t[{time.strftime('%Y-%m-%d %H:%M:%S')}] \n"
+                f" [LOGGING]: \n{text}\n"
+                f"}}\n")
+        f.close()
+
+
+def delete_character(configure: dict, model: str) -> bool:
+    if os.path.exists(f"./resources/voice/{model}"):
+        shutil.rmtree(f"./resources/voice/{model}")
+        del configure['model'][model]
+        save_configure(configure)
+    if os.path.exists(f"./intelligence/prompts/{model}.json"):
+        os.remove(f"./intelligence/prompts/{model}.json")
+    shutil.rmtree(f"./resources/model/{model}")
+    return True
+
+
+def get_configure_actions(configure: dict, configure_default: str) -> dict:
+    """加载动作配置"""
+    return configure['model'][configure_default]['action']
+
+
+def get_audio_path(configure: dict, configure_default: str, action: str) -> str:
+    """加载音频路径"""
+    try:
+        return (f"./resources/voice/{configure['default']}/"
+                f"{get_configure_actions(configure, configure_default)[action]['play']}/"
+                f"{random.choice(configure['model'][configure['default']]['voice'][configure['model'][
+                    configure_default]['action'][action]['play']])
+                    if get_configure_actions(configure, configure_default)[action]['play_type'] == 'random' else
+                    get_configure_actions(configure, configure_default)[action]['play_type']}")
+    except (KeyError, IndexError):
+        return ""
+
+
+def load_template_model(configure: dict, model: str) -> None:
+    """加载模板模型"""
+    with open("./resources/template.json", "r", encoding="utf-8") as tf:
+        template = json.load(tf)
+        tf.close()
+    if not os.path.exists(f"./resources/voice/{model}"):
+        os.mkdir(f"./resources/voice/{model}")
+        for template_dir in template['voice'].keys():
+            try:
+                os.mkdir(f"./resources/voice/{model}/{template_dir}")
+            except FileExistsError:
+                pass
+    for emotion_type in os.listdir(f"./resources/voice/{model}"):
+        template['voice'][emotion_type] = list(map(lambda v: v.split("\\")[-1], __import__("glob").glob(
+            f"./resources/voice/{model}/{emotion_type}/*.wav")))
+    configure['model'].update({model: template})
+    with open("./resources/configure.json", "w", encoding="utf-8") as sf:
+        json.dump(configure, sf, indent=3, ensure_ascii=False)
+        sf.close()
+    if not os.path.exists(f"./resources/voice/{model}"):
+        load_template_model(configure, model)
+
+
+def load_language(configure: dict) -> list[str]:
+    """加载语言配置"""
+    system_language = locale.getlocale()[0]
+    # 自动选择语言
+    if not configure['settings']['language'].strip():
+        configure['settings']['language'] = system_language
+    # 配置语言
+    if configure['settings']['language'] in os.listdir("./resources/languages"):
+        system_language = configure['settings']['language']
+    else:
+        # 默认为英文
+        system_language = "English_United States"
+        configure['settings']['language'] = "English_United States"
+    with open(f"./resources/languages/{system_language}", "r", encoding="utf-8") as f:
+        languages: list[str] = f.read().split("\n")
+        f.close()
+    return languages
+
+
+def load_switch() -> dict:
+    """加载开关配置"""
+    with open("./interface/setting/switch.json", "r", encoding="utf-8") as f:
+        switch = json.load(f)
+        f.close()
+    return switch
+
+
+def save_switch(switch: dict) -> None:
+    """保存开关配置"""
+    with open("./interface/setting/switch.json", "w", encoding="utf-8") as f:
+        json.dump(switch, f, indent=3, ensure_ascii=False)
+        f.close()
+
+
+def load_configure(subscribe) -> dict:
+    """加载配置"""
+    with open("./resources/configure.json", "r", encoding="utf-8") as f:
+        def recover_backup():
+            nonlocal configure
+            os.remove("./resources/configure.json")
+            shutil.copy2("./logs/backup/configure.json", "./resources/configure.json")
+            with open("./resources/configure.json", "r", encoding="utf-8") as lf:
+                configure = json.load(lf)
+                lf.close()
+
+        # 错误检查器
+        try:
+            configure = json.load(f)
+        except json.JSONDecodeError:
+            f.close()
+            recover_backup()
+
+        try:
+            configure_default = configure["default"]
+            if configure_default == "origin":
+                configure_default = "vanilla"
+
+            configure['model'][configure['default']]['adult'] = configure['model'][configure_default]['adult']
+            configure['model'][configure['default']]['voice'] = configure['model'][configure_default]['voice']
+        except KeyError:
+            f.close()
+            recover_backup()
+            return load_configure(subscribe)
+        f.close()
+
+    # 写入接口
+    subscribe.Register.SetCharacter(configure['default'])
+    subscribe.Register.SetVoiceModel(configure['voice_model'])
+    subscribe.Register.SetName(configure['name'])
+
+    return configure
+
+
+def save_configure(configure: dict) -> None:
+    """保存配置"""
+    with open("./resources/configure.json", "w", encoding="utf-8") as f:
+        json.dump(configure, f, indent=3, ensure_ascii=False)
+        f.close()

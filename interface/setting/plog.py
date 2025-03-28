@@ -25,18 +25,18 @@ class PluginLogCollector(QFrame):
         self.input_logger = TextEdit(self)
         self.input_logger.setFont(jetbrains_mono)
         self.input_logger.setReadOnly(True)
-        self.input_logger.setGeometry(QRect(0, 0, 640, 440))
+        self.input_logger.setGeometry(QRect(0, 42, 640, 440))
         self.input_logger.setLineWrapMode(0)
         self.input_logger.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.highlighter = highlight.LoggingHighLighter(self.input_logger.document())
 
         self.select_reply = ComboBox(self)
-        self.select_reply.setGeometry(QRect(0, 440, 100, 30))
+        self.select_reply.setGeometry(QRect(0, 482, 100, 30))
         self.input_message = LineEdit(self)
-        self.input_message.setGeometry(QRect(100, 440, 450, 30))
+        self.input_message.setGeometry(QRect(100, 482, 450, 30))
         self.click_send = ToolButton(FluentIcon.SEND, self)
         self.click_send.clicked.connect(self.send)
-        self.click_send.setGeometry(QRect(550, 440, 90, 36))
+        self.click_send.setGeometry(QRect(550, 482, 90, 36))
 
     def send(self):
         selected_id = self.select_reply.currentText()

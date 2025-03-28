@@ -72,8 +72,7 @@ def take_a_tts(text: str, language: Literal['zh', 'en', 'ja', 'ko', 'yue'], modu
     return base64.b64decode(json.loads(response.json())['result'])
 
 
-def ali_tts(text: str, api):
-    dashscope.api_key = api
+def ali_tts(text: str):
     result_voice: SpeechSynthesisResult | None = None
 
     class Callback(ResultCallback):
@@ -105,15 +104,3 @@ def ali_tts(text: str, api):
     if result.get_audio_data() is not None:
         return result.get_audio_data(), int(result_voice.get_timestamp()['end_time'])
     return None, None
-
-
-if __name__ == "__main__":
-    MODULE_INFO = get_module_lists()
-    while True:
-        module = str(input())
-        if module in MODULE_INFO.keys():
-            change_module(module, MODULE_INFO)
-            play_audio_by_bytes(take_a_tts(input("Content > "), "zh", module, MODULE_INFO))
-        else:
-            print(f"没有{module}模型\n", list(MODULE_INFO.keys()))
-

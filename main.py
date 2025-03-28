@@ -299,15 +299,20 @@ class TextGenerateThread(QThread):
         self.text = text
         self.is_search_online = is_search_online
 
+    def send(self, text: str, is_finished: bool):
+        self.result.emit(text)
+        for action_item in subscribe.actions.Operate().GetAIOutput():
+            action_item(text, is_finished)
+
     def run(self):
         try:
             intelligence.ALI_API_KEY = configure["settings"]['cloud']['aliyun']
             answer = intelligence.text_generator(
                 self.text,
                 configure['settings']['intelligence'],
-                self.is_search_online, self.result.emit,
+                self.is_search_online, lambda text: self.send(text, False),
                 url=runtime.parse_local_url(configure['settings']['local']['text']
-                                    ) if configure['settings']['text']['way'] == "local" else None,)
+                                            ) if configure['settings']['text']['way'] == "local" else None,)
         except Exception:
             logger(f"子应用 - AI剧情问答 调用失败\n"
                    f"   Message: {traceback.format_exc()}", logs.HISTORY_PATH)
@@ -315,7 +320,7 @@ class TextGenerateThread(QThread):
             return
         logger(f"子应用 - AI剧情问答 调用成功\n"
                f"   Message: {answer}", logs.HISTORY_PATH)
-        self.result.emit(f"None:{answer}")
+        self.send(f"None:{answer}", True)
 
 
 class VoiceGenerateThread(QThread):
@@ -1136,7 +1141,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
 
     def mouseReleaseEvent(self, event):
         def checker(parameter_action: str):
-            """检查点击位置是否符合标准 Check whether the click position meets the standard"""
+            """检查点击位置是否符合标准 Check whether the click position meets the standards"""
             x_min, x_max, y_min, y_max = get_configure_actions()[parameter_action]['position']
             return x_min <= click_x <= x_max and y_min <= click_y <= y_max \
                 and not self.is_playing_animation
@@ -1174,7 +1179,10 @@ class DesktopTop(shader.ADPOpenGLCanvas):
                 self.playAnimationEvent('ActionClickCustom')
                 SpeakThread(self, get_audio_path("ActionClickCustom")).start()
             for action_item in subscribe.actions.Operate().GetClckAction():
-                action_item()
+                try:
+                    action_item()
+                except Exception as e:
+                    widgets.pop_error(st, 'Error', str(e))
             event.accept()
         self.is_movement = False
 

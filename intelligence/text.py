@@ -9,14 +9,14 @@ import requests
 
 memories = []
 prompts = {}
-with open("./resources/functions.json", "r", encoding="utf-8") as ff:
-    tools = json.load(ff)
+with open("./resources/functions.json", "r", encoding="utf-8") as f:
+    tools = json.load(f)
     tool_names = []
     properties = {}
     for tool in tools:
         tool_names.append(tool['function']['name'])
         properties.update({tool['function']['name']: list(tool['function']['parameters']['properties'].keys())})
-    ff.close()
+    f.close()
 
 
 def clear_memories():
@@ -26,12 +26,17 @@ def clear_memories():
         memories.append({"role": re.sub(r'\d+', '', role), "content": content})
 
 
+def reload_api(api_key):
+    dashscope.api_key = api_key
+
+
 def reload_memories(model):
     global memories, prompts
     try:
-        with open(f"./intelligence/prompts/{model}.json", "r", encoding="utf-8") as f:
+        with open(f"./intelligence/prompts/{model}.json", "r", encoding="utf-8") as sf:
             prompts = json.load(f)
             clear_memories()
+            sf.close()
     except (FileNotFoundError, FileExistsError):
         memories = []
         prompts = {}
@@ -59,9 +64,6 @@ def TextGeneratorLocal(prompt, func, url):
 
 
 class TextGenerator:
-    def __init__(self, API_KEY):
-        dashscope.api_key = API_KEY
-
     @staticmethod
     def get_response(extra_body, model, enable_tools: bool = True):
         if enable_tools:
@@ -127,10 +129,9 @@ class TextGenerator:
 
 
 class CustomGenerator:
-    def __init__(self, API_KEY, messages: list, is_translate):
+    def __init__(self, messages: list, is_translate):
         self.messages = messages
         self.is_translate = is_translate
-        dashscope.api_key = API_KEY
 
     def generate_text(self) -> str:
         completion = dashscope.Generation().call(

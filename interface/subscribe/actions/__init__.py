@@ -15,3 +15,5 @@ class Register(_Register.Register):
 
 
 Config = _Config.Config()
+Register = Register()
+Operate = Operate()

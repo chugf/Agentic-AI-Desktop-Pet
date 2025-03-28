@@ -9,8 +9,9 @@
    },
    "Advanced": {
       "penetration": "shut",
-      "locktsk": false,
-      "media": true
+      "locktsk": true,
+      "media": true,
+      "safety": "l5"
    },
    "Live2D": {
       "AutoBlink": true,
