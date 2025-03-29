@@ -44,7 +44,7 @@ class General(QFrame):
         # 翻译引擎 Translation Engine
         BodyLabel(self.languages[4], self).setGeometry(QRect(5, 127, 80, 35))
         self.select_translation_engine = ComboBox(self)
-        self.select_translation_engine.addItems([self.languages[80], self.languages[81]])
+        self.select_translation_engine.addItems([self.languages[80], self.languages[82]])
         self.select_translation_engine.setGeometry(QRect(100, 127, 230, 35))
         # # 翻译工具 Translation Tool
         self.select_translation_tool = ComboBox(self)

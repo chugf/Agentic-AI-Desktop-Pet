@@ -70,7 +70,21 @@ def load_template_model(configure: dict, model: str) -> None:
     with open("./resources/configure.json", "w", encoding="utf-8") as sf:
         json.dump(configure, sf, indent=3, ensure_ascii=False)
         sf.close()
+    # 规则文件
+    if not os.path.isfile(f"./intelligence/rules/{model}.json"):
+        with open(f"./intelligence/rules/{model}.json", "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=3, ensure_ascii=False)
+            f.close()
+    # 提示文件
+    if not os.path.isfile(f"./intelligence/prompts/{model}.json"):
+        with open(f"./intelligence/prompts/{model}.json", "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=3, ensure_ascii=False)
+            f.close()
     if not os.path.exists(f"./resources/voice/{model}"):
+        load_template_model(configure, model)
+    if not os.path.exists(f"./intelligence/prompts/{model}.json"):
+        load_template_model(configure, model)
+    if not os.path.exists(f"./intelligence/rules/{model}.json"):
         load_template_model(configure, model)
 
 

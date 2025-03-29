@@ -95,10 +95,6 @@
   },
   {
    "optionDest": "datas",
-   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/live2d_custom;live2d_custom/"
-  },
-  {
-   "optionDest": "datas",
    "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/intelligence/external;intelligence/external/"
   },
   {
@@ -108,6 +104,10 @@
   {
    "optionDest": "datas",
    "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/engine;engine/"
+  },
+  {
+   "optionDest": "datas",
+   "value": "D:/USER/Desktop/Pycharmprojecets/pythonProject/AI DesktopPet_v2/architecture;architecture/"
   }
  ],
  "nonPyinstallerOptions": {
