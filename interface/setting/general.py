@@ -26,8 +26,7 @@ class General(QFrame):
         self.select_language.addItems(os.listdir("./resources/languages"))
         self.select_language.setCurrentText(self.configure['settings']['language'])
         self.select_language.setGeometry(QRect(100, 47, 230, 35))
-        self.select_language.currentTextChanged.connect(
-            lambda value: function.change_configure(value, "settings.language", self.configure))
+        self.select_language.currentTextChanged.connect(self.change_language)
         # 宠物形象 Character Pet
         BodyLabel(self.languages[2], self).setGeometry(QRect(5, 87, 80, 35))
         self.select_character = ComboBox(self)
@@ -118,9 +117,13 @@ class General(QFrame):
 
         self.fill_information()
 
+    def change_language(self, value):
+        function.change_configure(value, "settings.language", self.configure)
+        self.kwargs.get("reload")(value, "language")
+
     def change_character(self, value):
         function.change_configure(value, "default", self.configure)
-        self.kwargs.get("reload")(value)
+        self.kwargs.get("reload")(value, "character")
 
     def change_reference(self):
         refer_text = self.module_info[self.select_ai_speak.currentText()][3]

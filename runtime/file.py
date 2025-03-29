@@ -107,7 +107,7 @@ def save_switch(switch: dict) -> None:
         f.close()
 
 
-def load_configure(subscribe) -> dict:
+def load_configure(subscribe) -> tuple[dict, str]:
     """加载配置"""
     with open("./resources/configure.json", "r", encoding="utf-8") as f:
         def recover_backup():
@@ -143,7 +143,7 @@ def load_configure(subscribe) -> dict:
     subscribe.Register.SetVoiceModel(configure['voice_model'])
     subscribe.Register.SetName(configure['name'])
 
-    return configure
+    return configure, configure_default
 
 
 def save_configure(configure: dict) -> None:

@@ -24,8 +24,8 @@ def execute_file_dragging(original_mime: str, analyzed_mime: list):
     print(original_mime, analyzed_mime)
 
 
-def execute_mouse_dragging(x: int, y: int, new_pos: QPoint):
-    print(x, y, new_pos)
+def execute_mouse_dragging(mouse_x: int, mouse_y: int, pet_x: int, pet_y: int):
+    print(mouse_x, mouse_y, pet_x, pet_y)
 
 
 # Initialize the widget (SubInterface)

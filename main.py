@@ -311,6 +311,7 @@ class TextGenerateThread(QThread):
                 self.text,
                 configure['settings']['intelligence'],
                 self.is_search_online, lambda text: self.send(text, False),
+                language=configure['language_mapping'][configure['settings']['language']],
                 url=runtime.parse_local_url(configure['settings']['local']['text']
                                             ) if configure['settings']['text']['way'] == "local" else None,)
         except Exception:
@@ -619,6 +620,7 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         self.enter_position = self.drag_position = None
         self.image_path = self.direction = self.last_pos = None
         self.pet_model: live2d.LAppModel | None = None
+        self.is_transparent_raise = False
 
         if display_x is not None and display_y is not None:
             self.move(display_x, display_y)
@@ -632,7 +634,6 @@ class DesktopTop(shader.ADPOpenGLCanvas):
         self.recognize_thread = RecognitionThread(self)
         self.recognize_thread.result.connect(self.recognition_success)
 
-        self.is_transparent_raise = False
 
         # 定时器
         self.look_timer = QTimer(self)

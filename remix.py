@@ -1,6 +1,8 @@
 import json
 import traceback
 import typing
+import random
+import shutil
 
 # 运行时
 import runtime
@@ -18,6 +20,7 @@ import engine
 import architecture
 
 # WindowsAPI 和 系统
+import os
 import sys
 import ctypes
 import win32gui
@@ -25,10 +28,10 @@ import win32con
 # 界面和OpenGL
 from OpenGL import GL
 
-from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect
-from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout
+from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, QMimeData
+from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox
 from qfluentwidgets import FluentIcon, NavigationItemPosition, \
-    TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface
+    TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action
 from qframelesswindow import FramelessWindow, TitleBar
 
 # 初始化变量常亮和配置
@@ -37,12 +40,12 @@ GWL_EX_STYLE: int = -20
 WS_EX_TRANSPARENT: int = 0x00000020
 live2d_parameter: dict = {}
 switches_configure: dict = runtime.file.load_switch()
-configure: dict = runtime.file.load_configure(interface.subscribe)
+configure, configure_default = runtime.file.load_configure(interface.subscribe)
 languages: list[str] = runtime.file.load_language(configure)
 module_info: dict = intelligence.load_gpt_sovits(runtime.parse_local_url(configure['settings']['local']['gsv']))
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
                         configure["settings"]['cloud']['xunfei']['secret'], configure["settings"]['cloud']['aliyun'])
-runtime.thread.reload_module(intelligence, runtime, logs)
+runtime.thread.reload_module(interface, intelligence, runtime, logs)
 
 
 # 设置界面
@@ -69,7 +72,7 @@ class CustomTitleBar(TitleBar):
 
 
 class Setting(FramelessWindow):
-    def __init__(self, display_x: int | None = None, display_y: int | None = None):
+    def __init__(self, display_x: int | None = None, display_y: int | None = None, point_index: int = 0):
         super().__init__()
         self.setTitleBar(CustomTitleBar(self))
         self.setWindowIcon(QIcon("logo.ico"))
@@ -144,10 +147,10 @@ class Setting(FramelessWindow):
                              position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.about_page, FluentIcon.INFO, languages[66], position=NavigationItemPosition.BOTTOM)
 
-        qrouter.setDefaultRouteKey(self.stack_widget, self.switches_page.objectName())
+        qrouter.setDefaultRouteKey(self.stack_widget, self.general_page.objectName())
 
         self.stack_widget.currentChanged.connect(self.onCurrentInterfaceChanged)
-        self.stack_widget.setCurrentIndex(1)
+        self.stack_widget.setCurrentIndex(point_index)
 
     # 自定义
     def addSubInterface(self, widget, icon, text: str, position=NavigationItemPosition.TOP, parent=None):
@@ -177,9 +180,7 @@ class Setting(FramelessWindow):
             if not configure['record']['position'].count(-1):
                 self.record_timer.stop()
                 configure['record']['enable_position'] = False
-                with open("./resources/configure.json", "w", encoding="utf-8") as rf:
-                    json.dump(configure, rf, ensure_ascii=False, indent=3)
-                    rf.close()
+                runtime.file.save_configure(configure)
 
         if self.record_timer.isActive():
             self.record_timer.stop()
@@ -188,21 +189,24 @@ class Setting(FramelessWindow):
             self.record_timer.timeout.connect(recorder)
             self.record_timer.start(50)
 
-    def reload_character(self, model):
-        global desktop
+    def reload_character(self, value, type_: typing.Literal['language', 'character']):
+        global desktop, languages
         desktop.close()
         architecture.live2d.dispose()
 
         architecture.live2d.init()
-        runtime.file.load_template_model(configure, model)
+        if type_ == "character":
+            runtime.file.load_template_model(configure, value)
+        elif type_ == "language":
+            languages = runtime.file.load_language(configure)
         conversation.move(desktop.x(), desktop.y())
         desktop = DesktopPet(desktop.x(), desktop.y())
         desktop.show()
-        interface.subscribe.RegisterAttribute().SetWindow(desktop)
+        interface.subscribe.RegisterAttribute.SetWindow(desktop)
 
-        interface.subscribe.actions.Register().UnsetALL()
+        interface.subscribe.actions.Register.UnsetALL()
         self.close()
-        self.__init__(self.x(), self.y())
+        self.__init__(self.x(), self.y(), self.stack_widget.currentIndex())
         self.show()
 
     def exception(self, e_msg):
@@ -215,10 +219,11 @@ class Setting(FramelessWindow):
                 interface.setting.customize.widgets.pop_warning(self, languages[157], languages[158], 5000)
                 return
             safety_level = configure['settings']['safety']
-            attr = getattr(runtime.PythonCodeExaminer(codes), f"is_{safety_level}")
-            if safety_level != "shut" and (list(attr)[-1] or list(attr)[0]):
-                interface.setting.customize.widgets.pop_warning(self, languages[157], languages[159], 5000)
-                return
+            if safety_level != "shut":
+                attr = getattr(runtime.PythonCodeExaminer(codes), f"is_{safety_level}")
+                if list(attr)[-1] or list(attr)[0]:
+                    interface.setting.customize.widgets.pop_warning(self, languages[157], languages[159], 5000)
+                    return
 
         except Exception:
             self.exception(traceback.format_exc())
@@ -347,19 +352,581 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.enter_position = self.drag_position = None
         self.image_path = self.direction = self.last_pos = None
         self.pet_model: architecture.live2d.LAppModel | None = None
+        self.is_transparent_raise = False
 
         # 移动位置
+        self.screen_geometry = QApplication.desktop().availableGeometry()
         if display_x is not None and display_y is not None:
             self.move(display_x, display_y)
         else:
             # 屏幕中心坐标
-            self.screen_geometry = QApplication.desktop().availableGeometry()
             x = (self.screen_geometry.width() - self.width()) // 2
             y = self.screen_geometry.height() - self.height()
             self.move(x, y + 15)
 
+    # GUI功能性配置
+    def set_mouse_transparent(self, is_transparent: bool):
+        """设置鼠标穿透 (透明部分可以直接穿过)"""
+        if self.is_transparent_raise:
+            return
+        window_handle = int(self.winId())
+        try:
+            current_ex_style = ctypes.windll.user32.GetWindowLongW(window_handle, GWL_EX_STYLE)
+            if is_transparent:
+                # 添加WS_EX_TRANSPARENT样式以启用鼠标穿透
+                new_ex_style = current_ex_style | WS_EX_TRANSPARENT
+            else:
+                # 移除WS_EX_TRANSPARENT样式以禁用鼠标穿透
+                new_ex_style = current_ex_style & ~WS_EX_TRANSPARENT
+
+            # 应用新的样式
+            ctypes.windll.user32.SetWindowLongW(window_handle, GWL_EX_STYLE, new_ex_style)
+        except Exception as e:
+            self.is_transparent_raise = True
+            QMessageBox.warning(self, languages[105], f"{type(e).__name__}: {e}")
+
+    def set_window_below_taskbar(self):
+        """设置低于任务栏(高于其它除了任务栏的应用)"""
+        hwnd = self.winId().__int__()
+        taskbar_hwnd = win32gui.FindWindow("Shell_TrayWnd", None)
+
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOP, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOACTIVATE)
+        win32gui.SetWindowPos(hwnd, taskbar_hwnd, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOACTIVATE)
+
+    def is_in_live2d_area(self, click_x: int | None = None, click_y: int | None = None):
+        """检查是否在模型内 Check whether the mouse is in the model"""
+        if click_x is None:
+            click_x = QCursor.pos().x() - self.x()
+        if click_y is None:
+            click_y = QCursor.pos().y() - self.y()
+        h = self.height()
+        try:
+            alpha = GL.glReadPixels(click_x * QGuiApplication.primaryScreen().devicePixelRatio(),
+                                    (h - click_y) * QGuiApplication.primaryScreen().devicePixelRatio(),
+                                    1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)[3]
+        except GL.error.GLError:
+            alpha = 0
+        return alpha > 0
+
+    def open_close_conversation(self):
+        if conversation.input_question.isVisible():
+            self.change_status_for_conversation("hide")
+            conversation.hide()
+        else:
+            conversation.show()
+            self.change_status_for_conversation("show")
+
+    @staticmethod
+    def change_status_for_conversation(status: typing.Literal['hide', 'show'],
+                                       enable_chat_box: bool = True):
+        status = True if status == "show" else False
+        conversation.input_question.setVisible(status)
+        conversation.click_send.setVisible(status)
+        conversation.click_take_photo.setVisible(status)
+        if enable_chat_box:
+            conversation.input_answer.setVisible(status)
+
+    def conversation_display(self, text: str, temp_action: bool = False):
+        def __temp():
+            _temp_timer.stop()
+            conversation.input_answer.setVisible(False)
+
+        if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
+            open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8").close()
+        with open(f"./intelligence/rules/{configure['default']}.json", "r", encoding="utf-8") as rf:
+            rules = json.load(rf)
+            rf.close()
+
+        if text is None:
+            return
+
+        if text.split(":")[0] == "None":
+            conversation.input_question.setGeometry(QRect(0, 430, 281, 30))
+            if temp_action:
+                _temp_timer = QTimer(self)
+                _temp_timer.timeout.connect(__temp)
+                _temp_timer.start(5000)
+            else:
+                self.change_status_for_conversation("show", False)
+
+        if ((module_info and configure['settings']['tts']['way'] == "local") or
+                configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts'] and \
+                text.split(":")[0] == "None":
+            if configure['settings']['enable']['tts']:
+                voice_generator = runtime.thread.VoiceGenerateThread(
+                    self, configure, module_info, ':'.join(text.split(":")[1:]))
+                voice_generator.result.connect(lambda wave_bytes: runtime.thread.SpeakThread(self, wave_bytes).start())
+                voice_generator.start()
+        else:
+            conversation.input_answer.clear()
+            conversation.input_answer.setVisible(True)
+            if text.split(":")[0] == "None":
+                conversation.input_answer.setMarkdown(':'.join(text.split(":")[1:]))
+            else:
+                conversation.input_answer.setMarkdown(text)
+            conversation.input_answer.moveCursor(conversation.input_answer.textCursor().End)
+            if text is not None:
+                if text[-2:] in rules.keys():
+                    self.playAnimationEvent(rules[text[-2:]], "expr")
+
+    def have_conversation(self, text: str | None = None, temp_action: bool = False):
+        """进行聊天 Send conversation"""
+        chat_message = str(conversation.input_question.text()) if text is None else text
+        if intelligence is None:
+            return
+        if not chat_message.strip():
+            return
+        conversation.click_send.setVisible(False)
+        conversation.click_take_photo.setVisible(False)
+        conversation.input_answer.setText(f"{configure['name']} {languages[79]}")
+
+        if self.image_path is None and "$[图片]$" not in conversation.input_question.text():
+            text_generate = runtime.thread.TextGenerateThread(
+                self, configure, chat_message,
+                True if configure['settings']['enable']['online'] else False,
+            )
+        else:
+            text_generate = runtime.thread.MediaUnderstandThread(
+                self, configure, self.image_path, chat_message.replace("$[图片]$", ""),
+                True if configure['settings']['enable']['online'] else False,
+            )
+            self.image_path = None
+        text_generate.start()
+        text_generate.result.connect(lambda texts: self.conversation_display(texts, temp_action))
+
+    # 自定义事件
+    @staticmethod
+    def clear_memories():
+        """清除记忆 Clear memories"""
+        if intelligence is None:
+            return
+        intelligence.text.clear_memories()
+        conversation.input_answer.clear()
+
+    # 动画事件
+    def finishedAnimationEvent(self):
+        self.is_playing_animation = False
+        self.turn_count = 0
+        self.resetDefaultValueEvent()
+        print("END")
+
+    # 重置默认值事件
+    def resetDefaultValueEvent(self):
+        for param, values in live2d_parameter.items():
+            if param == configure['watermark'].split(";")[0]:
+                continue
+            self.pet_model.SetParameterValue(param, values['default'], 1)
+
+    # 加载模型事件
+    def loadModelEvent(self, model):
+        try:
+            if os.path.exists(f"./resources/model/"
+                              f"{model}/"
+                              f"{model.title()}.model{'3' if architecture.live2d.LIVE2D_VERSION == 3 else ''}"):
+                self.model_json_path = (f"./resources/model/"
+                                        f"{model}/{model.title()}."
+                                        f"model{'3' if architecture.live2d.LIVE2D_VERSION == 3 else ''}.json")
+                self.pet_model.LoadModelJson(self.model_json_path)
+            else:
+                self.model_json_path = (f"./resources/model/{model}/"
+                                        f"{model}.model{'3' if architecture.live2d.LIVE2D_VERSION == 3 else ''}.json")
+                self.pet_model.LoadModelJson(self.model_json_path)
+        except (KeyError, FileNotFoundError):
+            QMessageBox.critical(self, languages[107], languages[109])
+            if QMessageBox.question(self, languages[108], languages[110]) == QMessageBox.Yes:
+                runtime.file.load_template_model(configure, 'kasumi2')
+                QMessageBox.information(self, languages[108], languages[112])
+                runtime.file.save_configure(configure)
+            self.exit_program()
+
+    # 播放动画事件
+    def playAnimationEvent(self, animation_name: str,
+                           play_type: typing.Literal['expr', 'anime', 'event'] = 'event'):
+        self.is_playing_expression = True
+        if play_type != 'event':
+            if play_type == 'expr':
+                self.pet_model.SetExpression(animation_name)
+            else:
+                self.pet_model.StartMotion(
+                    animation_name.split(":")[0], int(animation_name.split(":")[1]),
+                    architecture.live2d.MotionPriority.FORCE, onFinishMotionHandler=self.finishedAnimationEvent)
+            return
+        if (exp := runtime.file.get_configure_actions(
+                configure, configure_default)[animation_name]['expression'].strip()) != "":
+            self.pet_model.SetExpression(exp)
+        else:
+            group, _, index = runtime.file.get_configure_actions(
+                configure, configure_default)[animation_name]['motion'].split(":")
+            self.pet_model.StartMotion(group, int(index), architecture.live2d.MotionPriority.FORCE,
+                                       onFinishMotionHandler=self.finishedAnimationEvent)
+
+    # 事件 Events
+    # 右键菜单事件 Right-click menu events
+    def contextMenuEvent(self, event):
+        content_menu = RoundMenu("MENU", parent=self)
+
+        settings_action = Action(FluentIcon.SETTING, languages[68], self)
+        settings_action.triggered.connect(lambda: setting.show())
+        content_menu.addAction(settings_action)
+
+        content_menu.addSeparator()
+
+        conversation_action = Action(FluentIcon.HELP, languages[69], self)
+        conversation_action.triggered.connect(self.open_close_conversation)
+        content_menu.addAction(conversation_action)
+
+        # 分割线
+        content_menu.addSeparator()
+
+        exit_action = Action(FluentIcon.CLOSE, languages[73], self)
+        exit_action.triggered.connect(self.exit_program)
+        content_menu.addAction(exit_action)
+
+        content_menu.exec_(self.mapToGlobal(event.pos()))
+
+    # 定时器事件 Timer events
+    def timerEvent(self, a0: QTimerEvent | None) -> None:
+        def save_change():
+            self.is_penetration = False
+            # 刷新设置的缓存文件
+            switches_configure['Advanced']['penetration'] = "shut"
+            runtime.file.save_switch(switches_configure)
+            self.set_mouse_transparent(False)
+            self.setCanvasOpacity(configure['settings']['transparency'])
+
+        def check_mouse_pressed(left_condition: str, right_condition: str):
+            if not MouseListener.isListening:
+                MouseListener.start_listening()
+            if switches_configure['Advanced']['penetration'] == left_condition:
+                pressed = MouseListener.is_left_button_pressed
+            elif switches_configure['Advanced']['penetration'] == right_condition:
+                pressed = MouseListener.is_right_button_pressed
+            else:
+                pressed = False
+            if not MouseListener.isListening:
+                MouseListener.start_listening()
+            return pressed
+
+        if not self.isVisible():
+            return
+        # 设置透明度
+        self.setCanvasOpacity(configure['settings']['transparency'])
+        # 判断兼容性
+        if configure["settings"]["compatibility"] is False and self.amount == 100:
+            # 判断顺序是否低于任务栏
+            hwnd = self.winId().__int__()
+            taskbar_hwnd = win32gui.FindWindow("Shell_TrayWnd", None)
+            if win32gui.GetWindowRect(hwnd)[1] < win32gui.GetWindowRect(taskbar_hwnd)[1]:
+                self.set_window_below_taskbar()
+
+        # 检查识别器
+        # if not self.recognize_thread.isRunning() and configure['settings']['enable']['rec']:
+        #     self.recognize()
+        # elif speech_rec is not None and not configure['settings']['enable']['rec']:
+        #     speech_rec.closed()
+
+        # 释放资源
+        # 检查说话列表的可用性
+        if len(self.speaking_lists) == self.speaking_lists.count(False) and not self.speaking_lists:
+            # 清除缓存
+            self.speaking_lists.clear()
+
+        # 定时器检查
+        # if not configure['settings']['enable']['media']:
+        #     if self.look_timer.isActive():
+        #         self.look_timer.stop()
+        # else:
+        #     if not self.look_timer.isActive():
+        #         self.look_timer.start(random.randint(
+        #             configure['settings']['understand']['min'],
+        #             configure['settings']['understand']['max']) * 1000)
+
+        local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
+        try:
+            if configure['settings']['live2d']['enable']['AutoDrag']:
+                self.pet_model.Drag(local_x, local_y)
+        except SystemError:
+            pass
+        # 检查是否开启全局鼠标穿透
+        if switches_configure['Advanced']['penetration'] != "shut":
+            self.setCanvasOpacity(0.4)
+            self.set_mouse_transparent(True)
+            self.is_penetration = True
+            # 如果start有以下几种情况，则取消全局鼠标穿透
+            # 下次启动时取消全局鼠标穿透
+            if switches_configure['Advanced']['penetration'] == "next" and self.amount == -1:
+                save_change()
+            # 鼠标左键或右键在顶部按下时取消全局鼠标穿透
+            elif switches_configure['Advanced']['penetration'] in ('left-top', 'right-top'):
+                if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-top', 'right-top') and \
+                        80 > local_y > 0:
+                    MouseListener.stop_listening()
+                    save_change()
+            # 鼠标左键或右键在底部按下时取消全局鼠标穿透
+            elif switches_configure['Advanced']['penetration'] in ('left-bottom', 'right-bottom'):
+                if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-bottom',
+                                                                                    'right-bottom') and \
+                        self.height() > local_y > self.height() - 80:
+                    MouseListener.stop_listening()
+                    save_change()
+        elif switches_configure['Advanced']['penetration'] == "shut" and self.amount == 0:
+            save_change()
+
+        # 循环次数
+        if self.amount > 100:
+            self.amount = 0
+        self.amount += 1
+        # 检查表情
+        if self.expression_count >= 300 * self.fps_refresh:
+            self.is_playing_expression = False
+            self.pet_model.ResetExpression()
+        if self.is_playing_expression:
+            self.expression_count += self.fps_refresh
+        else:
+            self.expression_count = 0
+        # 检查点击区域
+        if self.is_in_live2d_area(local_x, local_y) and not self.is_penetration:
+            self.set_mouse_transparent(False)
+            self.click_in_area = True
+        elif not self.is_penetration:
+            self.set_mouse_transparent(True)
+            self.turn_count = 0
+            self.click_in_area = False
+
+        self.update()
+
+    # 过滤器事件 Filter events
+    def eventFilter(self, obj, event):
+        if obj is conversation.input_question and event.type() == event.KeyPress:
+            # 是否按下 Shift + Enter
+            if event.key() in (Qt.Key_Enter, Qt.Key_Return):
+                if event.modifiers() & Qt.ShiftModifier and conversation.click_send.isVisible():
+                    conversation.click_send.click()
+                    return True
+                else:
+                    return False
+        return super().eventFilter(obj, event)
+
+    # 鼠标拖动事件
+    def mousePressEvent(self, event):
+        x, y = event.globalPos().x(), event.globalPos().y()
+        if self.is_in_live2d_area(QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()):
+            self.click_in_area = True
+            self.click_x, self.click_y = x, y
+            event.accept()
+
+        if event.button() == Qt.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        def checker(parameter: str, turn_count: int) -> bool:
+            """检查是否满足框内要求"""
+            x_min, x_max, y_min, y_max = runtime.file.get_configure_actions(
+                configure, configure_default)[parameter]['position']
+            return (
+                    x_min <= current_x <= x_max and y_min <= current_y <= y_max and
+                    not self.is_playing_animation and self.turn_count >= turn_count and self.click_in_area
+            )
+
+        x, y = QCursor.pos().x() - self.x(), QCursor.pos().y()
+        # 拖动事件
+        if event.buttons() & Qt.LeftButton:
+            self.is_movement = True
+            if self.drag_position is not None:
+                if self.click_in_area:
+                    cv_new_pos = event.globalPos() - self.drag_position
+                    new_pos = event.globalPos() - self.drag_position
+                    if configure['settings']['enable']['locktsk']:
+                        new_pos.setY(max(self.screen_geometry.height() - self.height(), new_pos.y()))
+                        cv_new_pos.setY(max(self.screen_geometry.height() - self.height() - 60, new_pos.y() - 60))
+                    else:
+                        cv_new_pos.setY(new_pos.y() - 60)
+                    self.move(new_pos)
+
+                    for action_item in interface.subscribe.actions.Operate.GetMouseDragAction():
+                        action_item(x, y, self.x(), self.y())
+                    conversation.move(cv_new_pos)
+                event.accept()
+
+        # 非接触悬浮鼠标的互动
+        if self.enter_position and not event.buttons() & Qt.LeftButton:
+            # 处理互动事件/动画
+            current_pos = event.pos()
+            current_x = current_pos.x()
+            current_y = current_pos.y()
+
+            if self.last_pos is not None:
+                last_x, last_y = self.last_pos.x(), self.last_pos.y()
+
+                # 状态
+                if current_x > last_x:
+                    new_direction = 'right'
+                elif current_x < last_x:
+                    new_direction = 'left'
+                else:
+                    new_direction = self.direction
+
+                # 检查方向是否改变
+                if self.direction is not None and new_direction != self.direction:
+                    self.turn_count += 1
+
+                self.direction = new_direction
+
+            self.last_pos = current_pos
+
+            # 互动事件/动画
+            if self.click_in_area and not self.is_movement:
+                # 摸头互动
+                if checker('ActionTouchHead', 4):
+                    runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+                        configure, configure_default, 'ActionTouchHead')).start()
+                    self.click_in_area = False
+                    self.is_playing_animation = True
+                    # 播放动画
+                    self.playAnimationEvent('ActionTouchHead')
+                # 摸腿互动
+                if checker('ActionTouchLeg', 4):
+                    runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+                        configure, configure_default, 'ActionTouchLeg')).start()
+                    self.click_in_area = False
+                    self.is_playing_animation = True
+                    self.playAnimationEvent('ActionTouchLeg')
+                # 自定义互动
+                if checker('ActionTouchCustom', 4):
+                    runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+                        configure, configure_default, 'ActionTouchCustom')).start()
+                    self.click_in_area = False
+                    self.is_playing_animation = True
+                    self.playAnimationEvent('ActionTouchCustom')
+
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        def checker(parameter_action: str):
+            """检查点击位置是否符合标准 Check whether the click position meets the standards"""
+            x_min, x_max, y_min, y_max = runtime.file.get_configure_actions(
+                configure, configure_default)[parameter_action]['position']
+            return x_min <= click_x <= x_max and y_min <= click_y <= y_max \
+                and not self.is_playing_animation
+
+        click_x, click_y = event.globalPos().x() - self.x(), event.globalPos().y() - self.y()
+        if event.button() == Qt.LeftButton and self.click_in_area:
+            print(f"meet the requirements. CLICK pos: {click_x, click_y}")
+            # 记录位置
+            if configure['record']['enable_position']:
+                if configure['record']['position'][:2].count(-1) == len(configure['record']['position'][:2]):
+                    configure['record']['position'][:2] = [click_x, click_y]
+                else:
+                    configure['record']['position'][2:] = [click_x, click_y]
+                    configure['record']['enable_position'] = False
+
+            # 点击事件/动画
+            # 胸部点击行为
+            if checker("ActionClickChest"):
+                self.is_playing_animation = True
+                self.playAnimationEvent('ActionClickChest')
+                if configure['adult_level'] > 0:
+                    dir_, voice_list = engine.adult.AdultEngine(configure).voice()
+                    runtime.thread.SpeakThread(self,
+                                               f"./resources/adult/{configure_default}/voice/{dir_}/"
+                                               f"{random.choice(voice_list)}").start()
+                else:
+                    runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+                        configure, configure_default, "ActionClickChest")).start()
+            # 帽点击行为
+            elif checker("ActionClickCap"):
+                self.is_playing_animation = True
+                self.playAnimationEvent('ActionClickCap')
+                runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+                        configure, configure_default, "ActionClickCap")).start()
+            elif checker("ActionClickCustom"):
+                self.is_playing_animation = True
+                self.playAnimationEvent('ActionClickCustom')
+                runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+                        configure, configure_default, "ActionClickCustom")).start()
+
+            for action_item in interface.subscribe.actions.Operate.GetClckAction():
+                try:
+                    action_item()
+                except Exception as e:
+                    interface.setting.customize.widgets.pop_error(setting, 'Error', str(e))
+            event.accept()
+        self.is_movement = False
+
+    # 鼠标进入事件 Mouse entry event
+    def enterEvent(self, event):
+        self.turn_count = 0
+        self.enter_position = event.pos()
+
+    # 鼠标离开事件 Mouse leave event
+    def leaveEvent(self, event):
+        self.is_movement = False
+        self.enter_position = None
+        self.is_playing_animation = False
+
+    # 拖拽事件 Drag event
+    def dragEnterEvent(self, event: QMimeData):
+        engine.actions.ActionsEngine(configure, languages, interface).analyze_action(event.mimeData().text())
+        engine.actions.ActionsEngine(configure, languages, interface).accept_action()
+        event.accept()
+    
+    # OpenGL 事件
+    def on_init(self):
+        architecture.live2d.glewInit()
+        self.pet_model = architecture.live2d.LAppModel()
+        self.loadModelEvent(configure_default)
+        live2d_parameter.clear()
+        for i in range(self.pet_model.GetParameterCount()):
+            param = self.pet_model.GetParameter(i)
+            live2d_parameter.update({str(param.id): {
+                "value": param.value, "max": param.max, "min": param.min, "default": param.default,
+            }})
+        interface.subscribe.RegisterAttribute.SetPet(self.pet_model)
+        self.startTimer(self.fps_refresh)
+
+    def on_resize(self, width, height):
+        self.pet_model.Resize(width, height)
+
+    def on_draw(self):
+        architecture.live2d.clearBuffer()
+        try:
+            self.pet_model.Update()
+            # 清除水印
+            try:
+                watermark_param = configure['watermark'].split(";")[0]
+                watermark_value = configure['watermark'].split(";")[1]
+                self.pet_model.SetParameterValue(
+                    watermark_param,
+                    float(watermark_value) if "." in watermark_value else int(watermark_value), 1)
+            except ValueError:
+                pass
+            # 加载Live2D开关
+            self.pet_model.SetAutoBlinkEnable(
+                configure['settings']['live2d']['enable']['AutoBlink'])
+            self.pet_model.SetAutoBreathEnable(
+                configure['settings']['live2d']['enable']['AutoBreath'])
+            # 加载模型 Load Model
+            self.pet_model.Draw()
+        except SystemError:
+            pass
+
+    def exit_program(self):
+        architecture.live2d.dispose()
+        self.close()
+        try:
+            os.remove("./logs/backup/configure.json")
+        except FileNotFoundError:
+            pass
+        shutil.copy2("./resources/configure.json", "./logs/backup/configure.json")
+        runtime.file.logger("程序退出 Program exit", logs.HISTORY_PATH)
+        os.kill(os.getpid(), __import__("signal").SIGINT)
+
 
 if __name__ == '__main__':
+    MouseListener = runtime.MouseListener()
     app = QApplication(sys.argv)
 
     PluginLogCollector = interface.setting.plog.PluginLogCollector()
@@ -368,10 +935,10 @@ if __name__ == '__main__':
     PLUGIN_GLOBAL['input'] = PluginLogCollector.input_
 
     desktop = DesktopPet()
-    # desktop.show()
+    desktop.show()
     setting = Setting()
     conversation = Conversation()
-    setting.show()
+    conversation.move(desktop.x(), desktop.y() - 60)
 
     interface.subscribe.views.RegisterSetting.register(setting)
 

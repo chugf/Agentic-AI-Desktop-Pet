@@ -389,4 +389,3 @@ def get_notice_board():
     except:
         pass
     return request
-

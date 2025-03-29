@@ -11,13 +11,15 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QOpenGLWidget
 
 
+interface = None
 intelligence = None
 runtime = None
 logs = None
 
 
-def reload_module(intelligence_module, runtime_module, logs_module):
-    global intelligence, runtime, logs
+def reload_module(interface_module, intelligence_module, runtime_module, logs_module):
+    global interface, intelligence, runtime, logs
+    interface = interface_module
     intelligence = intelligence_module
     runtime = runtime_module
     logs = logs_module
@@ -138,26 +140,26 @@ class TextGenerateThread(QThread):
     """文本生成器线程 Text Generation Thread"""
     result = pyqtSignal(str)
 
-    def __init__(self, parent: QOpenGLWidget, configure: dict, subscribe, text: str, is_search_online: bool = False):
+    def __init__(self, parent: QOpenGLWidget, configure: dict, text: str, is_search_online: bool = False):
         super().__init__(parent)
         self.configure = configure
-        self.subscribe = subscribe
         self.text = text
         self.is_search_online = is_search_online
 
     def send(self, text: str, is_finished: bool):
         self.result.emit(text)
-        for action_item in self.subscribe.actions.Operate().GetAIOutput():
+        for action_item in interface.subscribe.actions.Operate.GetAIOutput():
             action_item(text, is_finished)
 
     def run(self):
         try:
-            intelligence.ALI_API_KEY = self.configure["settings"]['cloud']['aliyun']
-            answer = intelligence.text_generator(self.text, self.configure['settings']['intelligence'],
-                                                 self.is_search_online, lambda text: self.send(text, False),
-                                                 url=runtime.parse_local_url(
-                                                     self.configure['settings']['local']['text']) if
-                                                 self.configure['settings']['text']['way'] == "local" else None)
+            answer = intelligence.text_generator(
+                self.text, self.configure['settings']['intelligence'],
+                self.is_search_online, lambda text: self.send(text, False),
+                language=self.configure['language_mapping'][self.configure['settings']['language']],
+                url=runtime.parse_local_url(
+                    self.configure['settings']['local']['text']) if
+                self.configure['settings']['text']['way'] == "local" else None)
         except Exception:
             file.logger(f"子应用 - AI剧情问答 调用失败\n"
                         f"   Message: {traceback.format_exc()}", logs.HISTORY_PATH)

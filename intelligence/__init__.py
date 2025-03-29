@@ -1,6 +1,7 @@
+import typing
+
 from . import text
 from . import recognition
-
 from . import voice
 from . import translate
 
@@ -21,8 +22,9 @@ def load_gpt_sovits(url: str) -> dict:
     return module_info
 
 
-def text_generator(prompt, model, is_search_online: bool, func: callable, url: str | None = None):
+def text_generator(prompt, model, is_search_online: bool, func: callable,
+                   language: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja", url: str | None = None):
     if url is None:
-        return text.TextGenerator().generate_text(prompt, model, func, is_search_online)
+        return text.TextGenerator().generate_text(prompt, model, func, language, is_search_online)
     else:
         return text.TextGeneratorLocal(prompt, func, url)

@@ -1,10 +1,11 @@
 from . import text
+import typing
 
 import requests
 import re
 
 
-def machine_translate(words):
+def machine_translate(words, target: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja"):
     # 定义目标URL以获取翻译服务的访问地址
     uri = 'https://cn.bing.com/translator'
     # 发起GET请求获取网页内容，用于提取必要的请求参数
@@ -20,7 +21,7 @@ def machine_translate(words):
     data = {
         'fromLang': 'auto-detect',
         'text': words,
-        'to': 'ja',
+        'to': target,
         'token': t,
         'key': js[0],
         'tryFetchingGenderDebiasedTranslations': 'true'
@@ -47,4 +48,4 @@ def tongyi_translate(words):
 
 if __name__ == '__main__':
     word = input("请输入要翻译的文本：")
-    print(machine_translate(word))
+    print(machine_translate(word, "zh-Hans"))

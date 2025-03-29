@@ -92,7 +92,7 @@ class Intelligence(ScrollArea):
         self.inference_group.addSettingCard(self.card_recognition)
 
         self.expand_layout.setSpacing(28)
-        self.expand_layout.setContentsMargins(36, 10, 36, 0)
+        self.expand_layout.setContentsMargins(36, 52, 36, 0)
         self.expand_layout.addWidget(self.inference_group)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

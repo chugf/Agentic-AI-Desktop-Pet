@@ -1,7 +1,9 @@
 import re
 import json
 import importlib
+import typing
 
+from . import translate
 from . import external
 
 import dashscope
@@ -86,12 +88,14 @@ class TextGenerator:
         return completion
 
     def generate_text(self, prompt, model, func: callable,
+                      language: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja",
                       is_search_online: bool = False):
         def process_chunks(completion_, memories_, extra_body_, model_, external_):
             chunk_message = None
             for chunk in completion_:
-                if chunk.status_code == 400:
-                    return False
+                if chunk.status_code != 200:
+                    return (f"AI Answer failed to call: \n\n"
+                            f"{chunk.message}\n\n{translate.machine_translate(chunk.message, language)}")
                 chunk_message = chunk.output.choices[0].message
 
                 if 'tool_calls' in chunk_message:
@@ -114,7 +118,7 @@ class TextGenerator:
                         func(f"<think>\n{chunk_message['reasoning_content']}\n</think>")
                     else:
                         func(chunk_message.content)
-            return chunk_message
+            return chunk_message.content
 
         extra_body = {}
         extra_body.update({"enable_search": is_search_online})
@@ -122,10 +126,10 @@ class TextGenerator:
         completion = self.get_response(extra_body, model)
         check_answer = process_chunks(completion, memories, extra_body, model, external)
         if check_answer is not False:
-            return check_answer.content
+            return check_answer
         else:
             completion = self.get_response(extra_body, model, False)
-            return process_chunks(completion, memories, extra_body, model, external).content
+            return process_chunks(completion, memories, extra_body, model, external)
 
 
 class CustomGenerator:
