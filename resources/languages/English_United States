@@ -1,167 +1,140 @@
 AI-Agent Desktop Pet Settings
 General
-Character
-Remove
-Translation
-Adult mode
-Voice model
-Preview
+Pet Appearance
+Delete Character
+Translation Tool
+Adult Mode
+Voice Model
+Test Listen
 Watermark
-Character transparency
-On/Off switch
-List of switches
-Screen recording compatibility
-Voice recognition
-AI voice
-Online search
-Translate
-Advanced switches
-Media understanding
-Global mouse-through
-Turn off
-Next startup
-Left-click bottom
-Left-click top
-Right-click bottom
-Right-click top
-Taskbar lock
-Artificial intelligence
-Inference
-Cloud inference
+Character Transparency
+Switch
+Switch List
+Screen Recording Compatibility
+Voice Recognition
+AI Voice
+Online Search
+Translation
+Advanced Switch
+Media Understanding
+Global Mouse Penetration
+Disable
+At Next Startup
+Left Click Bottom
+Left Click Top
+Right Click Bottom
+Right Click Top
+Taskbar Lock
+Artificial Intelligence
+Reasoning
+Cloud Reasoning
 Aliyun API-Key
-Local inference
-Text model
-Cloud-based
+Local Reasoning
+Text Model
+Cloud
 Local
-Save settings
-Binding settings
-Extension tools
-Source Python file path
-Required parameters
-Select
-Compile into program
-Animation binding
+Save Settings
+Extension Tools
+Source Python File Path
+Compile into Program
+Animation Binding
 Model
-Animation
 Parameters
-Coordinates
-Record
-Action group
-Action name
+Action Group
+Action Name
 Save
 Expression
 Audio
-Playback method
+Playback Method
 Animation
-Rule binding
 Rules
-Delete
-Add
-Character setting
-Character
-Permissions
-Description
-Add entry
-Delete entry
-Refresh entries
-About
-Info about AI desktop pets
-Settings
-Start chatting
-Switch characters
-Auto-translate
-Translation tool
-Exit
-Auto-blink
-Auto-breathe
-Auto-drag
-Text output
-Voice recognition
-Thinking...
+AI Desktop Pet Related Instructions
+Engage in Conversation
+Switch Characters
+Auto Blink
+Auto Breathing
+Auto Drag
+Text Output
+Voice Recognition
 Chat
-Clear memory
-Screenshot
-This will delete all info related to this character. Be careful! This action cannot be undone!
-Mouse will pass through the pet (you won't be able to interact with it!)
-When moving the pet, it won’t go beyond the taskbar
-Formatting notes
-1. {year} stands for the current year
-2. {ip} stands for your device IP
-[BUG] This inference mode has serious issues, don't use it! If you choose this mode, you'll get a Python Traceback. If you can fix it, feel free to submit a pull request on GitHub
-Bound action group name
-Name of the bound action file, in order from the motions folder
-Affects sampling probability (lower for less repetition, higher for more randomness)
-Affects audio variety (lower is too rigid, higher adds more variety)
-Affects audio randomness and variation (lower is more fixed, higher is more varied)
-Affects audio speed (lower slows down, higher speeds up)
-Affects inference speed (lower reduces GPU load, higher increases GPU load)
-Performance optimization threshold (lower uses more performance, higher takes less time)
-Affects inference speed (on is faster but consumes more, off is slower but consumes less)
-Help
-Start recording: You need to click 'Record' on your character. Click twice, first for minimum value, second for maximum value
-Compilation complete
-Select file
+Mouse Passes Through Desktop Pet (Cannot Operate the Pet!)
+When Moving the Pet, It Will Never Exceed the Taskbar
+Formatting Instructions
+1. {year} represents the current year
+2. {ip} represents your device’s IP
+【BUG】 This reasoning mode has serious issues, do not use it! If you select this mode, you will receive a Python Traceback. If you can fix it, you can submit a pull request on GitHub to resolve the issue.
+Bound action file names, ordered from top to bottom in the "motions" folder
+Probability affecting sampling (smaller value for repetition, larger value for pure luck)
+Start Recording: You need to click "Record" on your character. Click twice—once for the minimum value, once for the maximum value.
+Compilation Complete
 Confirm?
-This will delete all info related to the character (model, voice, settings, configuration), and it cannot be recovered. Be careful!
-Warning
-Waiting for your chat...
-Model error
-Compatible model
-Your model may not support Live2D Cubism 2.0 Core. If it's 2.0 Core, it might have been built with a 64-bit app. Not supported by 32-bit apps
-Your model doesn't support Live2D Cubism 2.0 Core, the program includes models with 2.0 Core. Do you want to enable them?
-Restart needed to activate compatible model
-Plugins
-Folder path
+Waiting for Your Chat…
+Compatible Models
+The model may not support Live2D Cubism 2.0 Core. If it is 2.0 Core, it may require modeling with a 64-bit application. 32-bit applications are not supported.
+Your model does not support Live2D Cubism 2.0 Core. The program has a built-in 2.0 Core model. Would you like to enable it?
+Restarting the program is required to enable the compatible model.
+Folder Path
 Run
 Terminate
-Language
-There's no model for {character} in resources, please bind it in the binding interface and try again!
-Plugin missing main.py entry, plugin entry must be main.py
-Function entry
-Crawler - spider
-Artificial intelligence - ai
-Qwen - tongyi
-Bing Translate - bing
-Add
-Make the pet screen-recordable (disables "not above taskbar" feature)
-Let the pet understand images/videos (includes proactive Agent)
-Gentlemen know what this means~ ;)
-Saved successfully!
-You need to restart to apply updates~
-Enable pet to understand speech
-Make your pet talk
-Pet can surf the web
-Speech (AI voice) translated to Japanese
-Image processing
-iFLYTEK ID
-iFLYTEK Key
-iFLYTEK Secret
-Text Output Parameter
-Voice Parameter
-Failed to play
-Plugin Logger
-Check Update
-Waiting for checking
-Yeah! You are the latest version!
-Emm... It seems that you are not the latest version of {latest}!
-NO! It seems that update checker has something wrong
-Checking
-Failed to end
-Success in ending
+There is no model for {character} in the resources. Please bind it in the binding interface and try again!
+Function Entry
+Artificial Intelligence - AI
+Tongyi Qianwen - Tongyi
+Crawler Translation - Spider
+Bing Translation - Bing
+Add Character
+Enable Desktop Pet to Be Captured by Screen Recording (Disables "Stay Above Taskbar" Function)
+Enable Desktop Pet to Understand Images/Videos (Includes Active Agent)
+Gentlemen Know What This Means~
+Save Successful!
+You Need to Restart to Apply Updates~
+Enable Desktop Pet to Understand Your Speech
+Make Your Desktop Pet Speak
+Desktop Pet Can Surf the Web
+Speech (AI Voice) Translated to Japanese
+Image Processing
+iFlytek ID
+iFlytek Key
+iFlytek Secret
+Text Output Parameters
+Voice Parameters
+Playback Failed
+Plugin Log Recording
+Check for Updates
+To Be Checked
+Yay! You’re on the Latest Version!!
+Oops, Looks Like You’re Not on the Latest Version {latest}!
+Done🥚, Looks Like There Was an Issue Checking for Updates!
+Checking…
+Termination Failed
+Termination Successful!
 Run
-Stop
-enhancement
-independent
-automatic
-No Files
-Import files
+Terminate
+Program Enhancement
+Standalone Program
+Auto Select
+No File
+Import File
 Optimization Suggestions
-There is an infinite loop in the code!
-The user has enabled security checks, and your plugin cannot be executed due to violation of the security check rules!
-L1 - Minor Protection
-L2 - Light Protection
+There’s an Infinite Loop in the Code!
+The User Enabled Security Checks, and Your Plugin Cannot Execute Due to Violating Security Check Rules!
+L1 - Light Protection
+L2 - Mild Protection
 L3 - Moderate Protection
 L4 - High Protection
-L5 - Severe Protection
-Security Check Function of Plugins
+L5 - Heavy Protection
+Plugin Security Check Function
 Security Check
+Text Output API
+Voice Synthesis API
+Settings
+About
+Language
+Plugins
+Binding Settings
+Select Folder
+Select File
+Import Audio
+Thinking…
+Audio Visualization
+Will display blocks of different heights above the desktop pet based on the volume.

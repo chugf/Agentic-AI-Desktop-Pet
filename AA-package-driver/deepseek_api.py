@@ -1,5 +1,6 @@
 import time
 import socket
+import json
 
 import ollama
 import fastapi
@@ -10,7 +11,7 @@ DeepSeekAPI = fastapi.FastAPI()
 
 
 class Parameters(BaseModel):
-    model: str = "deepseek-r1:8b"
+    model: str = "deepseek-r1:7b"
     messages: list
 
 
@@ -19,7 +20,7 @@ def chat(param: Parameters):
     response = deepseek.chat(
         model=param.model,
         messages=param.messages)
-    return response
+    return json.loads(response.model_dump_json())
 
 
 if __name__ == "__main__":

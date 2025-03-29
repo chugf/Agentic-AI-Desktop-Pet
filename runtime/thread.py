@@ -1,4 +1,5 @@
 import random
+import time
 import traceback
 import re
 import wave
@@ -25,7 +26,50 @@ def reload_module(interface_module, intelligence_module, runtime_module, logs_mo
     logs = logs_module
 
 
+class StartInternalRecording(QThread):
+    """内部录音线程"""
+    data = pyqtSignal(bytes)
+    error = pyqtSignal(str)
+
+    def __init__(self, parent=None, delay: float | int | None = 0.04):
+        super().__init__(parent)
+        self.delay = delay
+        self.__running = True
+
+    def run(self):
+        self.__running = True
+        audio = pyaudio.PyAudio()
+        internal_device = runtime.find_internal_recording_device(audio)
+        if internal_device == -1:
+            self.error.emit("404 Not Found"
+                            "\nCan't found internal recording device"
+                            "\nYour system or PC is too old"
+                            "\n: (")
+            return
+        stream = audio.open(
+            format=pyaudio.paInt16,
+            channels=2,
+            rate=44100,
+            input=True,
+            frames_per_buffer=1024,
+            input_device_index=internal_device)
+        while True:
+            self.data.emit(stream.read(1024))
+            if self.__running is False:
+                break
+            if self.delay is not None:
+                time.sleep(self.delay)
+
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+
+    def stop(self):
+        self.__running = False
+
+
 class RunPythonPlugin(QThread):
+    """运行Python插件"""
     error = pyqtSignal(str)
 
     def __init__(self, parent: QOpenGLWidget, codes, global_):
@@ -207,9 +251,6 @@ class VoiceGenerateThread(QThread):
             else:
                 language = self.language
 
-            intelligence.voice.change_module(
-                self.configure['voice_model'], self.module_info,
-                runtime.parse_local_url(self.configure['settings']['local']['gsv']))
             wav_bytes = intelligence.voice.take_a_tts(
                 text, language, self.configure['voice_model'],
                 self.module_info, self.configure['settings']['tts']['top_k'],

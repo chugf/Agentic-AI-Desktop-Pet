@@ -11,7 +11,8 @@
       "penetration": "shut",
       "locktsk": true,
       "media": true,
-      "safety": "shut"
+      "safety": "shut",
+      "visualization": true
    },
    "Live2D": {
       "AutoBlink": true,

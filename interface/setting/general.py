@@ -5,23 +5,22 @@ from .customize import function, constants
 
 from PyQt5.Qt import QRect, Qt
 from PyQt5.QtWidgets import QFrame
-from qfluentwidgets import ComboBox, LineEdit, PushButton, Slider, BodyLabel
+from qfluentwidgets import ComboBox, LineEdit, PrimaryPushButton, Slider, BodyLabel
 
 
 class General(QFrame):
-    def __init__(self, languages, configure, module_info, param_dict, **kwargs):
+    def __init__(self, intelligence_module, runtime_module, languages, configure, module_info, param_dict, **kwargs):
         super().__init__()
+        self.intelligence_module = intelligence_module
+        self.runtime_module = runtime_module
         self.languages = languages
         self.configure = configure
         self.module_info = module_info
         self.param_dict = param_dict
         self.kwargs = kwargs
         self.setObjectName("General")
-        # 默认值 Default Value
-        character_lists = os.listdir("./resources/model")
-        character_lists.append("origin")
         # 语言选择 Language selector
-        BodyLabel(self.languages[116], self).setGeometry(QRect(5, 47, 80, 35))
+        BodyLabel(self.languages[131], self).setGeometry(QRect(5, 47, 80, 35))
         self.select_language = ComboBox(self)
         self.select_language.addItems(os.listdir("./resources/languages"))
         self.select_language.setCurrentText(self.configure['settings']['language'])
@@ -30,7 +29,7 @@ class General(QFrame):
         # 宠物形象 Character Pet
         BodyLabel(self.languages[2], self).setGeometry(QRect(5, 87, 80, 35))
         self.select_character = ComboBox(self)
-        self.select_character.addItems(character_lists)
+        self.select_character.addItems(os.listdir("./resources/model"))
         self.select_character.setCurrentText(self.configure['default'])
         self.select_character.setGeometry(QRect(100, 87, 230, 35))
         self.select_character.currentTextChanged.connect(self.change_character)
@@ -45,16 +44,16 @@ class General(QFrame):
         # 翻译引擎 Translation Engine
         BodyLabel(self.languages[4], self).setGeometry(QRect(5, 127, 80, 35))
         self.select_translation_engine = ComboBox(self)
-        self.select_translation_engine.addItems([self.languages[120], self.languages[121]])
+        self.select_translation_engine.addItems([self.languages[80], self.languages[81]])
         self.select_translation_engine.setGeometry(QRect(100, 127, 230, 35))
         # # 翻译工具 Translation Tool
         self.select_translation_tool = ComboBox(self)
         if (translate := self.configure['settings']['translate'].split('.'))[0] == "ai":
-            self.select_translation_engine.setCurrentText(self.languages[121])
-            self.select_translation_tool.addItems([self.languages[122]])
+            self.select_translation_engine.setCurrentText(self.languages[80])
+            self.select_translation_tool.addItems([self.languages[81]])
         elif translate[0] == "spider":
-            self.select_translation_engine.setCurrentText(self.languages[120])
-            self.select_translation_tool.addItems([self.languages[123]])
+            self.select_translation_engine.setCurrentText(self.languages[82])
+            self.select_translation_tool.addItems([self.languages[83]])
         self.select_translation_tool.setGeometry(QRect(340, 127, 230, 35))
         self.select_translation_engine.currentTextChanged.connect(
             lambda value: self.change_translation(value, "object"))
@@ -83,7 +82,7 @@ class General(QFrame):
         self.input_reference_text.setPlaceholderText("Reference Text here")
         self.input_reference_text.setClearButtonEnabled(True)
         self.input_reference_text.setGeometry(QRect(5, 247, 470, 35))
-        self.click_play_reference = PushButton(self.languages[7], self)
+        self.click_play_reference = PrimaryPushButton(self.languages[7], self)
         self.click_play_reference.clicked.connect(
             lambda: self.kwargs.get("play")(self.input_reference_text.text()))
         self.click_play_reference.setGeometry(QRect(490, 247, 80, 35))
@@ -110,9 +109,9 @@ class General(QFrame):
             lambda value: function.change_configure(
                 value / constants.OPACITY_PRECISION, "settings.transparency", self.configure))
         # 角色相关 Character Related
-        self.click_add_character = PushButton(self.languages[124], self)
+        self.click_add_character = PrimaryPushButton(self.languages[84], self)
         self.click_add_character.setGeometry(QRect(450, 462, 80, 35))
-        self.click_delete_character = PushButton(self.languages[3], self)
+        self.click_delete_character = PrimaryPushButton(self.languages[3], self)
         self.click_delete_character.setGeometry(QRect(550, 462, 80, 35))
 
         self.fill_information()
@@ -130,14 +129,17 @@ class General(QFrame):
         self.input_reference_text.clear()
         self.input_reference_text.setText(refer_text)
         function.change_configure(self.select_ai_speak.currentText(), "voice_model", self.configure)
+        self.intelligence_module.voice.change_module(
+            self.configure['voice_model'], self.module_info,
+            self.runtime_module.parse_local_url(self.configure['settings']['local']['gsv']))
 
     def change_translation(self, value, type_: typing.Literal['object', 'method']):
         if type_ == "object":
             self.select_translation_tool.clear()
-            if value == self.languages[121]:
-                self.select_translation_tool.addItems([self.languages[122]])
-            elif value == self.languages[120]:
-                self.select_translation_tool.addItems([self.languages[123]])
+            if value == self.languages[80]:
+                self.select_translation_tool.addItems([self.languages[81]])
+            elif value == self.languages[82]:
+                self.select_translation_tool.addItems([self.languages[83]])
             function.change_configure(f"{value.replace(' ', '').split('-')[1]}."
                                       f"{self.select_translation_tool.currentText().replace(' ', '').split('-')[1]}",
                                       "settings.translate", self.configure)

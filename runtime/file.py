@@ -4,6 +4,7 @@ import os
 import json
 import locale
 import random
+import difflib
 
 
 def logger(text: str, father_dir: str) -> None:
@@ -83,9 +84,15 @@ def load_language(configure: dict) -> list[str]:
     if configure['settings']['language'] in os.listdir("./resources/languages"):
         system_language = configure['settings']['language']
     else:
-        # 默认为英文
-        system_language = "English_United States"
-        configure['settings']['language'] = "English_United States"
+        # 进行相似度比较
+        similarities = {}
+        for language in os.listdir("./resources/languages"):
+            similarity = difflib.SequenceMatcher(None, system_language, language).ratio()
+            similarities[language] = similarity
+        best_match = max(similarities, key=similarities.get)
+        print(f"Language Match Similarities: \n{similarities}\n\nAuto Select: {best_match}")
+        configure['settings']['language'] = best_match
+        system_language = best_match
     with open(f"./resources/languages/{system_language}", "r", encoding="utf-8") as f:
         languages: list[str] = f.read().split("\n")
         f.close()
@@ -127,8 +134,6 @@ def load_configure(subscribe) -> tuple[dict, str]:
 
         try:
             configure_default = configure["default"]
-            if configure_default == "origin":
-                configure_default = "vanilla"
 
             configure['model'][configure['default']]['adult'] = configure['model'][configure_default]['adult']
             configure['model'][configure['default']]['voice'] = configure['model'][configure_default]['voice']

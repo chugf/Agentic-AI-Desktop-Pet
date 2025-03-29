@@ -1,7 +1,9 @@
 from ..customize import function
 
-from .sub_local import text
-from .sub_local import voice
+from .sub_local import gentext
+from .sub_local import genvoice
+from .sub_local import paramtext
+from .sub_local import paramvoice
 
 from PyQt5.Qt import QRect
 from PyQt5.QtWidgets import QWidget, QStackedWidget
@@ -26,7 +28,7 @@ class IntelligenceLocale(QWidget):
             lambda value: function.change_configure(value, "settings.local.text", self.configure))
 
         # 图像处理自定义URL
-        BodyLabel(self.languages[134], self).setGeometry(QRect(10, 87, 100, 35))
+        BodyLabel(self.languages[94], self).setGeometry(QRect(10, 87, 100, 35))
         self.input_image_url = LineEdit(self)
         self.input_image_url.setText(self.configure["settings"]['local']['media'])
         self.input_image_url.setGeometry(QRect(120, 87, 300, 35))
@@ -42,9 +44,9 @@ class IntelligenceLocale(QWidget):
             lambda value: function.change_configure(value, "settings.local.gsv", self.configure))
 
         # 格式化说明
-        BodyLabel(self.languages[86], self).setGeometry(QRect(430, 47, 250, 35))
-        BodyLabel(self.languages[87], self).setGeometry(QRect(430, 82, 250, 35))
-        BodyLabel(self.languages[88], self).setGeometry(QRect(430, 117, 250, 35))
+        BodyLabel(self.languages[61], self).setGeometry(QRect(430, 47, 250, 35))
+        BodyLabel(self.languages[62], self).setGeometry(QRect(430, 82, 250, 35))
+        BodyLabel(self.languages[63], self).setGeometry(QRect(430, 117, 250, 35))
 
         # 语音识别
         # # 语音识别工具
@@ -61,15 +63,19 @@ class IntelligenceLocale(QWidget):
         self.input_recognition_url.textChanged.connect(
             lambda value: function.change_configure(value, "settings.local.rec.url", self.configure))
 
-        # 自定义参数合成 Customize parameter synthesis
         self.pivot_parameter = Pivot(self)
         self.stacked_widget = QStackedWidget(self)
 
-        self.text_parameter = text.TextParameter(self.configure, self)
-        self.voice_parameter = voice.VoiceParameter(self.configure, self)
+        self.text_parameter = paramtext.TextParameter(self.configure, self)
+        self.voice_parameter = paramvoice.VoiceParameter(self.configure, self)
 
-        self.addSubInterface(self.text_parameter, "TextParameter", self.languages[138])
-        self.addSubInterface(self.voice_parameter, "VoiceParameter", self.languages[139])
+        self.text_generator = gentext.TextGenerator(self.configure, self)
+        self.voice_generator = genvoice.VoiceGenerator(self.configure, self)
+
+        self.addSubInterface(self.text_parameter, "TextParameter", self.languages[98])
+        self.addSubInterface(self.voice_parameter, "VoiceParameter", self.languages[99])
+        self.addSubInterface(self.text_generator, "TextGenerator", self.languages[127])
+        self.addSubInterface(self.voice_generator, "VoiceGenerator", self.languages[128])
 
         self.pivot_parameter.setGeometry(QRect(10, 222, 100, 35))
         self.stacked_widget.setGeometry(QRect(30, 267, 500, 300))

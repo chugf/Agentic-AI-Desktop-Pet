@@ -1,2 +1,2 @@
-from . import text
-from . import voice
+from . import paramtext
+from . import paramvoice

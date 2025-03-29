@@ -43,10 +43,10 @@ class About(QWidget):
         self.setObjectName("About")
 
         self.check_update = PushSettingCard(
-            text=self.languages[142],
-            icon=FluentIcon.INFO,
-            title=self.languages[142],
-            content=self.languages[143],
+            text=self.languages[102],
+            icon=FluentIcon.UPDATE,
+            title=self.languages[102],
+            content=self.languages[103],
             parent=self,
         )
         self.check_update.clicked.connect(self.check_if_latest)
@@ -70,21 +70,22 @@ class About(QWidget):
 
     def check_if_latest(self):
         def _is_latest(is_latest):
-            self.check_update.button.setText(self.languages[142])
+            self.check_update.button.setText(self.languages[102])
             if is_latest == "latest":
-                widgets.pop_success(self, self.languages[144], self.languages[144])
-                self.check_update.contentLabel.setText(self.languages[144])
+                widgets.pop_success(self, self.languages[104], self.languages[104])
+                self.check_update.contentLabel.setText(self.languages[104])
             else:
-                widgets.pop_warning(self, self.languages[145].format(latest=is_latest), self.languages[145].format(latest=is_latest))
-                self.check_update.contentLabel.setText(self.languages[145].format(latest=is_latest))
+                widgets.pop_warning(self, self.languages[105].format(latest=is_latest),
+                                    self.languages[105].format(latest=is_latest))
+                self.check_update.contentLabel.setText(self.languages[105].format(latest=is_latest))
 
         def _is_error(is_error):
-            self.check_update.button.setText(self.languages[142])
+            self.check_update.button.setText(self.languages[102])
             if is_error:
-                widgets.pop_warning(self, self.languages[146], self.languages[146])
-                self.check_update.contentLabel.setText(self.languages[146])
+                widgets.pop_warning(self, self.languages[106], self.languages[106])
+                self.check_update.contentLabel.setText(self.languages[106])
 
-        self.check_update.button.setText(self.languages[147])
+        self.check_update.button.setText(self.languages[107])
         update_checker = CheckUpdate(self, self.runtime_module)
         update_checker.is_latest.connect(_is_latest)
         update_checker.is_error.connect(_is_error)

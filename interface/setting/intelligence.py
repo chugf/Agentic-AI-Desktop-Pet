@@ -38,7 +38,7 @@ class Intelligence(ScrollArea):
         self.card_text_output = OptionsSettingCard(
             Config.text_output,
             FluentIcon.EDIT,
-            self.languages[77],
+            self.languages[56],
             "",
             [self.languages[33], self.languages[34]],
             self.inference_group)
@@ -66,7 +66,7 @@ class Intelligence(ScrollArea):
         self.card_media_understanding = OptionsSettingCard(
             Config.media,
             FluentIcon.PHOTO,
-            self.languages[134],
+            self.languages[18],
             "",
             [self.languages[33], self.languages[34]],
             self.inference_group)

@@ -24,6 +24,7 @@ class Config(QConfig):
     safety_examine = OptionsConfigItem(
         "Advanced", "safety", "shut",
         OptionsValidator(["shut", "l1", "l2", "l3", "l4", "l5"]), restart=True)
+    audio_visualization = OptionsConfigItem("Advanced", "visualization", False, BoolValidator())
 
     live2d_blink = OptionsConfigItem("Live2D", "AutoBlink", True, BoolValidator())
     live2d_breath = OptionsConfigItem("Live2D", "AutoBreath", True, BoolValidator())
@@ -45,7 +46,7 @@ class Switches(ScrollArea):
         self.card_compatible_capture = SwitchSettingCard(
             icon=FluentIcon.FIT_PAGE,
             title=self.languages[12],
-            content=self.languages[125],
+            content=self.languages[85],
             parent=self.general_group,
             configItem=Config.compatible,
         )
@@ -59,19 +60,19 @@ class Switches(ScrollArea):
             configItem=Config.adult,
             icon=FluentIcon.HEART,
             title=self.languages[5],
-            content=self.languages[127],
+            content=self.languages[87],
             parent=self.general_group
         )
         self.card_adult.checkedChanged.connect(
             lambda value: self.pop_success(
-                self.languages[128], self.languages[129],
+                self.languages[88], self.languages[89],
                 function.change_configure, 1 if value else 0, "adult_level", self.configure))
         self.general_group.addSettingCard(self.card_adult)
         self.card_recognition = SwitchSettingCard(
             configItem=Config.recognition,
             icon=FluentIcon.MICROPHONE,
             title=self.languages[13],
-            content=self.languages[130],
+            content=self.languages[89],
             parent=self.general_group
         )
         self.card_recognition.checkedChanged.connect(
@@ -84,7 +85,7 @@ class Switches(ScrollArea):
             configItem=Config.speaker,
             icon=FluentIcon.SPEAKERS,
             title=self.languages[14],
-            content=self.languages[131],
+            content=self.languages[91],
             parent=self.general_group
         )
         self.card_speaker.checkedChanged.connect(
@@ -97,7 +98,7 @@ class Switches(ScrollArea):
             configItem=Config.search,
             icon=FluentIcon.SEARCH,
             title=self.languages[15],
-            content=self.languages[132],
+            content=self.languages[92],
             parent=self.general_group
         )
         self.card_search.checkedChanged.connect(
@@ -110,7 +111,7 @@ class Switches(ScrollArea):
             configItem=Config.translate,
             icon=FluentIcon.LANGUAGE,
             title=self.languages[16],
-            content=self.languages[133],
+            content=self.languages[93],
             parent=self.general_group
         )
         self.card_translate.checkedChanged.connect(
@@ -126,7 +127,7 @@ class Switches(ScrollArea):
             configItem=Config.media_understanding,
             icon=FluentIcon.PHOTO,
             title=self.languages[18],
-            content=self.languages[126],
+            content=self.languages[86],
             parent=self.advanced_group
         )
         self.media_understanding.checkedChanged.connect(
@@ -139,7 +140,7 @@ class Switches(ScrollArea):
             Config.penetration,
             icon=FluentIcon.TRANSPARENT,
             title=self.languages[19],
-            content=self.languages[84],
+            content=self.languages[59],
             texts=[self.languages[20], self.languages[21], self.languages[22],
                    self.languages[23], self.languages[24], self.languages[25]],
             parent=self.advanced_group
@@ -153,7 +154,7 @@ class Switches(ScrollArea):
             configItem=Config.taskbar_lock,
             icon=FluentIcon.PIN,
             title=self.languages[26],
-            content=self.languages[85],
+            content=self.languages[60],
             parent=self.advanced_group
         )
         self.card_taskbar_lock.checkedChanged.connect(
@@ -165,13 +166,26 @@ class Switches(ScrollArea):
 
         self.card_safety_examine = OptionsSettingCard(
             configItem=Config.safety_examine,
-            icon=FluentIcon.SEARCH,
-            title=self.languages[166],
-            content=self.languages[165],
-            texts=[self.languages[20], self.languages[160], self.languages[161],
-                   self.languages[162], self.languages[163], self.languages[164]],
+            icon=FluentIcon.VPN,
+            title=self.languages[126],
+            content=self.languages[125],
+            texts=[self.languages[20], self.languages[120], self.languages[121],
+                   self.languages[122], self.languages[123], self.languages[124]],
             parent=self.advanced_group
         )
+        self.card_audio_visualization = SwitchSettingCard(
+            configItem=Config.audio_visualization,
+            icon=FluentIcon.MUSIC,
+            title=self.languages[138],
+            content=self.languages[139],
+            parent=self.advanced_group
+        )
+        self.card_audio_visualization.checkedChanged.connect(
+            lambda value: self.change_configure(
+                value, "settings.enable.visualization",
+                value, "Advanced.visualization"
+            ))
+        self.advanced_group.addSettingCard(self.card_audio_visualization)
         self.card_safety_examine.optionChanged.connect(
             lambda value: self.change_configure(
                 value.value, "settings.safety",
@@ -184,8 +198,8 @@ class Switches(ScrollArea):
         self.card_auto_blink = SwitchSettingCard(
             configItem=Config.live2d_blink,
             icon=FluentIcon.VIEW,
-            title=self.languages[74],
-            content=self.languages[74],
+            title=self.languages[53],
+            content=self.languages[53],
             parent=self.live2d_group
         )
         self.card_auto_blink.checkedChanged.connect(
@@ -197,8 +211,8 @@ class Switches(ScrollArea):
         self.card_auto_breath = SwitchSettingCard(
             configItem=Config.live2d_breath,
             icon=FluentIcon.SYNC,
-            title=self.languages[75],
-            content=self.languages[75],
+            title=self.languages[54],
+            content=self.languages[54],
             parent=self.live2d_group
         )
         self.card_auto_breath.checkedChanged.connect(
@@ -210,8 +224,8 @@ class Switches(ScrollArea):
         self.card_auto_drag = SwitchSettingCard(
             configItem=Config.live2d_drag,
             icon=FluentIcon.MOVE,
-            title=self.languages[76],
-            content=self.languages[76],
+            title=self.languages[55],
+            content=self.languages[55],
             parent=self.live2d_group
         )
         self.card_auto_drag.checkedChanged.connect(

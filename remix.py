@@ -28,7 +28,8 @@ import win32con
 # 界面和OpenGL
 from OpenGL import GL
 
-from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, QMimeData
+from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
+    QMimeData, QColor, QLinearGradient, QPainter, QBrush
 from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox
 from qfluentwidgets import FluentIcon, NavigationItemPosition, \
     TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action
@@ -46,6 +47,64 @@ module_info: dict = intelligence.load_gpt_sovits(runtime.parse_local_url(configu
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
                         configure["settings"]['cloud']['xunfei']['secret'], configure["settings"]['cloud']['aliyun'])
 runtime.thread.reload_module(interface, intelligence, runtime, logs)
+
+
+class AudioVisualization(QWidget):
+    """音频可视化"""
+    def __init__(self):
+        super().__init__()
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowOpacity(0.5)
+
+        self.setWindowTitle("AudioVisualization - Ai Desktop Pet")
+        self.setWindowIcon(QIcon('logo.ico'))
+        self.setFixedSize(400, 200)
+        self.rectangles = []
+
+    def draw_rectangle(self, rms):
+        if len(self.rectangles) >= 400 // 15:
+            self.rectangles.pop(0)
+        self.rectangles.append(int(rms))
+        self.update()
+
+    @staticmethod
+    def get_rainbow_gradient(height):
+        colors = [
+            QColor(148, 0, 211),
+            QColor(75, 0, 130),
+            QColor(0, 0, 255),
+            QColor(0, 255, 0),
+            QColor(255, 255, 0),
+            QColor(255, 127, 0),
+            QColor(255, 0, 0)
+        ]
+        gradient = QLinearGradient(0, 0, 0, height)
+        gradient.setColorAt(0.0, colors[0])
+        gradient.setColorAt(0.15, colors[0])
+        gradient.setColorAt(0.15, colors[1])
+        gradient.setColorAt(0.3, colors[1])
+        gradient.setColorAt(0.3, colors[2])
+        gradient.setColorAt(0.45, colors[2])
+        gradient.setColorAt(0.45, colors[3])
+        gradient.setColorAt(0.6, colors[3])
+        gradient.setColorAt(0.6, colors[4])
+        gradient.setColorAt(0.75, colors[4])
+        gradient.setColorAt(0.75, colors[5])
+        gradient.setColorAt(0.9, colors[5])
+        gradient.setColorAt(0.9, colors[6])
+        gradient.setColorAt(1.0, colors[6])
+        return gradient
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        x_offset = 0
+        for width in self.rectangles:
+            gradient = self.get_rainbow_gradient(width)
+            brush = QBrush(gradient)
+            painter.setBrush(brush)
+            painter.drawRect(x_offset, 20, 15, width)
+            x_offset += 15
 
 
 # 设置界面
@@ -94,6 +153,7 @@ class Setting(FramelessWindow):
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
         self.general_page = interface.setting.general.General(
+            intelligence, runtime,
             languages, configure, module_info, live2d_parameter,
             play=self.reference, reload=self.reload_character)
         self.switches_page = interface.setting.switches.Switches(languages, switches_configure, configure)
@@ -135,17 +195,17 @@ class Setting(FramelessWindow):
         self.addSubInterface(self.local_intelligence_page, FluentIcon.DOWN, languages[31],
                              parent=self.intelligence_page)
 
-        self.addSubInterface(self.binding_page, FluentIcon.TRANSPARENT, languages[36])
-        self.addSubInterface(self.animation_binding_page, FluentIcon.LIBRARY_FILL, languages[42],
+        self.addSubInterface(self.binding_page, FluentIcon.TRANSPARENT, languages[133])
+        self.addSubInterface(self.animation_binding_page, FluentIcon.LIBRARY_FILL, languages[39],
                              parent=self.binding_page)
-        self.addSubInterface(self.rule_binding_page, FluentIcon.ALIGNMENT, languages[37], parent=self.binding_page)
-        self.addSubInterface(self.tools_binding_page, FluentIcon.EMOJI_TAB_SYMBOLS, languages[55],
+        self.addSubInterface(self.rule_binding_page, FluentIcon.ALIGNMENT, languages[49], parent=self.binding_page)
+        self.addSubInterface(self.tools_binding_page, FluentIcon.EMOJI_TAB_SYMBOLS, languages[36],
                              parent=self.binding_page)
-        self.addSubInterface(self.plugin_binding_page, FluentIcon.IOT, languages[112], parent=self.binding_page)
+        self.addSubInterface(self.plugin_binding_page, FluentIcon.IOT, languages[132], parent=self.binding_page)
 
-        self.addSubInterface(PluginLogCollector, FluentIcon.COMMAND_PROMPT, languages[141],
+        self.addSubInterface(PluginLogCollector, FluentIcon.COMMAND_PROMPT, languages[101],
                              position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.about_page, FluentIcon.INFO, languages[66], position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.about_page, FluentIcon.INFO, languages[130], position=NavigationItemPosition.BOTTOM)
 
         qrouter.setDefaultRouteKey(self.stack_widget, self.general_page.objectName())
 
@@ -190,12 +250,13 @@ class Setting(FramelessWindow):
             self.record_timer.start(50)
 
     def reload_character(self, value, type_: typing.Literal['language', 'character']):
-        global desktop, languages
+        global desktop, languages, configure_default
         desktop.close()
         architecture.live2d.dispose()
 
         architecture.live2d.init()
         if type_ == "character":
+            configure_default = value
             runtime.file.load_template_model(configure, value)
         elif type_ == "language":
             languages = runtime.file.load_language(configure)
@@ -266,7 +327,8 @@ class Setting(FramelessWindow):
 
     # 测试语音合成组
     def reference(self, text):
-        voice_generator = runtime.thread.VoiceGenerateThread(desktop, text.split(":")[-1], text.split(":")[0])
+        voice_generator = runtime.thread.VoiceGenerateThread(
+            desktop, configure, module_info, text.split(":")[-1], text.split(":")[0])
         voice_generator.result.connect(self.play)
         voice_generator.error.connect(self.error)
         voice_generator.start()
@@ -285,11 +347,14 @@ class Setting(FramelessWindow):
 
 
 class Conversation(QWidget):
+    """对话界面"""
     def __init__(self):
         super().__init__()
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(400, 600)
+        self.setWindowIcon(QIcon("logo.ico"))
+        self.setWindowTitle("Enter Conversation - Ai Desktop Pet")
+        self.setFixedSize(desktop.width(), 600)
 
         self.input_answer = TextEdit(self)
         self.input_answer.setGeometry(QRect(0, 0, 400, 60))
@@ -303,13 +368,13 @@ class Conversation(QWidget):
         self.click_take_photo = PrimaryToolButton(self)
         self.click_take_photo.setIcon(FluentIcon.CAMERA)
         self.click_take_photo.setGeometry(QRect(280, 431, 60, 30))
-        self.click_take_photo.clicked.connect(lambda: self.take_photo())
+        self.click_take_photo.clicked.connect(self.take_photo)
         self.input_question = LineEdit(self)
         self.input_question.setGeometry(QRect(0, 430, 281, 30))
+        self.input_question.setPlaceholderText(languages[70])
 
         # 为发送绑定按键
-        self.input_question.returnPressed.connect(lambda: self.click_send.click())
-
+        self.input_question.returnPressed.connect(self.click_send.click)
         # 不可见
         self.input_question.setVisible(False)
         self.click_send.setVisible(False)
@@ -344,7 +409,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         # 变量初始化
         self.fps_refresh = int(1000 / 900)
-        self.turn_count = self.expression_count = 0
+        self.rms_volume = self.turn_count = self.expression_count = 0
         self.model_json_path: str = ""
         self.amount = self.click_in_area = self.click_x = self.click_y = -1
         self.speaking_lists: list[bool] = []
@@ -353,6 +418,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.image_path = self.direction = self.last_pos = None
         self.pet_model: architecture.live2d.LAppModel | None = None
         self.is_transparent_raise = False
+        self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
 
         # 移动位置
         self.screen_geometry = QApplication.desktop().availableGeometry()
@@ -410,6 +476,17 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             alpha = 0
         return alpha > 0
 
+    # 音频可视化
+    def audio_visualization(self):
+        def draw(wav_bytes: bytes):
+            self.rms_volume = runtime.calculate_rms(wav_bytes)
+            visualization.draw_rectangle(self.rms_volume)
+
+        self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
+        self.internal_record.data.connect(draw)
+        self.internal_record.start()
+
+    # 聊天
     def open_close_conversation(self):
         if conversation.input_question.isVisible():
             self.change_status_for_conversation("hide")
@@ -480,7 +557,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             return
         conversation.click_send.setVisible(False)
         conversation.click_take_photo.setVisible(False)
-        conversation.input_answer.setText(f"{configure['name']} {languages[79]}")
+        conversation.input_answer.setText(f"{configure['name']} {languages[137]}")
 
         if self.image_path is None and "$[图片]$" not in conversation.input_question.text():
             text_generate = runtime.thread.TextGenerateThread(
@@ -567,20 +644,20 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     def contextMenuEvent(self, event):
         content_menu = RoundMenu("MENU", parent=self)
 
-        settings_action = Action(FluentIcon.SETTING, languages[68], self)
+        settings_action = Action(FluentIcon.SETTING, languages[129], self)
         settings_action.triggered.connect(lambda: setting.show())
         content_menu.addAction(settings_action)
 
         content_menu.addSeparator()
 
-        conversation_action = Action(FluentIcon.HELP, languages[69], self)
+        conversation_action = Action(FluentIcon.HELP, languages[51], self)
         conversation_action.triggered.connect(self.open_close_conversation)
         content_menu.addAction(conversation_action)
 
         # 分割线
         content_menu.addSeparator()
 
-        exit_action = Action(FluentIcon.CLOSE, languages[73], self)
+        exit_action = Action(FluentIcon.CLOSE, languages[20], self)
         exit_action.triggered.connect(self.exit_program)
         content_menu.addAction(exit_action)
 
@@ -627,12 +704,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         # elif speech_rec is not None and not configure['settings']['enable']['rec']:
         #     speech_rec.closed()
 
-        # 释放资源
-        # 检查说话列表的可用性
-        if len(self.speaking_lists) == self.speaking_lists.count(False) and not self.speaking_lists:
-            # 清除缓存
-            self.speaking_lists.clear()
-
         # 定时器检查
         # if not configure['settings']['enable']['media']:
         #     if self.look_timer.isActive():
@@ -642,6 +713,12 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         #         self.look_timer.start(random.randint(
         #             configure['settings']['understand']['min'],
         #             configure['settings']['understand']['max']) * 1000)
+
+        # 释放资源
+        # 检查说话列表的可用性
+        if len(self.speaking_lists) == self.speaking_lists.count(False) and not self.speaking_lists:
+            # 清除缓存
+            self.speaking_lists.clear()
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         try:
@@ -673,6 +750,15 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                     save_change()
         elif switches_configure['Advanced']['penetration'] == "shut" and self.amount == 0:
             save_change()
+
+        # 检查是否开启音频可视化
+        if configure['settings']['enable']['visualization']:
+            if not self.internal_record.isRunning():
+                visualization.show()
+                self.audio_visualization()
+        else:
+            self.internal_record.stop()
+            visualization.hide()
 
         # 循环次数
         if self.amount > 100:
@@ -749,6 +835,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                     for action_item in interface.subscribe.actions.Operate.GetMouseDragAction():
                         action_item(x, y, self.x(), self.y())
                     conversation.move(cv_new_pos)
+                    cv_new_pos.setY(cv_new_pos.y() + 40)
+                    visualization.move(cv_new_pos)
                 event.accept()
 
         # 非接触悬浮鼠标的互动
@@ -894,6 +982,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         architecture.live2d.clearBuffer()
         try:
             self.pet_model.Update()
+            if "ParamMouthOpenY" in live2d_parameter.keys():
+                self.pet_model.AddParameterValue("ParamMouthOpenY", min(
+                    live2d_parameter["ParamMouthOpenY"]['max'], self.rms_volume / 100))
             # 清除水印
             try:
                 watermark_param = configure['watermark'].split(";")[0]
@@ -934,11 +1025,13 @@ if __name__ == '__main__':
     PLUGIN_GLOBAL['print'] = PluginLogCollector.print_
     PLUGIN_GLOBAL['input'] = PluginLogCollector.input_
 
+    visualization = AudioVisualization()
     desktop = DesktopPet()
     desktop.show()
     setting = Setting()
     conversation = Conversation()
     conversation.move(desktop.x(), desktop.y() - 60)
+    visualization.move(desktop.x(), desktop.y() - 20)
 
     interface.subscribe.views.RegisterSetting.register(setting)
 

@@ -1,0 +1,340 @@
+{
+	[2025-03-29 09:36:49] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 09:42:49] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:45:39] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:45:59] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:46:42] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:46:50] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:46:55] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:47:03] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:47:09] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:47:11] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:47:14] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:47:20] 
+ [LOGGING]: 
+子应用 - AI语音(GSV) 调用成功
+
+}
+{
+	[2025-03-29 09:47:26] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: AI Answer failed to call: 
+
+No API-key provided.
+
+未提供 API 密钥。
+}
+{
+	[2025-03-29 09:47:45] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 10:09:59] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用失败
+   Message: Traceback (most recent call last):
+  File "D:\python312\Lib\site-packages\requests\models.py", line 974, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\USER\Desktop\Pycharmprojecets\pythonProject\AI DesktopPet_v2\runtime\thread.py", line 156, in run
+    answer = intelligence.text_generator(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\USER\Desktop\Pycharmprojecets\pythonProject\AI DesktopPet_v2\intelligence\__init__.py", line 30, in text_generator
+    return text.TextGeneratorLocal(prompt, func, url)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\USER\Desktop\Pycharmprojecets\pythonProject\AI DesktopPet_v2\intelligence\text.py", line 63, in TextGeneratorLocal
+    answer = response.json()
+             ^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\requests\models.py", line 978, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+}
+{
+	[2025-03-29 10:11:17] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: None
+}
+{
+	[2025-03-29 10:14:01] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 10:14:30] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: None
+}
+{
+	[2025-03-29 10:16:10] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: None
+}
+{
+	[2025-03-29 10:16:36] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: None
+}
+{
+	[2025-03-29 10:17:22] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: <think>
+
+</think>
+
+你好！有什么我可以帮助你的吗？
+}
+{
+	[2025-03-29 10:17:40] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: <think>
+我是DeepSeek-R1，一个由深度求索公司开发的智能助手，我擅长通过思考来帮您解答复杂的数学，代码和逻辑推理等理工类问题。
+</think>
+
+您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。
+}
+{
+	[2025-03-29 10:17:47] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 10:52:24] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 10:58:28] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 12:32:03] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 12:34:16] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 12:48:15] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用失败
+   Message: Traceback (most recent call last):
+  File "D:\python312\Lib\site-packages\urllib3\connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\urllib3\util\connection.py", line 85, in create_connection
+    raise err
+  File "D:\python312\Lib\site-packages\urllib3\util\connection.py", line 73, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\python312\Lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\urllib3\connectionpool.py", line 493, in _make_request
+    conn.request(
+  File "D:\python312\Lib\site-packages\urllib3\connection.py", line 445, in request
+    self.endheaders()
+  File "D:\python312\Lib\http\client.py", line 1331, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "D:\python312\Lib\http\client.py", line 1091, in _send_output
+    self.send(msg)
+  File "D:\python312\Lib\http\client.py", line 1035, in send
+    self.connect()
+  File "D:\python312\Lib\site-packages\urllib3\connection.py", line 276, in connect
+    self.sock = self._new_conn()
+                ^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\urllib3\connection.py", line 213, in _new_conn
+    raise NewConnectionError(
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x000000003FBB7980>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\python312\Lib\site-packages\requests\adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\urllib3\connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\urllib3\util\retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='192.168.1.164', port=2025): Max retries exceeded with url: /chat (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000000003FBB7980>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\USER\Desktop\Pycharmprojecets\pythonProject\AI DesktopPet_v2\runtime\thread.py", line 156, in run
+    answer = intelligence.text_generator(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\USER\Desktop\Pycharmprojecets\pythonProject\AI DesktopPet_v2\intelligence\__init__.py", line 30, in text_generator
+    return text.TextGeneratorLocal(prompt, func, url)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\USER\Desktop\Pycharmprojecets\pythonProject\AI DesktopPet_v2\intelligence\text.py", line 62, in TextGeneratorLocal
+    response = requests.post(url, json={"messages": memories})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\requests\api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\python312\Lib\site-packages\requests\adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='192.168.1.164', port=2025): Max retries exceeded with url: /chat (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000000003FBB7980>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+}
+{
+	[2025-03-29 12:48:34] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: AI Answer failed to call: 
+
+No API-key provided.
+
+未提供 API 密钥。
+}
+{
+	[2025-03-29 12:52:36] 
+ [LOGGING]: 
+子应用 - AI剧情问答 调用成功
+   Message: AI Answer failed to call: 
+
+Invalid API-key provided.
+
+提供的 API 密钥无效。
+}
+{
+	[2025-03-29 13:14:03] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 13:29:48] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 13:36:44] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 13:43:36] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 13:58:04] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 14:02:39] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 15:53:49] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 18:47:21] 
+ [LOGGING]: 
+程序退出 Program exit
+}
+{
+	[2025-03-29 18:50:15] 
+ [LOGGING]: 
+程序退出 Program exit
+}

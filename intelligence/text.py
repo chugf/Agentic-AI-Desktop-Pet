@@ -59,10 +59,11 @@ def reload_tools():
 
 def TextGeneratorLocal(prompt, func, url):
     memories.append({"role": "user", "content": prompt})
-    response = requests.post(url, json={"model": "deepseek-r1:8b", "messages": memories})
+    response = requests.post(url, json={"messages": memories})
     answer = response.json()
     memories.append({'role': 'assistant', 'content': answer['message']['content']})
     func(answer['message']['content'])
+    return answer['message']['content']
 
 
 class TextGenerator:

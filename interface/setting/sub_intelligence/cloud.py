@@ -37,7 +37,7 @@ class IntelligenceCloud(QFrame):
             lambda value: function.change_configure(value, 'settings.intelligence', self.configure))
 
         # 讯飞云 API ID - API Key - API Secret
-        BodyLabel(self.languages[135], self).setGeometry(QRect(10, 82, 120, 35))
+        BodyLabel(self.languages[95], self).setGeometry(QRect(10, 82, 120, 35))
         self.input_xfyun_id = PasswordLineEdit(self)
         self.input_xfyun_id.setPlaceholderText("Type Xfyun API-ID here")
         self.input_xfyun_id.setText(self.configure['settings']['cloud']['xunfei']['id'])
@@ -46,7 +46,7 @@ class IntelligenceCloud(QFrame):
         self.input_xfyun_id.textChanged.connect(
             lambda value: function.change_configure(value, 'settings.cloud.xunfei.id', self.configure))
 
-        BodyLabel(self.languages[136], self).setGeometry(QRect(10, 122, 120, 35))
+        BodyLabel(self.languages[96], self).setGeometry(QRect(10, 122, 120, 35))
         self.input_xfyun_key = PasswordLineEdit(self)
         self.input_xfyun_key.setPlaceholderText("Type Xfyun API-Key here")
         self.input_xfyun_key.setText(self.configure['settings']['cloud']['xunfei']['key'])
@@ -55,7 +55,7 @@ class IntelligenceCloud(QFrame):
         self.input_xfyun_key.textChanged.connect(
             lambda value: function.change_configure(value, 'settings.cloud.xunfei.key', self.configure))
 
-        BodyLabel(self.languages[137], self).setGeometry(QRect(10, 157, 120, 35))
+        BodyLabel(self.languages[97], self).setGeometry(QRect(10, 157, 120, 35))
         self.input_xfyun_secret = PasswordLineEdit(self)
         self.input_xfyun_secret.setPlaceholderText("Type Xfyun API-Secret here")
         self.input_xfyun_secret.setText(self.configure['settings']['cloud']['xunfei']['secret'])

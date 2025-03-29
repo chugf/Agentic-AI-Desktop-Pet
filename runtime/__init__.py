@@ -6,14 +6,15 @@ import os
 import tempfile
 import ast
 import threading
-import ctypes
 import time
 import re
+import struct
 
 import mss
 import requests
 import win32api
 import win32con
+import numpy
 
 
 class PassedNoneContent(object):
@@ -389,3 +390,25 @@ def get_notice_board():
     except:
         pass
     return request
+
+
+def find_internal_recording_device(p):
+    """寻找内录设备"""
+    target = '立体声混音'
+    for i in range(p.get_device_count()):
+        dev_info = p.get_device_info_by_index(i)
+        if dev_info['name'].find(target) >= 0 and dev_info['hostApi'] == 0:
+            return i
+    return -1
+
+
+def calculate_rms(data):
+    """计算RMS音量标准"""
+    length = len(data) / 2
+    shorts = struct.unpack("%dh" % length, data)
+    sum_squares = 0.0
+    for sample in shorts:
+        n = sample * (1.0 / 32768)
+        sum_squares += n * n
+    rms = numpy.sqrt(sum_squares / length)
+    return rms * 1000
