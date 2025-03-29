@@ -62,18 +62,74 @@ def process_human_information(name: str, age: int, gender: str):
 
 利用内置API接口，可以快速开发插件。以下是一些常用API：
 
-| API名称             | 继承路径                | 参数   | 用途描述                |
-|-------------------|---------------------|------|---------------------|
-| GetLive2D         | subscribe.Live2D    | null | 获取Live2D模型的Python属性 |
-| GetWindowPosition | subscribe.Window    | null | 获取窗口位置              |
-| GetCharacter      | subscribe.Character | null | 获取当前角色的Live2D模型名称   |
-| GetName           | subscribe.Character | null | 获取角色名称              |
-| GetVoiceModel     | subscribe.Model     | null | 获取声音模型名称            |
+| API Name          | Inheritance Path              | Parameters | Description         |
+|-------------------|-------------------------------|------------|---------------------|
+| GetLive2D         | interface.subscribe.Live2D    | N/A        | 获得Python Live2D 的属性 |
+| GetWindowPosition | interface.subscribe.Window    | N/A        | 获得窗口位置              |
+| GetCharacter      | interface.subscribe.Character | N/A        | 获得宠物的宠物的角色模型        |
+| GetName           | interface.subscribe.Character | N/A        | 获得宠物的名字             |
+| GetVoiceModel     | interface.subscribe.Model     | N/A        | 获得语音模型的名称           |
 
-| API名称          | 继承路径                    | 参数          | 用途描述             |
-|----------------|-------------------------|-------------|------------------|
-| InsertNotebook | subscribe.views.Setting | frame, text | 插入一个Frame进设置的选项卡 |
-| DeleteNotebook | subscribe.views.Setting | frame       | 删除一个Frame的选项卡    |
+| API Name        | Inheritance Path                  | Parameters         | Description    |
+|-----------------|-----------------------------------|--------------------|----------------|
+| InsertInterface | interface.subscribe.views.Setting | widget, icon, text | 插入widget 到设置界面 |                                   |
+| DeleteInterface | interface.subscribe.views.Setting | widget             | 删除widget 从设置界面 |
+
+#### InsertInterface
+
+- **widget**: 控件必须调用 ***setObjectName***
+
+> QWidget
+>
+> 这个参数将被添加至设置界面。
+
+- icon
+
+> FluentIcon
+>
+> 这个参数将设置图标
+
+- text
+
+> str
+>
+> 这个参数将设置文本
+
+#### DeleteInterface
+
+- widget
+
+> QWidget
+>
+> 这个参数将被删除从设置界面。
+
+| API Name           | Inheritance Path                     | Parameters     | Description                                                  |
+|--------------------|--------------------------------------|----------------|--------------------------------------------------------------|
+| SetDragAction      | interface.subscribe.actions.Register | func: callable | When pet is moving, it will call                             |
+| SetClickAction     | interface.subscribe.actions.Register | func: callable | When pet is clicked, it will call                            |
+| SetMouseDragAction | interface.subscribe.actions.Register | func: callable | When pet is dragged, it will call                            |                                |
+| SetAIOutput        | interface.subscribe.actions.Register | func: callable | When the AI(*Only Reasoning AI*) is outputting, it will call |                   |
+
+#### SetDragAction
+
+- *RawQMimeData*: 将对绑定的函数传入`QMimeData`原始拖拽数据
+- *AnalyzedData*: 将对绑定的函数传入程序解析后的数据
+
+#### SetClickAction
+
+- 不适用
+
+#### SetMouseDragAction
+
+- *CurrentMouseX*: 将对绑定的函数传入当前鼠标的X坐标
+- *CurrentMouseY*: 将对绑定的函数传入当前鼠标的Y坐标
+- *CurrentMainWindowX*: 将对绑定的函数传入当前主窗口的X坐标
+- *CurrentMainWindowY*: 将对绑定的函数传入当前主窗口的Y坐标
+
+#### SetAIOutput
+
+- *Answer*: 将对绑定的函数传入AI的回答
+- *IsLast*: 将对绑定的函数传入是否是最后一条回答
 
 ---
 
@@ -88,7 +144,6 @@ def process_human_information(name: str, age: int, gender: str):
 | pypiwin32        | latest |
 | live2d-py        | latest |
 | dashscope        | latest |
-| markdown         | latest |
 | requests         | latest |
 | pyaudio          | latest |
 | numpy            | latest |

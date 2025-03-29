@@ -40,17 +40,7 @@ experience.
 
 ## 🛠 Usage Guide
 
-### Adding Models
-
-1. Download your favorite Live2D model files.
-2. Place the files in the `resources/model` directory.
-3. Restart the program to load the new model.
-
-> **Tip**: If model replacement fails, ensure that the model data is bound (`Binding Settings -> Animation Binding`).
-
-### Binding Settings
-
-#### Extension Tools
+### Extension Tools
 
 Extension tools allow you to define new function call capabilities for the AI. For example:
 
@@ -60,22 +50,78 @@ def process_human_information(name: str, age: int, gender: str):
     return "Processing Complete!"
 ```
 
-#### Plugin Development
+### Plugin Development
 
 Using built-in API interfaces, you can quickly develop plugins. Here are some commonly used APIs:
 
-| API Name          | Inheritance Path    | Parameters | Description                              |
-|-------------------|---------------------|------------|------------------------------------------|
-| GetLive2D         | subscribe.Live2D    | null       | Get Python properties of Live2D model    |
-| GetWindowPosition | subscribe.Window    | null       | Get window position                      |
-| GetCharacter      | subscribe.Character | null       | Get the name of the current Live2D model |
-| GetName           | subscribe.Character | null       | Get character name                       |
-| GetVoiceModel     | subscribe.Model     | null       | Get voice model name                     |
+| API Name          | Inheritance Path              | Parameters | Description                              |
+|-------------------|-------------------------------|------------|------------------------------------------|
+| GetLive2D         | interface.subscribe.Live2D    | N/A        | Get Python properties of Live2D model    |
+| GetWindowPosition | interface.subscribe.Window    | N/A        | Get window position                      |
+| GetCharacter      | interface.subscribe.Character | N/A        | Get the name of the current Live2D model |
+| GetName           | interface.subscribe.Character | N/A        | Get character name                       |
+| GetVoiceModel     | interface.subscribe.Model     | N/A        | Get voice model name                     |
 
-| API Name       | Inheritance Path        | Parameters  | Description      |
-|----------------|-------------------------|-------------|------------------|
-| InsertNotebook | subscribe.views.Setting | frame, text | 插入一个Frame进设置的选项卡 |
-| DeleteNotebook | subscribe.views.Setting | frame       | 删除一个Frame的选项卡    |
+| API Name        | Inheritance Path                  | Parameters         | Description                          |
+|-----------------|-----------------------------------|--------------------|--------------------------------------|
+| InsertInterface | interface.subscribe.views.Setting | widget, icon, text | Insert widget into setting interface |
+| DeleteInterface | interface.subscribe.views.Setting | widget             | Delete widget from setting interface |
+
+#### InsertInterface
+
+- **widget**: The widget must ***setObjectName***
+
+> QWidget
+>
+> This parameter is a widget that will be inserted into the setting interface.
+
+- icon
+
+> FluentIcon
+>
+> This parameter is the icon displayed in the setting interface.
+
+- text
+
+> str
+>
+> This parameter is the text displayed in the setting interface.
+
+#### DeleteInterface
+
+- widget
+
+> QWidget
+>
+> This parameter is the widget that will be deleted from the setting interface.
+
+| API Name           | Inheritance Path                     | Parameters     | Description                                                  |
+|--------------------|--------------------------------------|----------------|--------------------------------------------------------------|
+| SetDragAction      | interface.subscribe.actions.Register | func: callable | When pet is moving, it will call                             |
+| SetClickAction     | interface.subscribe.actions.Register | func: callable | When pet is clicked, it will call                            |
+| SetMouseDragAction | interface.subscribe.actions.Register | func: callable | When pet is dragged, it will call                            |                                |
+| SetAIOutput        | interface.subscribe.actions.Register | func: callable | When the AI(*Only Reasoning AI*) is outputting, it will call |                   |
+
+#### SetDragAction
+
+- *RawQMimeData*: It will return the raw `QMimeData` data
+- *AnalyzedData*: It will return the program analyzed data
+
+#### SetClickAction
+
+- N/A
+
+#### SetMouseDragAction
+
+- *CurrentMouseX*: It will return current mouse X coordinate
+- *CurrentMouseY*: It will return current mouse Y coordinate
+- *CurrentMainWindowX*: It will return the current main window X coordinate
+- *CurrentMainWindowY*: It will return the current main window Y coordinate
+
+#### SetAIOutput
+
+- *Answer*: It will return the AI answer
+- *IsLast*: It will return whether it is the last answer
 
 ---
 
@@ -90,7 +136,6 @@ The following is a list of core libraries this project depends on:
 | pypiwin32        | latest  |
 | live2d-py        | latest  |
 | dashscope        | latest  |
-| markdown         | latest  |
 | requests         | latest  |
 | pyaudio          | latest  |
 | numpy            | latest  |
