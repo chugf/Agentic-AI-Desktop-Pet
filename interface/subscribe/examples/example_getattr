@@ -18,6 +18,8 @@ print(f"{'=' * 20} Views Supported {'=' * 20}")
 show(interface.subscribe.views, "interface.subscribe.views")
 print(f"{'=' * 20} Actions Supported {'=' * 20}")
 show(interface.subscribe.actions, "interface.subscribe.actions")
+print(f"{'=' * 20} Standards Supported {'=' * 20}")
+show(interface.subscribe.standards, "interface.subscribe.standards")
 print(f"{'=' * 20} Supported {'=' * 20}")
 
 # Request character model

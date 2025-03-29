@@ -36,7 +36,7 @@ def reload_memories(model):
     global memories, prompts
     try:
         with open(f"./intelligence/prompts/{model}.json", "r", encoding="utf-8") as sf:
-            prompts = json.load(f)
+            prompts = json.load(sf)
             clear_memories()
             sf.close()
     except (FileNotFoundError, FileExistsError):

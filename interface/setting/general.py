@@ -1,7 +1,9 @@
+import glob
 import os
+import random
 import typing
 
-from .customize import function, constants
+from .customize import function, constants, widgets
 
 from PyQt5.Qt import QRect, Qt
 from PyQt5.QtWidgets import QFrame
@@ -111,10 +113,37 @@ class General(QFrame):
         # 角色相关 Character Related
         self.click_add_character = PrimaryPushButton(self.languages[84], self)
         self.click_add_character.setGeometry(QRect(450, 462, 80, 35))
+        self.click_add_character.clicked.connect(self.add_character)
         self.click_delete_character = PrimaryPushButton(self.languages[3], self)
         self.click_delete_character.setGeometry(QRect(550, 462, 80, 35))
+        self.click_delete_character.clicked.connect(self.delete_character)
 
         self.fill_information()
+
+    def add_character(self):
+        def check_if_live2d(path: str):
+            exist_v3_over = glob.glob(f"{path}/*.model3.json")
+            if exist_v3_over:
+                return glob.glob(f"{path}/*.moc3")
+            else:
+                return glob.glob(f"{path}/*.model.json") and os.path.exists(f"{path}/live2d")
+
+        character_model_path = function.select_folder(self, self.languages[84])
+        if character_model_path:
+            if not check_if_live2d(character_model_path):
+                widgets.pop_error(self, self.languages[140], self.languages[141])
+                return
+            self.runtime_module.file.add_character(character_model_path)
+            self.select_character.addItem(character_model_path.split("/")[-1])
+
+    def delete_character(self):
+        list_character = os.listdir("./resources/model")
+        list_character.remove(self.select_character.currentText())
+        function.change_configure("vanilla", "default", self.configure)
+        self.kwargs.get("reload")("vanilla", "character")
+        self.runtime_module.file.delete_character(self.configure, self.select_character.currentText())
+        self.select_character.setCurrentText("vanilla")
+        self.select_character.removeItem(os.listdir("./resources/model").index(self.select_character.currentText()))
 
     def change_language(self, value):
         function.change_configure(value, "settings.language", self.configure)

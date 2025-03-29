@@ -12,7 +12,7 @@
       "locktsk": true,
       "media": true,
       "safety": "shut",
-      "visualization": false
+      "visualization": true
    },
    "Live2D": {
       "AutoBlink": true,

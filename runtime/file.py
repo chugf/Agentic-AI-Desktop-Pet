@@ -22,6 +22,14 @@ def logger(text: str, father_dir: str) -> None:
         f.close()
 
 
+def add_character(model_path: str) -> bool:
+    try:
+        shutil.copytree(model_path, f"./resources/model/{model_path.split('/')[-1]}/")
+        return True
+    except:
+        return False
+
+
 def delete_character(configure: dict, model: str) -> bool:
     if os.path.exists(f"./resources/voice/{model}"):
         shutil.rmtree(f"./resources/voice/{model}")

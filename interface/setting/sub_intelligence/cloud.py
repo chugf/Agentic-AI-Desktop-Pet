@@ -9,7 +9,7 @@ from qfluentwidgets import PasswordLineEdit, BodyLabel, ComboBox
 
 
 class IntelligenceCloud(QFrame):
-    def __init__(self, languages, configure):
+    def __init__(self, languages, configure, reload_func: callable):
         super().__init__()
         with open('./resources/intelligence.json', 'r', encoding='utf-8') as itf:
             intelligence = json.load(itf)
@@ -17,6 +17,7 @@ class IntelligenceCloud(QFrame):
 
         self.languages = languages
         self.configure = configure
+        self.reload_func = reload_func
         self.setObjectName("IntelligenceCloud")
 
         # 阿里云API
@@ -27,14 +28,14 @@ class IntelligenceCloud(QFrame):
         self.input_aliyun_key.setClearButtonEnabled(True)
         self.input_aliyun_key.setGeometry(QRect(120, 52, 330, 35))
         self.input_aliyun_key.textChanged.connect(
-            lambda value: function.change_configure(value, 'settings.cloud.aliyun', self.configure))
+            lambda value: self.reload(value, 'settings.cloud.aliyun'))
         # # 阿里云模型 Aliyun Model
         self.select_aliyun_model = ComboBox(self)
         self.select_aliyun_model.addItems(intelligence)
         self.select_aliyun_model.setCurrentText(self.configure['settings']['intelligence'])
         self.select_aliyun_model.setGeometry(QRect(470, 52, 170, 35))
         self.select_aliyun_model.currentTextChanged.connect(
-            lambda value: function.change_configure(value, 'settings.intelligence', self.configure))
+            lambda value: self.reload(value, 'settings.intelligence'))
 
         # 讯飞云 API ID - API Key - API Secret
         BodyLabel(self.languages[95], self).setGeometry(QRect(10, 82, 120, 35))
@@ -44,7 +45,7 @@ class IntelligenceCloud(QFrame):
         self.input_xfyun_id.setClearButtonEnabled(True)
         self.input_xfyun_id.setGeometry(QRect(120, 87, 330, 35))
         self.input_xfyun_id.textChanged.connect(
-            lambda value: function.change_configure(value, 'settings.cloud.xunfei.id', self.configure))
+            lambda value: self.reload(value, 'settings.cloud.xunfei.id'))
 
         BodyLabel(self.languages[96], self).setGeometry(QRect(10, 122, 120, 35))
         self.input_xfyun_key = PasswordLineEdit(self)
@@ -53,7 +54,7 @@ class IntelligenceCloud(QFrame):
         self.input_xfyun_key.setClearButtonEnabled(True)
         self.input_xfyun_key.setGeometry(QRect(120, 122, 330, 35))
         self.input_xfyun_key.textChanged.connect(
-            lambda value: function.change_configure(value, 'settings.cloud.xunfei.key', self.configure))
+            lambda value: self.reload(value, 'settings.cloud.xunfei.key'))
 
         BodyLabel(self.languages[97], self).setGeometry(QRect(10, 157, 120, 35))
         self.input_xfyun_secret = PasswordLineEdit(self)
@@ -62,6 +63,10 @@ class IntelligenceCloud(QFrame):
         self.input_xfyun_secret.setClearButtonEnabled(True)
         self.input_xfyun_secret.setGeometry(QRect(120, 157, 330, 35))
         self.input_xfyun_secret.textChanged.connect(
-            lambda value: function.change_configure(value, 'settings.cloud.xunfei.secret', self.configure))
+            lambda value: self.reload_func(value, 'settings.cloud.xunfei.secret'))
 
         del intelligence
+
+    def reload(self, value, relative_path):
+        function.change_configure(value, relative_path, self.configure)
+        self.reload_func()

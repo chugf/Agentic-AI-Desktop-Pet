@@ -1,8 +1,9 @@
-import json
 import traceback
 import typing
-import random
 import shutil
+import re
+import random
+import json
 
 # 运行时
 import runtime
@@ -29,7 +30,7 @@ import win32con
 from OpenGL import GL
 
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
-    QMimeData, QColor, QLinearGradient, QPainter, QBrush
+    QMimeData, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog
 from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox
 from qfluentwidgets import FluentIcon, NavigationItemPosition, \
     TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action
@@ -44,9 +45,73 @@ switches_configure: dict = runtime.file.load_switch()
 configure, configure_default = runtime.file.load_configure(interface.subscribe)
 languages: list[str] = runtime.file.load_language(configure)
 module_info: dict = intelligence.load_gpt_sovits(runtime.parse_local_url(configure['settings']['local']['gsv']))
+intelligence.text.reload_memories(configure_default)
+intelligence.text.reload_tools()
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
                         configure["settings"]['cloud']['xunfei']['secret'], configure["settings"]['cloud']['aliyun'])
 runtime.thread.reload_module(interface, intelligence, runtime, logs)
+
+
+class PictureShow(QWidget):
+    """展示绘画图片"""
+    def __init__(self):
+        super().__init__()
+        self.image_path = None
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setWindowTitle("AudioVisualization - Ai Desktop Pet")
+        self.setWindowIcon(QIcon('logo.ico'))
+
+        self.image_show = QLabel(self)
+
+    def _save_as(self):
+        select_save_folder = QFileDialog.getExistingDirectory(self)
+        if select_save_folder:
+            shutil.copy(self.image_path, select_save_folder)
+            return True
+        return False
+
+    def _save_as_and_remove_origin(self):
+        if self._save_as():
+            os.remove(self.image_path)
+            self.close()
+
+    def open(self, file_path):
+        self.image_path = file_path
+
+        pixmap = QPixmap(self.image_path)
+        try:
+            pixmap = pixmap.scaled(pixmap.width() // 3, pixmap.height() // 3,
+                                   Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.image_show.setPixmap(pixmap)
+        except Exception:
+            self.image_show.setText(f"{traceback.format_exc()}\n"
+                                    f"Failed to show\nGo {self.image_path}\nOr go ./logs/picture to see")
+
+        self.resize(pixmap.width(), pixmap.height())
+        self.image_show.setScaledContents(True)
+
+    def contextMenuEvent(self, event):
+        menu = RoundMenu("MENU", self)
+
+        image_path = os.path.join(os.getcwd(), self.image_path)
+
+        save_as_action = Action(FluentIcon.SAVE_AS, "Save As...", self)
+        save_as_action.triggered.connect(self._save_as)
+        menu.addAction(save_as_action)
+
+        save_as_and_remove_action = Action(FluentIcon.MOVE, "Move to...", self)
+        save_as_and_remove_action.triggered.connect(self._save_as_and_remove_origin)
+        menu.addAction(save_as_and_remove_action)
+
+        open_file_action = Action(FluentIcon.LINK, "Open File", self)
+        open_file_action.triggered.connect(lambda: os.startfile(image_path))
+        menu.addAction(open_file_action)
+
+        open_folder_action = Action(FluentIcon.FOLDER, "Open In Explorer", self)
+        open_folder_action.triggered.connect(lambda: os.startfile(os.path.dirname(image_path)))
+        menu.addAction(open_folder_action)
+
+        menu.exec_(event.globalPos())
 
 
 class AudioVisualization(QWidget):
@@ -160,7 +225,7 @@ class Setting(FramelessWindow):
 
         self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure)
         self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(languages, configure)
-        self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(languages, configure)
+        self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(languages, configure, self.reload_intelligence)
 
         self.binding_page = interface.setting.binding.Binding(languages, configure, module_info, live2d_parameter)
         self.animation_binding_page = interface.setting.sub_binding.animation.AnimationBinding(
@@ -171,8 +236,8 @@ class Setting(FramelessWindow):
                                                                                 live2d_parameter)
         self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(languages, configure, module_info,
                                                                                    live2d_parameter)
-        self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(self.run_code_for_plugin,
-                                                                                      languages, configure)
+        self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(
+            interface, self.run_code_for_plugin, languages, configure)
 
         self.about_page = interface.setting.about.About(languages, runtime)
         self.record_timer = QTimer(self)
@@ -233,6 +298,35 @@ class Setting(FramelessWindow):
         self.navigation_interface.setCurrentItem(widget.objectName())
         qrouter.push(self.stack_widget, widget.objectName())
 
+    @staticmethod
+    def reload_intelligence():
+        intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'],
+                                configure["settings"]['cloud']['xunfei']['key'],
+                                configure["settings"]['cloud']['xunfei']['secret'],
+                                configure["settings"]['cloud']['aliyun'])
+
+    def reload_character(self, value, type_: typing.Literal['language', 'character']):
+        global desktop, languages, configure_default
+        desktop.close()
+        architecture.live2d.dispose()
+
+        architecture.live2d.init()
+        if type_ == "character":
+            configure_default = value
+            runtime.file.load_template_model(configure, value)
+        elif type_ == "language":
+            languages = runtime.file.load_language(configure)
+        conversation.move(desktop.x(), desktop.y())
+        desktop.internal_record.stop()
+        desktop = DesktopPet(desktop.x(), desktop.y())
+        desktop.show()
+        interface.subscribe.RegisterAttribute.SetWindow(desktop)
+
+        interface.subscribe.actions.Register.UnsetALL()
+        self.close()
+        self.__init__(self.x(), self.y(), self.stack_widget.currentIndex())
+        self.show()
+
     # Function
     def record_animation(self):
         def recorder():
@@ -248,27 +342,6 @@ class Setting(FramelessWindow):
             configure['record']['position'] = [-1, -1, -1, -1]
             self.record_timer.timeout.connect(recorder)
             self.record_timer.start(50)
-
-    def reload_character(self, value, type_: typing.Literal['language', 'character']):
-        global desktop, languages, configure_default
-        desktop.close()
-        architecture.live2d.dispose()
-
-        architecture.live2d.init()
-        if type_ == "character":
-            configure_default = value
-            runtime.file.load_template_model(configure, value)
-        elif type_ == "language":
-            languages = runtime.file.load_language(configure)
-        conversation.move(desktop.x(), desktop.y())
-        desktop = DesktopPet(desktop.x(), desktop.y())
-        desktop.show()
-        interface.subscribe.RegisterAttribute.SetWindow(desktop)
-
-        interface.subscribe.actions.Register.UnsetALL()
-        self.close()
-        self.__init__(self.x(), self.y(), self.stack_widget.currentIndex())
-        self.show()
 
     def exception(self, e_msg):
         print(e_msg)
@@ -522,6 +595,11 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             return
 
         if text.split(":")[0] == "None":
+            markdown_images = re.findall(r'!\[.*?]\((.*?)\)', text.split(":")[1])
+            for markdown_image in markdown_images:
+                picture.open(markdown_image)
+                picture.show()
+                picture.move(self.x() - self.width(), self.y())
             conversation.input_question.setGeometry(QRect(0, 430, 281, 30))
             if temp_action:
                 _temp_timer = QTimer(self)
@@ -838,6 +916,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
                     for action_item in interface.subscribe.actions.Operate.GetMouseDragAction():
                         action_item(x, y, self.x(), self.y())
+
+                    picture.move(self.x() - self.width(), self.y())
                     conversation.move(cv_new_pos)
                     cv_new_pos.setY(cv_new_pos.y() + 40)
                     visualization.move(cv_new_pos)
@@ -1021,8 +1101,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
 
 if __name__ == '__main__':
-    MouseListener = runtime.MouseListener()
     app = QApplication(sys.argv)
+    MouseListener = runtime.MouseListener()
 
     PluginLogCollector = interface.setting.plog.PluginLogCollector()
     PLUGIN_GLOBAL['interface'] = interface
@@ -1036,6 +1116,7 @@ if __name__ == '__main__':
     conversation = Conversation()
     conversation.move(desktop.x(), desktop.y() - 60)
     visualization.move(desktop.x(), desktop.y() - 20)
+    picture = PictureShow()
 
     interface.subscribe.views.RegisterSetting.register(setting)
 

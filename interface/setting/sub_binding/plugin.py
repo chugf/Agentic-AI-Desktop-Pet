@@ -10,7 +10,7 @@ from qfluentwidgets import PrimaryPushButton, BodyLabel, LineEdit, ComboBox, Rad
 
 
 class PluginBinding(QFrame):
-    def __init__(self, run_function: callable, languages, configure):
+    def __init__(self, interface_module, run_function: callable, languages, configure):
         super().__init__()
         self.run_function = run_function
         self.languages = languages
@@ -28,7 +28,7 @@ class PluginBinding(QFrame):
         font_id = QFontDatabase.addApplicationFont("./interface/setting/JetBrainsMono-Bold.ttf")
         font_families = QFontDatabase.applicationFontFamilies(font_id)
         jetbrains_mono = QFont(font_families[0], 10)
-        self.input_codes = widgets.CodeEdit(self)
+        self.input_codes = widgets.CodeEdit(interface_module, self)
         self.input_codes.setFont(jetbrains_mono)
         self.input_codes.setLineWrapMode(0)
         self.input_codes.setText(open("./interface/subscribe/examples/example_getattr",

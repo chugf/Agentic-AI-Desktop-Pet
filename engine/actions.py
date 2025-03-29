@@ -18,12 +18,12 @@ class ActionsEngine(basic.BaseEngine):
             mime_data = mime.split(":///")
             if mime_data[0] == "file":
                 if os.path.isfile(mime_data[1]):
-                    self.analyzed_action.append("drag_file")
+                    self.analyzed_action.append(("drag_file", mime_data[1]))
                 else:
-                    self.analyzed_action.append("drag_folder")
+                    self.analyzed_action.append(("drag_folder", mime_data[1]))
             else:
-                self.analyzed_action.append("drag_pure_text")
-        for action_item in self.interface.actions.Operate().GetDragAction():
+                self.analyzed_action.append(("drag_pure_text", mime_data[1]))
+        for action_item in self.interface.subscribe.actions.Operate.GetDragAction():
             action_item(mimes, self.analyzed_action)
         print("ANALYZE ACTION: ", self.analyzed_action)
 
