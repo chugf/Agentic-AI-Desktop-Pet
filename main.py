@@ -45,6 +45,8 @@ switches_configure: dict = runtime.file.load_switch()
 configure, configure_default = runtime.file.load_configure(interface.subscribe)
 languages: list[str] = runtime.file.load_language(configure)
 module_info: dict = intelligence.load_gpt_sovits(runtime.parse_local_url(configure['settings']['local']['gsv']))
+interface.setting.developer.reload_module(engine, runtime, logs, intelligence, interface)
+interface.setting.developer.reload_file(languages, configure, module_info, live2d_parameter)
 intelligence.text.reload_memories(configure_default)
 intelligence.text.reload_tools()
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
@@ -228,7 +230,7 @@ class Setting(FramelessWindow):
         self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(
             languages, configure, self.reload_intelligence)
 
-        self.binding_page = interface.setting.binding.Binding(languages, configure, runtime)
+        self.binding_page = interface.setting.binding.Binding(languages, configure, runtime, self.addSubInterface)
         self.animation_binding_page = interface.setting.sub_binding.animation.AnimationBinding(
             languages, configure,
             module_info, desktop.model_json_path, architecture.addon,
@@ -327,6 +329,7 @@ class Setting(FramelessWindow):
         self.close()
         self.__init__(self.x(), self.y(), self.stack_widget.currentIndex())
         self.show()
+        interface.setting.developer.reload_program(desktop, conversation, setting, visualization, picture)
 
     # Function
     def record_animation(self):
@@ -1124,5 +1127,6 @@ if __name__ == '__main__':
     picture = PictureShow()
 
     interface.subscribe.views.RegisterSetting.register(setting)
+    interface.setting.developer.reload_program(desktop, conversation, setting, visualization, picture)
 
     sys.exit(app.exec())

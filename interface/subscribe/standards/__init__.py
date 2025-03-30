@@ -5,6 +5,8 @@ ACTION_CLICK_CAP = "ActionClickCap"
 ACTION_CLICK_CHEST = "ActionClickChest"
 ACTION_CLICK_CUSTOM = "ActionClickCustom"
 
+# VIEWS =
+
 MIME_DRAG_FILE = "drag_file"
 MIME_DRAG_FOLDER = "drag_folder"
 MIME_DRAG_PURE_TEXT = "drag_pure_text"

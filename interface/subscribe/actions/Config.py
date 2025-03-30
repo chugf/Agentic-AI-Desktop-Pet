@@ -4,7 +4,7 @@ class Config:
             "drag_action": [],
             "click_action": [],
             "mouse_drag_action": [],
-            "ai_output": []
+            "ai_output": [],
         }
 
     def register(self, relative: str, value: str):

@@ -28,7 +28,7 @@ SENSITIVE_CONTENT = [
 ]
 major = "3"
 minor = "3"
-patch = "0"
+patch = "5"
 
 
 class ExtractFunctionDocstring(ast.NodeVisitor):
@@ -424,14 +424,21 @@ def user_vertify(email, code, password):
         return {"status": False, "message": "验证错误！"}
 
 
-def user_login(email, password):
+def user_login(email, password, auto_login: bool = False, session: str = ""):
     try:
         login_response = requests.post("http://adp.nekocode.top/account/login.php",
-                                       json={'email': email, 'password': password})
+                                       json={'email': email, 'password': password,
+                                             "auto_login": auto_login, "session": session})
+        print(login_response.json())
         if login_response.json().get('error'):
-            return {"status": False, "message": login_response.json()['error']}
+            return {"status": False, "token": None,
+                    "message": login_response.json()['error']}
         elif login_response.json().get('success'):
-            return {"status": True, "message": login_response.json()['success']}
+            t = ""
+            if auto_login:
+                t = login_response.json()['session']
+            return {"status": True, "token": t, "role": login_response.json()['role'],
+                    "message": login_response.json()['success']}
     except:
         return {"status": False, "message": "登录错误！"}
 

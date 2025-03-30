@@ -7,7 +7,7 @@ from qfluentwidgets import Pivot
 
 
 class Binding(QFrame):
-    def __init__(self, languages, configure, runtime_module):
+    def __init__(self, languages, configure, runtime_module, add_interface):
         super().__init__()
         self.languages = languages
         self.configure = configure
@@ -15,7 +15,7 @@ class Binding(QFrame):
         self.pivot_parameter = Pivot(self)
         self.stacked_widget = QStackedWidget(self)
 
-        self.login_parameter = login.Login(languages, configure, runtime_module)
+        self.login_parameter = login.Login(languages, configure, runtime_module, add_interface)
         self.register_parameter = register.Register(languages, configure, runtime_module)
         self.addSubInterface(self.login_parameter, "Login", self.languages[148])
         self.addSubInterface(self.register_parameter, "Register", self.languages[149])
