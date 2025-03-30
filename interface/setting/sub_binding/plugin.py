@@ -41,7 +41,7 @@ class PluginBinding(QFrame):
         examples = os.listdir("./interface/subscribe/examples")
         self.select_examples.addItems(examples)
         self.select_examples.setGeometry(QRect(500, 102, 130, 30))
-        self.select_examples.setCurrentIndex(1)
+        self.select_examples.setCurrentText("example_getattr")
         self.select_examples.currentTextChanged.connect(
             lambda: self.input_codes.setText(
                 open(f"./interface/subscribe/examples/{examples[self.select_examples.currentIndex()]}",

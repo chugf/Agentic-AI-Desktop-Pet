@@ -1,8 +1,9 @@
 import keyword
 import builtins
 import string
+import inspect
 
-from PyQt5.Qt import Qt, QStringListModel
+from PyQt5.Qt import Qt, QStringListModel, QStandardItemModel, QFont, QIcon, QStandardItem, QTimer
 from PyQt5.QtWidgets import QCompleter, QComboBox, QVBoxLayout
 from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox
 
@@ -20,11 +21,11 @@ class CodeEdit(TextEdit):
         self.completer.setModel(self.model)
 
         self.combo_completer = QComboBox()
-        self.combo_completer.setStyleSheet("QComboBox {font-size: 14px;}")
+        self.combo_completer.setFont(QFont("微软雅黑", 11))
         self.combo_completer.setEditable(False)
         self.combo_completer.setModel(self.model)
         self.combo_completer.hide()
-        self.combo_completer.activated.connect(self.insert_completion)
+        self.combo_completer.activated.connect(self.click_complete)
 
         layout = QVBoxLayout()
         layout.addWidget(self.combo_completer)
@@ -36,11 +37,10 @@ class CodeEdit(TextEdit):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Tab:
             if self.combo_completer.isVisible():
-                completion = self.combo_completer.currentText()
-                self.insert_completion(completion)
+                self.insert_completion(self.combo_completer.currentIndex())
                 self.combo_completer.hide()
             else:
-                super().keyPressEvent(event)
+                self.insertPlainText("    ")
         elif event.key() == Qt.Key_Down:
             if self.combo_completer.isVisible():
                 index = self.combo_completer.currentIndex()
@@ -68,6 +68,9 @@ class CodeEdit(TextEdit):
                 self.insertPlainText("\n" + " " * indent)
         elif event.key() == Qt.Key_Escape:
             self.combo_completer.hide()
+        elif event.key() == Qt.Key_Period:
+            self.update_completions()
+            super().keyPressEvent(event)
         else:
             super().keyPressEvent(event)
 
@@ -90,26 +93,50 @@ class CodeEdit(TextEdit):
             return enum_list
 
         builtin_functions = [func for func in dir(builtins) if callable(getattr(builtins, func))]
-        customize_functions = ["interface.subscribe"]
-        customize_functions.extend(getter(self.interface.subscribe, "interface.subscribe"))
 
-        customize_functions.append("interface.subscribe.views")
-        customize_functions.extend(getter(self.interface.subscribe.views, "interface.subscribe.views"))
-        customize_functions.append("interface.subscribe.actions")
-        customize_functions.extend(getter(self.interface.subscribe.actions, "interface.subscribe.actions"))
-        customize_functions.append("interface.subscribe.standards")
-        customize_functions.extend(getter(self.interface.subscribe.standards, "interface.subscribe.standards"))
+        packages = ["views", "actions", "standards"]
+        customize_functions = ["interface", "interface.subscribe"]
+        customize_functions.extend(getter(self.interface.subscribe, "interface.subscribe"))
+        for package in packages:
+            customize_functions.append(f"interface.subscribe.{package}")
+            customize_functions.extend(getter(self.interface.subscribe.views, f"interface.subscribe.{package}"))
+
         builtin_functions.extend(customize_functions)
         return builtin_functions
 
     def update_completions(self):
+        def get_completions(module_, parts_, current_prefix):
+            if not parts_:
+                return
+
+            first_part = parts_[0]
+            remaining_parts = parts_[1:]
+
+            for m in dir(module_):
+                if m[0] == "_":
+                    continue
+                if m.startswith(first_part):
+                    attr = getattr(module_, m, None)
+                    if not remaining_parts:
+                        if inspect.ismodule(attr):
+                            filtered_list.append((f"{current_prefix}.{m}", "module", m))
+                        elif inspect.isclass(attr):
+                            filtered_list.append((f"{current_prefix}.{m}", "class", m))
+                        elif callable(attr):
+                            filtered_list.append((f"{current_prefix}.{m}", "function", m))
+                        else:
+                            filtered_list.append((f"{current_prefix}.{m}", "variable", m))
+                    else:
+                        if attr:
+                            get_completions(attr, remaining_parts, f"{current_prefix}.{m}")
+
         cursor = self.textCursor()
         block = cursor.block()
         text = block.text()
         pos = cursor.positionInBlock()
 
         start = pos - 1
-        while start >= 0 and text[start].isalnum():
+        while start >= 0 and (text[start].isalnum() or text[start] == '.'):
             start -= 1
         start += 1
         prefix = text[start:pos]
@@ -118,14 +145,36 @@ class CodeEdit(TextEdit):
             self.combo_completer.hide()
             return
 
+        parts = prefix.split('.')
         filtered_list = []
-        for word in self.get_keywords():
-            if word.startswith(prefix):
-                filtered_list.append(word)
-        for word in self.get_other():
-            if word.startswith(prefix):
-                filtered_list.append(word)
-        self.model.setStringList(filtered_list)
+
+        if len(parts) == 1:
+            for word in self.get_keywords():
+                if word.startswith(prefix):
+                    filtered_list.append((word, "keyword", word))
+            for word in self.get_other():
+                if word.startswith(prefix):
+                    filtered_list.append((word, "variable", word))
+        else:
+            module_name = parts[0]
+            if module_name == "interface":
+                module = self.interface
+            elif module_name == "builtins":
+                module = builtins
+            else:
+                module = None
+
+            if module:
+                get_completions(module, parts[1:], module_name)
+
+        item_model = QStandardItemModel()
+        for full_path, item_type, display_text in filtered_list:
+            icon = QIcon(f"./resources/image/{item_type}.png")
+            q_item = QStandardItem(icon, display_text)
+            q_item.setData(full_path, Qt.UserRole)
+            item_model.appendRow(q_item)
+
+        self.combo_completer.setModel(item_model)
 
         if not filtered_list:
             self.combo_completer.hide()
@@ -138,16 +187,20 @@ class CodeEdit(TextEdit):
         self.combo_completer.setGeometry(rect)
         self.combo_completer.show()
 
+    def click_complete(self, completion):
+        self.insert_completion(completion)
+        QTimer.singleShot(50, self.setFocus)
+
     def insert_completion(self, completion):
         if isinstance(completion, int):
-            completion = self.combo_completer.itemText(completion)
+            completion = self.combo_completer.itemData(completion, Qt.UserRole)
         tc = self.textCursor()
         block = tc.block()
         text = block.text()
         pos = tc.positionInBlock()
 
         start = pos - 1
-        while start >= 0 and text[start].isalnum():
+        while start >= 0 and (text[start].isalnum() or text[start] == '.'):
             start -= 1
         start += 1
 
@@ -181,11 +234,11 @@ def pop_warning(parent, title, content, duration=1200, orient=Qt.Horizontal):
     )
 
 
-def pop_success(parent, title, content, duration=1200):
+def pop_success(parent, title, content, duration=1200, orient=Qt.Horizontal):
     InfoBar.success(
         title=title,
         content=content,
-        orient=Qt.Horizontal,
+        orient=orient,
         isClosable=True,
         position=InfoBarPosition.TOP,
         duration=duration,

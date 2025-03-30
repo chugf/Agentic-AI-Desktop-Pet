@@ -392,6 +392,50 @@ def get_notice_board():
     return request
 
 
+def get_policy():
+    request = ""
+    try:
+        request = '\n'.join(requests.get("http://adp.nekocode.top/notice/get_policy.php").json())
+    except:
+        pass
+    return request
+
+
+def user_register(email):
+    try:
+        register_response = requests.post("http://adp.nekocode.top/account/register.php", json={'to': email})
+        if register_response.json().get('error'):
+            return {"status": False, "message": register_response.json()['error']}
+        elif register_response.json().get('success'):
+            return {"status": True, "message": register_response.json()['success']}
+    except:
+        return {"status": False, "message": "发送邮件错误！"}
+
+
+def user_vertify(email, code, password):
+    try:
+        vertify_response = requests.post("http://adp.nekocode.top/account/vertify.php",
+                                         json={'email': email, 'code': code, 'password': password})
+        if vertify_response.json().get('error'):
+            return {"status": False, "message": vertify_response.json()['error']}
+        elif vertify_response.json().get('success'):
+            return {"status": True, "message": vertify_response.json()['success']}
+    except:
+        return {"status": False, "message": "验证错误！"}
+
+
+def user_login(email, password):
+    try:
+        login_response = requests.post("http://adp.nekocode.top/account/login.php",
+                                       json={'email': email, 'password': password})
+        if login_response.json().get('error'):
+            return {"status": False, "message": login_response.json()['error']}
+        elif login_response.json().get('success'):
+            return {"status": True, "message": login_response.json()['success']}
+    except:
+        return {"status": False, "message": "登录错误！"}
+
+
 def find_internal_recording_device(p):
     """寻找内录设备"""
     target = '立体声混音'

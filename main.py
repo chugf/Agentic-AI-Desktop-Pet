@@ -30,9 +30,9 @@ import win32con
 from OpenGL import GL
 
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
-    QMimeData, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog
+    QMimeData, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale
 from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox
-from qfluentwidgets import FluentIcon, NavigationItemPosition, \
+from qfluentwidgets import FluentIcon, NavigationItemPosition, FluentTranslator, \
     TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action
 from qframelesswindow import FramelessWindow, TitleBar
 
@@ -95,19 +95,19 @@ class PictureShow(QWidget):
 
         image_path = os.path.join(os.getcwd(), self.image_path)
 
-        save_as_action = Action(FluentIcon.SAVE_AS, "Save As...", self)
+        save_as_action = Action(FluentIcon.SAVE_AS, languages[142], self)
         save_as_action.triggered.connect(self._save_as)
         menu.addAction(save_as_action)
 
-        save_as_and_remove_action = Action(FluentIcon.MOVE, "Move to...", self)
+        save_as_and_remove_action = Action(FluentIcon.MOVE, languages[143], self)
         save_as_and_remove_action.triggered.connect(self._save_as_and_remove_origin)
         menu.addAction(save_as_and_remove_action)
 
-        open_file_action = Action(FluentIcon.LINK, "Open File", self)
+        open_file_action = Action(FluentIcon.LINK, languages[144], self)
         open_file_action.triggered.connect(lambda: os.startfile(image_path))
         menu.addAction(open_file_action)
 
-        open_folder_action = Action(FluentIcon.FOLDER, "Open In Explorer", self)
+        open_folder_action = Action(FluentIcon.FOLDER, languages[145], self)
         open_folder_action.triggered.connect(lambda: os.startfile(os.path.dirname(image_path)))
         menu.addAction(open_folder_action)
 
@@ -225,9 +225,10 @@ class Setting(FramelessWindow):
 
         self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure)
         self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(languages, configure)
-        self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(languages, configure, self.reload_intelligence)
+        self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(
+            languages, configure, self.reload_intelligence)
 
-        self.binding_page = interface.setting.binding.Binding(languages, configure, module_info, live2d_parameter)
+        self.binding_page = interface.setting.binding.Binding(languages, configure, runtime)
         self.animation_binding_page = interface.setting.sub_binding.animation.AnimationBinding(
             languages, configure,
             module_info, desktop.model_json_path, architecture.addon,
@@ -1102,6 +1103,10 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
+    app.installTranslator(translator)
+
     MouseListener = runtime.MouseListener()
 
     PluginLogCollector = interface.setting.plog.PluginLogCollector()
