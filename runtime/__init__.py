@@ -27,7 +27,7 @@ SENSITIVE_CONTENT = [
     PassedNoneContent(),  # 占位符
 ]
 major = "3"
-minor = "0"
+minor = "3"
 patch = "0"
 
 
