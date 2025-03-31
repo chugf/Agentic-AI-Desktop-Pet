@@ -6,13 +6,6 @@
     <b><a href="README.md">English</a></b> | <b><a href="README_zh.md">简体中文</a></b>
     <br/>
 </div>
-# API发展
-
-## 截断API
-
-| API名称 | 参数 | 用途 |
-|:-----:|----|:--:|
-| <abbr title="这是一个API的名称">API名称</abbr> | <abbr title="这是API的参数">参数</abbr> | <abbr title="这是API的用途">用途</abbr> |
 
 ## 🌟 Project Overview
 
