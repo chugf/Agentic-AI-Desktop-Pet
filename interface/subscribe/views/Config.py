@@ -1,15 +1,12 @@
 class _Config:
     def __init__(self):
-        self._config = {
-            "setting": ""
-        }
+        self._config = {}
 
     def register(self, relative: str, value):
+        if relative not in self._config.keys():
+            self._config.update({relative: ""})
         if isinstance(self._config[relative], str):
             self._config[relative] = value
-        elif isinstance(self._config[relative], list):
-            self._config[relative].append(value)
 
-    @property
-    def setting(self) -> callable:
-        return self._config["setting"]
+    def __getitem__(self, item):
+        return self._config[item]

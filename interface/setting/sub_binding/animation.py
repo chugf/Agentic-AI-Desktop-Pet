@@ -15,11 +15,10 @@ with open("./resources/template.json", "r", encoding="utf-8") as f:
 
 
 class AnimationBinding(QWidget):
-    def __init__(self, languages, configure, param_dict, model_json_path, live2d_custom, **kwargs):
+    def __init__(self, languages, configure, model_json_path, live2d_custom, **kwargs):
         super().__init__()
         self.languages = languages
         self.configure = configure
-        self.param_dict = param_dict
         self.kwargs = kwargs
         self.setObjectName("AnimationBinding")
 
@@ -47,7 +46,7 @@ class AnimationBinding(QWidget):
         for index, attr in enumerate([self.input_min_x, self.input_min_y, self.input_max_x, self.input_max_y]):
             attr.setText(str(configure['record']['position'][index]))
 
-        self.click_auto_record = PrimaryPushButton(self.languages[47], self)
+        self.click_auto_record = PrimaryPushButton(self.languages[153], self)
         self.click_auto_record.clicked.connect(self.start_record)
         self.click_auto_record.setGeometry(QRect(500, 112, 100, 30))
 
@@ -179,7 +178,7 @@ class AnimationBinding(QWidget):
         self.select_expression_name.setText("")
 
     def start_record(self):
-        if widgets.pop_message(self, self.languages[99], self.languages[100], "OK👌"):
+        if widgets.pop_message(self, self.languages[49], self.languages[67], "OK👌"):
             function.change_configure(True, "record.enable_position", self.configure)
             self.kwargs.get("record")()
 

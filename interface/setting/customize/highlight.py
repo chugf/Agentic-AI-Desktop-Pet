@@ -1,5 +1,6 @@
 import keyword
 import builtins
+import re
 
 from PyQt5.Qt import Qt, QTextCharFormat, QFont, QRegExp, QSyntaxHighlighter, QColor
 
@@ -74,6 +75,11 @@ class PythonSyntaxHighlighter(BracketHighLighter):
 
         self.highlightingRules = []
 
+        # 数字高亮
+        self.number_format = QTextCharFormat()
+        self.number_format.setForeground(QColor("cyan"))
+        self.highlightingRules.append((re.compile(r'\b\d+(\.\d+)?\b'), self.number_format))
+
         # 关键字高亮
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(QColor("#FFA500"))
@@ -105,12 +111,17 @@ class PythonSyntaxHighlighter(BracketHighLighter):
 
     def highlightBlock(self, text):
         for pattern, format_ in self.highlightingRules:
-            expression = QRegExp(pattern)
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                self.setFormat(index, length, format_)
-                index = expression.indexIn(text, index + length)
+            if isinstance(pattern, QRegExp):
+                expression = pattern
+                index = expression.indexIn(text)
+                while index >= 0:
+                    length = expression.matchedLength()
+                    self.setFormat(index, length, format_)
+                    index = expression.indexIn(text, index + length)
+            elif isinstance(pattern, re.Pattern):
+                for match in re.finditer(pattern, text):
+                    start, end = match.span()
+                    self.setFormat(start, end - start, format_)
 
         super().highlightBlock(text)
         self.setCurrentBlockState(0)

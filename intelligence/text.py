@@ -57,13 +57,30 @@ def reload_tools():
         ff.close()
 
 
-def TextGeneratorLocal(prompt, func, url):
+def TextGeneratorLocal(prompt, func, url, api_config):
+    bodies = {}
+    if api_config['text']['api']:
+        bodies.update({api_config['text']['api']: api_config['text']['api-key']})
+    if api_config['text']['model']:
+        bodies.update({api_config['text']['model']: api_config['text']['model-name']})
+    if api_config['text']['tools']:
+        bodies.update({api_config['text']['tools']: tools})
+
     memories.append({"role": "user", "content": prompt})
-    response = requests.post(url, json={"messages": memories})
-    answer = response.json()
-    memories.append({'role': 'assistant', 'content': answer['message']['content']})
-    func(answer['message']['content'])
-    return answer['message']['content']
+    bodies.update({api_config['text']['messages']: memories})
+    with requests.post(url, json=bodies, stream=True) as response:
+        response.raise_for_status()
+        history = ""
+        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+            response_result = json.loads(chunk)
+            keys = api_config['text']['endpoint'].split('.')
+            for key in keys:
+                if isinstance(response_result, dict) and key in response_result:
+                    response_result = response_result[key]
+            history += response_result
+            func(history)
+    memories.append({'role': 'assistant', 'content': history})
+    return history
 
 
 class TextGenerator:

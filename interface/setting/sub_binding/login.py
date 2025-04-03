@@ -2,7 +2,6 @@ import typing
 import hashlib
 
 from ..customize import widgets
-from .. import developer
 
 from PyQt5.Qt import QRect, QWidget, QThread, pyqtSignal
 from qfluentwidgets import LineEdit, PasswordLineEdit, BodyLabel, TextEdit, PrimaryPushButton, \
@@ -83,9 +82,6 @@ class Login(QWidget):
             with open("./resources/token/token.aes", "w", encoding="utf-8") as f:
                 f.write(result['token'])
                 f.close()
-            if result['role'] == 'dev':
-                self.addSubInterface(developer.Developer(), FluentIcon.DEVELOPER_TOOLS,
-                                     "Developer Mode", NavigationItemPosition.BOTTOM)
 
     def login(self):
         policy_thread = Loading(self, self.runtime, 'login')

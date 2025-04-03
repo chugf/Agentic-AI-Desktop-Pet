@@ -19,7 +19,7 @@
          }
       },
       "enable": {
-         "visualization": true,
+         "visualization": false,
          "tts": false,
          "media": true,
          "online": false,
@@ -45,7 +45,7 @@
          }
       },
       "tts": {
-         "way": "local",
+         "way": "cloud",
          "top_k": 9,
          "top_p": 0.74,
          "temperature": 0.77,
@@ -193,10 +193,10 @@
    },
    "record": {
       "position": [
-         149,
-         2,
-         234,
-         62
+         179,
+         99,
+         224,
+         287
       ],
       "enable_position": false
    }

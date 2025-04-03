@@ -63,7 +63,7 @@ class IntelligenceCloud(QFrame):
         self.input_xfyun_secret.setClearButtonEnabled(True)
         self.input_xfyun_secret.setGeometry(QRect(120, 157, 330, 35))
         self.input_xfyun_secret.textChanged.connect(
-            lambda value: self.reload_func(value, 'settings.cloud.xunfei.secret'))
+            lambda value: self.reload(value, 'settings.cloud.xunfei.secret'))
 
         del intelligence
 

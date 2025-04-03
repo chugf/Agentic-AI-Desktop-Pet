@@ -1,6 +1,12 @@
 from .Config import _Config
 from . import setting
+from . import menu
 from . import Register
+
+
+class ContentMenu(menu.ContentMenu):
+    def __init__(self):
+        super().__init__(_Config)
 
 
 class Setting(setting.Setting):
@@ -15,4 +21,5 @@ class RegisterSetting(Register.RegisterSetting):
 
 _Config = _Config()
 Setting = Setting()
+ContentMenu = ContentMenu()
 RegisterSetting = RegisterSetting()

@@ -1,36 +1,12 @@
 class _Config:
     def __init__(self):
-        self._config = {
-            "name": "",
-            "character": "",
-            "voice_model": "",
-
-            "_Pet": "",
-            "_Window": ""
-        }
+        self._config = {}
 
     def register(self, relative: str, value: str):
+        if relative not in self._config.keys():
+            self._config.update({relative: ""})
         if isinstance(self._config[relative], str):
             self._config[relative] = value
-        elif isinstance(self._config[relative], list):
-            self._config[relative].append(value)
 
-    @property
-    def character(self):
-        return self._config['character']
-
-    @property
-    def voice_model(self):
-        return self._config['voice_model']
-
-    @property
-    def name(self):
-        return self._config['name']
-
-    @property
-    def attribute_pet(self):
-        return self._config['_Pet']
-
-    @property
-    def attribute_window(self):
-        return self._config['_Window']
+    def __getitem__(self, item):
+        return self._config[item]

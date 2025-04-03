@@ -239,7 +239,5 @@ if __name__ == "__main__":
     def c():
         print("close")
 
-    import socket
-    recognizer = WhisperRealTimeSpeechRecognizer(
-        f"ws://{socket.gethostbyname(socket.gethostname())}:2035", s, e, c)
+    recognizer = XFRealTimeSpeechRecognizer(s, e, c)
     recognizer.start_recognition()

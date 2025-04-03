@@ -132,31 +132,33 @@ class RecognitionThread(QThread):
     """语音识别线程 Speech Recognition Thread"""
     result = pyqtSignal(str)
 
-    def __init__(self, parent: QOpenGLWidget, configure: dict, speech_rec: callable):
+    def __init__(self, parent: QOpenGLWidget, configure: dict):
         super().__init__(parent)
-        self.speech_rec = speech_rec
         self.configure = configure
 
     def run(self):
         if self.configure['settings']['rec'] == "cloud":
-            self.speech_rec = intelligence.recognition.XFRealTimeSpeechRecognizer(
+            func = intelligence.recognition.XFRealTimeSpeechRecognizer
+        else:
+            func = intelligence.recognition.WhisperRealTimeSpeechRecognizer
+            # self.parent().speech_recognition = (
+            #     self.result.emit, self.parent().recognition_failure,
+            #     self.parent().recognition_closure,
+            #     runtime.parse_local_url(self.configure['settings']['local']['rec']['url']))
+        self.parent().speech_recognition = func(
                 self.result.emit, self.parent().recognition_failure,
                 self.parent().recognition_closure)
-        else:
-            self.speech_rec = intelligence.recognition.WhisperRealTimeSpeechRecognizer(
-                self.result.emit, self.parent().recognition_failure,
-                self.parent().recognition_closure,
-                runtime.parse_local_url(self.configure['settings']['local']['rec']['url']))
-        self.speech_rec.start_recognition()
+        self.parent().speech_recognition.start_recognition()
 
 
 class MediaUnderstandThread(QThread):
     result = pyqtSignal(str)
 
-    def __init__(self, parent: QOpenGLWidget, configure: dict, image_path: str, texts: str | None = None,
+    def __init__(self, parent: QOpenGLWidget, api_config, configure: dict, image_path: str, texts: str | None = None,
                  is_search_online: bool = False):
         """根据媒体理解线程 Media Understand Thread"""
         super().__init__(parent)
+        self.api_config = api_config
         self.configure = configure
         self.image_path = image_path
         self.is_search_online = is_search_online
@@ -169,7 +171,7 @@ class MediaUnderstandThread(QThread):
         try:
             answer = intelligence.text_generator(f"`{self.image_path}` \n{self.texts}",
                                                  self.configure['settings']['intelligence'], self.is_search_online,
-                                                 self.result.emit)
+                                                 self.api_config, self.result.emit)
         except Exception:
             file.logger(f"子应用 - 媒体文件理解 调用失败\n"
                         f"   Message: {traceback.format_exc()}", logs.HISTORY_PATH)
@@ -184,9 +186,11 @@ class TextGenerateThread(QThread):
     """文本生成器线程 Text Generation Thread"""
     result = pyqtSignal(str)
 
-    def __init__(self, parent: QOpenGLWidget, configure: dict, text: str, is_search_online: bool = False):
+    def __init__(self, parent: QOpenGLWidget, configure: dict, api_config: dict,
+                 text: str, is_search_online: bool = False):
         super().__init__(parent)
         self.configure = configure
+        self.api_config = api_config
         self.text = text
         self.is_search_online = is_search_online
 
@@ -199,7 +203,8 @@ class TextGenerateThread(QThread):
         try:
             answer = intelligence.text_generator(
                 self.text, self.configure['settings']['intelligence'],
-                self.is_search_online, lambda text: self.send(text, False),
+                self.is_search_online, self.api_config,
+                lambda text: self.send(text, False),
                 language=self.configure['language_mapping'][self.configure['settings']['language']],
                 url=runtime.parse_local_url(
                     self.configure['settings']['local']['text']) if
@@ -207,7 +212,7 @@ class TextGenerateThread(QThread):
         except Exception:
             file.logger(f"子应用 - AI剧情问答 调用失败\n"
                         f"   Message: {traceback.format_exc()}", logs.HISTORY_PATH)
-            self.result.emit(f"AI问答 调用失败 AI Answer failed to call\n{traceback.format_exc()}")
+            self.result.emit(f"None:AI问答 调用失败 AI Answer failed to call\n{traceback.format_exc()}")
             return
         file.logger(f"子应用 - AI剧情问答 调用成功\n"
                     f"   Message: {answer}", logs.HISTORY_PATH)

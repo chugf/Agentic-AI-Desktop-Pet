@@ -23,8 +23,6 @@ class ActionsEngine(basic.BaseEngine):
                     self.analyzed_action.append(("drag_folder", mime_data[1]))
             else:
                 self.analyzed_action.append(("drag_pure_text", mime_data[1]))
-        for action_item in self.interface.subscribe.actions.Operate.GetDragAction():
-            action_item(mimes, self.analyzed_action)
         print("ANALYZE ACTION: ", self.analyzed_action)
 
     def accept_action(self):

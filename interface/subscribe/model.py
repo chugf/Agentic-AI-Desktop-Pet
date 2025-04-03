@@ -3,5 +3,5 @@ class Model:
         self.config = config
 
     def GetVoiceModel(self):
-        return self.config.voice_model
+        return self.config['voice_model']
     

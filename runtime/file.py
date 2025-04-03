@@ -22,6 +22,23 @@ def logger(text: str, father_dir: str) -> None:
         f.close()
 
 
+def load_api() -> dict:
+    with open("./resources/api.json", "r", encoding="utf-8") as f:
+        api = json.load(f)
+        f.close()
+    return api
+
+
+def save_api(api: dict) -> bool:
+    try:
+        with open("./resources/api.json", "w", encoding="utf-8") as f:
+            json.dump(api, f, indent=3, ensure_ascii=False)
+            f.close()
+        return True
+    except:
+        return False
+
+
 def add_character(model_path: str) -> bool:
     try:
         shutil.copytree(model_path, f"./resources/model/{model_path.split('/')[-1]}/")

@@ -2,31 +2,32 @@
 from . import views
 from . import actions
 from . import standards
+from . import hooks
 
 from .Config import _Config
 from . import Register as _Register
-from . import character
-from . import window
-from . import live2d
-from . import model
+from . import character as _character
+from . import window as _window
+from . import live2d as _live2d
+from . import model as _model
 
 
-class Character(character.Character):
+class Character(_character.Character):
     def __init__(self):
         super().__init__(_Config)
 
 
-class Window(window.Window):
+class Window(_window.Window):
     def __init__(self):
         super().__init__(_Config)
 
 
-class Live2D(live2d.Live2D):
+class Live2D(_live2d.Live2D):
     def __init__(self):
         super().__init__(_Config)
 
 
-class Model(model.Model):
+class Model(_model.Model):
     def __init__(self):
         super().__init__(_Config)
 

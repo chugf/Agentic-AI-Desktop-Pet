@@ -22,9 +22,9 @@ def load_gpt_sovits(url: str) -> dict:
     return module_info
 
 
-def text_generator(prompt, model, is_search_online: bool, func: callable,
+def text_generator(prompt, model, is_search_online: bool, api_config: dict, func: callable,
                    language: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja", url: str | None = None):
     if url is None:
         return text.TextGenerator().generate_text(prompt, model, func, language, is_search_online)
     else:
-        return text.TextGeneratorLocal(prompt, func, url)
+        return text.TextGeneratorLocal(prompt, func, url, api_config)

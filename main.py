@@ -43,10 +43,9 @@ WS_EX_TRANSPARENT: int = 0x00000020
 live2d_parameter: dict = {}
 switches_configure: dict = runtime.file.load_switch()
 configure, configure_default = runtime.file.load_configure(interface.subscribe)
+api_config = runtime.file.load_api()
 languages: list[str] = runtime.file.load_language(configure)
 module_info: dict = intelligence.load_gpt_sovits(runtime.parse_local_url(configure['settings']['local']['gsv']))
-interface.setting.developer.reload_module(engine, runtime, logs, intelligence, interface)
-interface.setting.developer.reload_file(languages, configure, module_info, live2d_parameter)
 intelligence.text.reload_memories(configure_default)
 intelligence.text.reload_tools()
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
@@ -226,19 +225,17 @@ class Setting(FramelessWindow):
         self.switches_page = interface.setting.switches.Switches(languages, switches_configure, configure)
 
         self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure)
-        self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(languages, configure)
+        self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(
+            languages, configure, api_config)
         self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(
             languages, configure, self.reload_intelligence)
 
         self.binding_page = interface.setting.binding.Binding(languages, configure, runtime, self.addSubInterface)
         self.animation_binding_page = interface.setting.sub_binding.animation.AnimationBinding(
-            languages, configure,
-            module_info, desktop.model_json_path, architecture.addon,
+            languages, configure, desktop.model_json_path, architecture.addon,
             record=self.record_animation, live2d=architecture.live2d, pet_model=desktop.pet_model)
-        self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(languages, configure, module_info,
-                                                                                live2d_parameter)
-        self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(languages, configure, module_info,
-                                                                                   live2d_parameter)
+        self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(languages, configure, live2d_parameter)
+        self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(languages, configure, live2d_parameter)
         self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(
             interface, self.run_code_for_plugin, languages, configure)
 
@@ -329,7 +326,7 @@ class Setting(FramelessWindow):
         self.close()
         self.__init__(self.x(), self.y(), self.stack_widget.currentIndex())
         self.show()
-        interface.setting.developer.reload_program(desktop, conversation, setting, visualization, picture)
+        interface.subscribe.hooks.Register.HookConversationInterface(conversation)
 
     # Function
     def record_animation(self):
@@ -434,18 +431,24 @@ class Conversation(QWidget):
         self.setFixedSize(desktop.width(), 600)
 
         self.input_answer = TextEdit(self)
-        self.input_answer.setGeometry(QRect(0, 0, 400, 60))
+        self.input_answer.setGeometry(QRect(0, 0, 370, 60))
         self.input_answer.setReadOnly(True)
+
+        self.icon = "DOWN"
+        self.click_pop_answer = PrimaryToolButton(self)
+        self.click_pop_answer.setIcon(FluentIcon.ARROW_DOWN)
+        self.click_pop_answer.setGeometry(QRect(370, 0, 30, 60))
+        self.click_pop_answer.clicked.connect(self.pop_answer)
 
         self.click_send = PrimaryToolButton(self)
         self.click_send.setIcon(FluentIcon.SEND)
         self.click_send.setGeometry(QRect(340, 431, 60, 30))
-        self.click_send.clicked.connect(lambda: self.send_question())
+        self.click_send.clicked.connect(self.send_question)
 
         self.click_take_photo = PrimaryToolButton(self)
         self.click_take_photo.setIcon(FluentIcon.CAMERA)
         self.click_take_photo.setGeometry(QRect(280, 431, 60, 30))
-        self.click_take_photo.clicked.connect(self.take_photo)
+        self.click_take_photo.clicked.connect(desktop.capture_screen)
         self.input_question = LineEdit(self)
         self.input_question.setGeometry(QRect(0, 430, 281, 30))
         self.input_question.setPlaceholderText(languages[70])
@@ -453,14 +456,34 @@ class Conversation(QWidget):
         # 为发送绑定按键
         self.input_question.returnPressed.connect(self.click_send.click)
         # 不可见
+        self.click_pop_answer.setVisible(False)
         self.input_question.setVisible(False)
         self.click_send.setVisible(False)
         self.click_take_photo.setVisible(False)
         self.input_answer.setVisible(False)
 
-    @staticmethod
-    def take_photo():
-        desktop.capture_screen()
+    def pop_answer(self):
+        def wrapper():
+            nonlocal height
+            if icon == "UP":
+                height += 15
+            elif icon == "DOWN":
+                height -= 20
+            if (icon == "UP" and height > 400) or (icon == "DOWN" and height < 80):
+                timer.stop()
+            self.click_pop_answer.setGeometry(QRect(370, 0, 30, height))
+            self.input_answer.setGeometry(QRect(0, 0, 370, height))
+
+        height = int(self.input_answer.height())
+        if self.icon == "DOWN":
+            self.icon = icon = "UP"
+            self.click_pop_answer.setIcon(FluentIcon.UP)
+        else:
+            self.icon = icon = "DOWN"
+            self.click_pop_answer.setIcon(FluentIcon.ARROW_DOWN)
+        timer = QTimer(self)
+        timer.timeout.connect(wrapper)
+        timer.start(2)
 
     def send_question(self):
         self.input_question.setGeometry(QRect(0, 430, 400, 30))
@@ -491,11 +514,14 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.amount = self.click_in_area = self.click_x = self.click_y = -1
         self.speaking_lists: list[bool] = []
         self.is_playing_expression = self.is_penetration = self.is_playing_animation = self.is_movement = False
-        self.enter_position = self.drag_position = None
+        self.speech_recognition = self.enter_position = self.drag_position = None
         self.image_path = self.direction = self.last_pos = None
         self.pet_model: architecture.live2d.LAppModel | None = None
-        self.is_transparent_raise = False
+        self.is_generating = self.is_transparent_raise = False
+        # 初始化部分
         self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
+        self.recognition_thread = runtime.thread.RecognitionThread(self, configure)
+        self.recognition_thread.result.connect(self.recognition_success)
 
         # 移动位置
         self.screen_geometry = QApplication.desktop().availableGeometry()
@@ -553,6 +579,42 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             alpha = 0
         return alpha > 0
 
+    # 拍照
+    def capture_screen(self):
+        if not configure['settings']['enable']['media']:
+            return
+        conversation.input_question.setText(str(conversation.input_question.text()) + "$[图片]$")
+        self.image_path = runtime.capture()
+
+    # 语音识别
+    def recognize(self):
+        if not configure['settings']['enable']['rec']:
+            return
+        if self.recognition_thread.isRunning():
+            self.recognition_thread.wait()
+        self.recognition_thread.start()
+
+    def recognition_success(self, result: str):
+        self.speech_recognition.statued()
+
+        if configure['name'] in result or configure_default in result:
+            conversation.show()
+            self.change_status_for_conversation("show")
+            self.have_conversation(result, True)
+        runtime.file.logger(f"子应用 - 语音识别 语音呼唤成功\n"
+                            f"Sub-Application - Voice Recognition Success: {result}\n"
+                            f"  Message: {result}\n\n"
+                            f"  Origin: {json.dumps(result, indent=3, ensure_ascii=False)}", logs.API_PATH)
+
+    @staticmethod
+    def recognition_failure(error, code):
+        runtime.file.logger(f"子应用 - 语音识别 发生错误 {code}:{error}\n"
+                            f"Sub-Application - Voice Recognition Error: {code}:{error}\n", logs.API_PATH)
+
+    @staticmethod
+    def recognition_closure():
+        pass
+
     # 音频可视化
     def audio_visualization(self):
         def draw(wav_bytes: bytes):
@@ -579,13 +641,16 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         conversation.input_question.setVisible(status)
         conversation.click_send.setVisible(status)
         conversation.click_take_photo.setVisible(status)
+        conversation.click_pop_answer.setVisible(status)
         if enable_chat_box:
             conversation.input_answer.setVisible(status)
 
     def conversation_display(self, text: str, temp_action: bool = False):
         def __temp():
             _temp_timer.stop()
-            conversation.input_answer.setVisible(False)
+            if not self.is_generating:
+                self.change_status_for_conversation("hide")
+                conversation.hide()
 
         if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
             with open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8") as f:
@@ -595,10 +660,13 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             rules = json.load(rf)
             rf.close()
 
-        if text is None:
+        if text is None and not temp_action:
+            conversation.input_question.setGeometry(QRect(0, 430, 281, 30))
+            self.change_status_for_conversation("show", False)
             return
 
         if text.split(":")[0] == "None":
+            self.is_generating = False
             markdown_images = re.findall(r'!\[.*?]\((.*?)\)', text.split(":")[1])
             for markdown_image in markdown_images:
                 picture.open(markdown_image)
@@ -626,6 +694,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             if text.split(":")[0] == "None":
                 conversation.input_answer.setMarkdown(':'.join(text.split(":")[1:]))
             else:
+                self.is_generating = True
                 conversation.input_answer.setMarkdown(text)
             conversation.input_answer.moveCursor(conversation.input_answer.textCursor().End)
             if text is not None:
@@ -635,25 +704,27 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     def have_conversation(self, text: str | None = None, temp_action: bool = False):
         """进行聊天 Send conversation"""
         chat_message = str(conversation.input_question.text()) if text is None else text
-        if intelligence is None:
-            return
         if not chat_message.strip():
             return
+        # 临时隐藏控件
+        if temp_action:
+            conversation.input_question.setVisible(False)
         conversation.click_send.setVisible(False)
         conversation.click_take_photo.setVisible(False)
         conversation.input_answer.setText(f"{configure['name']} {languages[137]}")
 
         if self.image_path is None and "$[图片]$" not in conversation.input_question.text():
             text_generate = runtime.thread.TextGenerateThread(
-                self, configure, chat_message,
+                self, configure, api_config, chat_message,
                 True if configure['settings']['enable']['online'] else False,
             )
         else:
             text_generate = runtime.thread.MediaUnderstandThread(
-                self, configure, self.image_path, chat_message.replace("$[图片]$", ""),
+                self, api_config, configure, self.image_path, chat_message.replace("$[图片]$", ""),
                 True if configure['settings']['enable']['online'] else False,
             )
             self.image_path = None
+        self.is_generating = True
         text_generate.start()
         text_generate.result.connect(lambda texts: self.conversation_display(texts, temp_action))
 
@@ -731,7 +802,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         content_menu = RoundMenu("MENU", parent=self)
 
         settings_action = Action(FluentIcon.SETTING, languages[129], self)
-        settings_action.triggered.connect(lambda: setting.show())
+        settings_action.triggered.connect(lambda: interface.subscribe.hooks.Operate.GetSettingInterface().show())
         content_menu.addAction(settings_action)
 
         content_menu.addSeparator()
@@ -785,10 +856,10 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 self.set_window_below_taskbar()
 
         # 检查识别器
-        # if not self.recognize_thread.isRunning() and configure['settings']['enable']['rec']:
-        #     self.recognize()
-        # elif speech_rec is not None and not configure['settings']['enable']['rec']:
-        #     speech_rec.closed()
+        if not self.recognition_thread.isRunning() and configure['settings']['enable']['rec']:
+            self.recognize()
+        elif self.speech_recognition is not None and not configure['settings']['enable']['rec']:
+            self.speech_recognition.closed()
 
         # 定时器检查
         # if not configure['settings']['enable']['media']:
@@ -978,6 +1049,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                     self.is_playing_animation = True
                     self.playAnimationEvent('ActionTouchCustom')
 
+        for action_item in interface.subscribe.actions.Operate.GetMouseMoveAction():
+            action_item()
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -1030,25 +1103,55 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 except Exception as e:
                     interface.setting.customize.widgets.pop_error(setting, 'Error', str(e))
             event.accept()
+        for action_item in interface.subscribe.actions.Operate.GetMouseReleaseAction():
+            action_item()
         self.is_movement = False
 
     # 鼠标进入事件 Mouse entry event
     def enterEvent(self, event):
         self.turn_count = 0
         self.enter_position = event.pos()
+        for action_item in interface.subscribe.actions.Operate.GetMouseEnterAction():
+            action_item()
 
     # 鼠标离开事件 Mouse leave event
     def leaveEvent(self, event):
         self.is_movement = False
         self.enter_position = None
         self.is_playing_animation = False
+        for action_item in interface.subscribe.actions.Operate.GetMouseLeaveAction():
+            action_item()
 
     # 拖拽事件 Drag event
     def dragEnterEvent(self, event: QMimeData):
-        engine.actions.ActionsEngine(configure, languages, interface).analyze_action(event.mimeData().text())
-        engine.actions.ActionsEngine(configure, languages, interface).accept_action()
+        action = engine.actions.ActionsEngine(configure, languages, interface)
+        action.analyze_action(event.mimeData().text())
+        for action_item in interface.subscribe.actions.Operate.GetDragEnterAction():
+            action_item(event, action.analyzed_action)
         event.accept()
-    
+
+    def dragLeaveEvent(self, event: QMimeData):
+        action = engine.actions.ActionsEngine(configure, languages, interface)
+        action.analyze_action(event.mimeData().text())
+        for action_item in interface.subscribe.actions.Operate.GetDragLeaveAction():
+            action_item(event, action.analyzed_action)
+        event.accept()
+
+    def dragMoveEvent(self, event: QMimeData):
+        action = engine.actions.ActionsEngine(configure, languages, interface)
+        action.analyze_action(event.mimeData().text())
+        for action_item in interface.subscribe.actions.Operate.GetDragMoveAction():
+            action_item(event, action.analyzed_action)
+        event.accept()
+
+    def dropEvent(self, event: QMimeData):
+        action = engine.actions.ActionsEngine(configure, languages, interface)
+        action.analyze_action(event.mimeData().text())
+        for action_item in interface.subscribe.actions.Operate.GetDropAction():
+            action_item(event, action.analyzed_action)
+        action.accept_action()
+        event.accept()
+
     # OpenGL 事件
     def on_init(self):
         architecture.live2d.glewInit()
@@ -1127,6 +1230,7 @@ if __name__ == '__main__':
     picture = PictureShow()
 
     interface.subscribe.views.RegisterSetting.register(setting)
-    interface.setting.developer.reload_program(desktop, conversation, setting, visualization, picture)
+    interface.subscribe.hooks.Register.HookSettingInterface(setting)
+    interface.subscribe.hooks.Register.HookConversationInterface(conversation)
 
     sys.exit(app.exec())

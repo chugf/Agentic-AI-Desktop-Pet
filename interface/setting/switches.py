@@ -34,6 +34,7 @@ class Config(QConfig):
 class Switches(ScrollArea):
     def __init__(self, languages, cache_config, configure):
         super().__init__()
+        self.setObjectName("SwitchesG")
         self.cache_config = cache_config
         self.languages = languages
         self.configure = configure
@@ -72,7 +73,7 @@ class Switches(ScrollArea):
             configItem=Config.recognition,
             icon=FluentIcon.MICROPHONE,
             title=self.languages[13],
-            content=self.languages[89],
+            content=self.languages[90],
             parent=self.general_group
         )
         self.card_recognition.checkedChanged.connect(
@@ -245,7 +246,6 @@ class Switches(ScrollArea):
         self.setWidgetResizable(True)
         self.setWidget(self.scroll_widgets)
         self.scroll_widgets.setObjectName('ScrollWidget')
-        self.setObjectName("Switches")
 
     def change_configure(self, value, relative, cache_value, cache_relative):
         function.change_configure(cache_value, cache_relative, self.cache_config, constants.CACHE_CONFIGURE_PATH)
