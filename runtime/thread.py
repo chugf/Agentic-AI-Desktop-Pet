@@ -141,13 +141,10 @@ class RecognitionThread(QThread):
             func = intelligence.recognition.XFRealTimeSpeechRecognizer
         else:
             func = intelligence.recognition.WhisperRealTimeSpeechRecognizer
-            # self.parent().speech_recognition = (
-            #     self.result.emit, self.parent().recognition_failure,
-            #     self.parent().recognition_closure,
-            #     runtime.parse_local_url(self.configure['settings']['local']['rec']['url']))
         self.parent().speech_recognition = func(
                 self.result.emit, self.parent().recognition_failure,
-                self.parent().recognition_closure)
+                self.parent().recognition_closure,
+                runtime.parse_local_url(self.configure['settings']['local']['rec']['url']))
         self.parent().speech_recognition.start_recognition()
 
 

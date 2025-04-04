@@ -4,6 +4,6 @@ class Window:
         self.config = config
 
     def GetWindowPosition(self) -> tuple:
-        return (self.config['attribute_window'].width(), self.config['attribute_window'].height(),
-                self.config['attribute_window'].x(), self.config['attribute_window'].y())
-    
+        return (self.config['_Window'].width(), self.config['_Window'].height(),
+                self.config['_Window'].x(), self.config['_Window'].y())
+

@@ -33,15 +33,15 @@ class WhisperRealTimeSpeechRecognizer:
     此API有严重问题
     This API has serious problems
     """
-    def __init__(self, ws_url, success_func, failure_func, close_func):
+    def __init__(self, success_func, failure_func, close_func, ws_url):
         self.is_continue = True
         self.ws_url = ws_url
         self.success_func = success_func
         self.failure_func = failure_func
         self.close_func = close_func
 
-        self.silence_duration = RATE * 0.6
-        self.silence_threshold = 0.03
+        self.silence_duration = RATE * 0.8
+        self.silence_threshold = 0.04
         self.audio_buffer = []
 
     def on_message(self, ws, message):
@@ -94,6 +94,9 @@ class WhisperRealTimeSpeechRecognizer:
     def closed(self):
         self.is_continue = False
 
+    def statued(self):
+        pass
+
     def start_recognition(self):
         ws = websocket.WebSocketApp(self.ws_url,
                                     on_open=self.on_open,
@@ -105,7 +108,7 @@ class WhisperRealTimeSpeechRecognizer:
 
 
 class XFRealTimeSpeechRecognizer:
-    def __init__(self, success_func, error_func, close_func):
+    def __init__(self, success_func, error_func, close_func, *args):
         self.is_status = False
         self.is_continue = True
         self.success_func = success_func
@@ -239,5 +242,5 @@ if __name__ == "__main__":
     def c():
         print("close")
 
-    recognizer = XFRealTimeSpeechRecognizer(s, e, c)
+    recognizer = WhisperRealTimeSpeechRecognizer("ws://192.168.1.164:2025", s, e, c)
     recognizer.start_recognition()

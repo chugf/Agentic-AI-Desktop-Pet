@@ -509,7 +509,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         # 变量初始化
         self.fps_refresh = int(1000 / 900)
-        self.rms_volume = self.turn_count = self.expression_count = 0
+        self.continuous_conversation = self.rms_volume = self.turn_count = self.expression_count = 0
         self.model_json_path: str = ""
         self.amount = self.click_in_area = self.click_x = self.click_y = -1
         self.speaking_lists: list[bool] = []
@@ -517,7 +517,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.speech_recognition = self.enter_position = self.drag_position = None
         self.image_path = self.direction = self.last_pos = None
         self.pet_model: architecture.live2d.LAppModel | None = None
-        self.is_generating = self.is_transparent_raise = False
+        self.is_continuous = self.is_generating = self.is_transparent_raise = False
         # 初始化部分
         self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
         self.recognition_thread = runtime.thread.RecognitionThread(self, configure)
@@ -597,7 +597,12 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     def recognition_success(self, result: str):
         self.speech_recognition.statued()
 
-        if configure['name'] in result or configure_default in result:
+        if self.is_continuous or (configure['name'] in result or configure_default in result):
+            if result.strip():
+                self.is_continuous = True
+            else:
+                self.is_continuous = False
+                return
             conversation.show()
             self.change_status_for_conversation("show")
             self.have_conversation(result, True)
@@ -608,6 +613,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
     @staticmethod
     def recognition_failure(error, code):
+        configure['settings']['enable']['rec'] = False
+        runtime.file.save_configure(configure)
         runtime.file.logger(f"子应用 - 语音识别 发生错误 {code}:{error}\n"
                             f"Sub-Application - Voice Recognition Error: {code}:{error}\n", logs.API_PATH)
 
@@ -645,7 +652,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         if enable_chat_box:
             conversation.input_answer.setVisible(status)
 
-    def conversation_display(self, text: str, temp_action: bool = False):
+    def conversation_display(self, text: str, current_index: int, temp_action: bool = False):
         def __temp():
             _temp_timer.stop()
             if not self.is_generating:
@@ -659,6 +666,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         with open(f"./intelligence/rules/{configure['default']}.json", "r", encoding="utf-8") as rf:
             rules = json.load(rf)
             rf.close()
+
+        if current_index != self.continuous_conversation:
+            return
 
         if text is None and not temp_action:
             conversation.input_question.setGeometry(QRect(0, 430, 281, 30))
@@ -726,7 +736,10 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.image_path = None
         self.is_generating = True
         text_generate.start()
-        text_generate.result.connect(lambda texts: self.conversation_display(texts, temp_action))
+        self.continuous_conversation += 1
+        current = self.continuous_conversation
+        text_generate.result.connect(lambda texts: self.conversation_display(
+            texts, current, temp_action))
 
     # 自定义事件
     @staticmethod
@@ -812,6 +825,16 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         content_menu.addAction(conversation_action)
 
         # 分割线
+        content_menu.addSeparator()
+
+        for views_item in interface.subscribe.views.Operate.GetContentMenu():
+            if isinstance(views_item, RoundMenu):
+                views_item.setParent(self)
+                content_menu.addMenu(views_item)
+            elif isinstance(views_item, Action):
+                views_item.setParent(self)
+                content_menu.addAction(views_item)
+
         content_menu.addSeparator()
 
         exit_action = Action(FluentIcon.CLOSE, languages[20], self)
@@ -1229,6 +1252,7 @@ if __name__ == '__main__':
     visualization.move(desktop.x(), desktop.y() - 20)
     picture = PictureShow()
 
+    interface.subscribe.RegisterAttribute.SetWindow(desktop)
     interface.subscribe.views.RegisterSetting.register(setting)
     interface.subscribe.hooks.Register.HookSettingInterface(setting)
     interface.subscribe.hooks.Register.HookConversationInterface(conversation)

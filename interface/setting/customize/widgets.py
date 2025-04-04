@@ -181,6 +181,7 @@ class CodeEdit(TextEdit):
             return
 
         rect = self.cursorRect(cursor)
+        rect.setX(0)
         rect.setY(rect.y() + 25)
         rect.setHeight(25)
         rect.setWidth(500)

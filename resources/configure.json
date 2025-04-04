@@ -41,7 +41,7 @@
          "gsv": "http://{ip}:{year} + 1",
          "rec": {
             "tool": "whisper",
-            "url": "ws://{ip}:{year} + 3"
+            "url": "ws://{ip}:{year}"
          }
       },
       "tts": {
@@ -55,7 +55,7 @@
          "parallel": true
       },
       "text": {
-         "way": "cloud",
+         "way": "local",
          "temperature": 0.8,
          "top_p": 0.8,
          "top_k": 20

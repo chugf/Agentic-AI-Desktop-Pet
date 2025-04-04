@@ -346,7 +346,7 @@ def parse_local_url(url: str):
         year=time.strftime("%Y"),
     )
     cleaned_url = re.sub(r'\s*\+\s*', '+', truly_url)
-    pattern = r'^(http|https)://([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(:(.*?))?(/.*)?$'
+    pattern = r'^(http|https|ws)://([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(:(.*?))?(/.*)?$'
     match = re.match(pattern, cleaned_url)
     if match:
         request_header = match.group(1)

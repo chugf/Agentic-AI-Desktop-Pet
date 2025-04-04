@@ -5,3 +5,4 @@ req
 uvicorn
 pyadntic
 pyaudio
+openai-whisper

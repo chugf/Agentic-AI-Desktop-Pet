@@ -8,7 +8,10 @@ class Config:
         self._config[relative].append(value)
 
     def unregister(self, relative: str):
-        self._config[relative].clear()
+        try:
+            self._config[relative].clear()
+        except KeyError:
+            pass
 
     def __getitem__(self, item):
         try:
