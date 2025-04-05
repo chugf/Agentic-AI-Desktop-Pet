@@ -165,4 +165,4 @@ class CustomGenerator:
         except AttributeError:
             message = None
         self.messages.append({"role": "assistant", "content": message})
-        yield message
+        return message

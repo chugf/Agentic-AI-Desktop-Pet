@@ -47,4 +47,4 @@ os.system("color 0")
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(CustomAPI, host=socket.gethostbyname(socket.gethostname()), port=int(time.strftime("%Y")) + 1)
+    uvicorn.run(CustomAPI, host=socket.gethostbyname(socket.gethostname()), port=int(time.strftime("%Y")))

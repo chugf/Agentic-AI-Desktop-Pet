@@ -17,7 +17,7 @@ CHANNELS = 1
 RATE = 16000
 
 ip = socket.gethostbyname(socket.gethostname())
-port = int(time.strftime("%Y"))
+port = int(time.strftime("%Y")) + 3
 
 
 async def recognize_audio(websocket):
