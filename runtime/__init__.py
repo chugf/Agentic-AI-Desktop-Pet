@@ -27,8 +27,8 @@ SENSITIVE_CONTENT = [
     PassedNoneContent(),  # 占位符
 ]
 major = "3"
-minor = "4"
-patch = "2"
+minor = "5"
+patch = "0"
 
 
 class ExtractFunctionDocstring(ast.NodeVisitor):
@@ -104,23 +104,37 @@ class MouseListener:
         self.__init__()
 
     def listen(self):
+        # 初始化鼠标左键和右键的状态变量
         state_left = 0
         state_right = 0
+
+        # 当isListening标志为真时，持续监听鼠标按钮的状态
         while self.isListening:
+            # 获取当前鼠标左键和右键的状态
             current_state_left = win32api.GetKeyState(win32con.VK_LBUTTON)
             current_state_right = win32api.GetKeyState(win32con.VK_RBUTTON)
+
+            # 检查鼠标左键状态是否有变化
             if current_state_left != state_left:
                 state_left = current_state_left
+                # 当鼠标左键被按下时，设置相应标志为真
                 if current_state_left < 0:
                     self.is_left_button_pressed = True
+                # 当鼠标左键被释放时，设置相应标志为假
                 else:
                     self.is_left_button_pressed = False
+
+            # 检查鼠标右键状态是否有变化
             if current_state_right != state_right:
                 state_right = current_state_right
+                # 当鼠标右键被按下时，设置相应标志为真
                 if current_state_right < 0:
                     self.is_right_button_pressed = True
+                # 当鼠标右键被释放时，设置相应标志为假
                 else:
                     self.is_right_button_pressed = False
+
+            # 线程暂停0.01秒，以减少CPU占用
             threading.Event().wait(0.01)
 
 
@@ -374,7 +388,7 @@ def capture() -> str:
 
 def check_update():
     try:
-        latest_version = requests.post("http://adp.nekocode.top/update/version.php").json()['version']
+        latest_version = requests.post("https://adp.nekocode.top/update/version.php").json()['version']
     except:
         return None
     if latest_version == f"{major}.{minor}.{patch}":
@@ -386,7 +400,7 @@ def check_update():
 def get_notice_board():
     request = ""
     try:
-        request = '\n'.join(requests.get("http://adp.nekocode.top/notice/get.php").json())
+        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get.php").json())
     except:
         pass
     return request
@@ -395,7 +409,7 @@ def get_notice_board():
 def get_policy():
     request = ""
     try:
-        request = '\n'.join(requests.get("http://adp.nekocode.top/notice/get_policy.php").json())
+        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get_policy.php").json())
     except:
         pass
     return request
@@ -403,7 +417,7 @@ def get_policy():
 
 def user_register(email):
     try:
-        register_response = requests.post("http://adp.nekocode.top/account/register.php", json={'to': email})
+        register_response = requests.post("https://adp.nekocode.top/account/register.php", json={'to': email})
         if register_response.json().get('error'):
             return {"status": False, "message": register_response.json()['error']}
         elif register_response.json().get('success'):
@@ -414,7 +428,7 @@ def user_register(email):
 
 def user_vertify(email, code, password):
     try:
-        vertify_response = requests.post("http://adp.nekocode.top/account/vertify.php",
+        vertify_response = requests.post("https://adp.nekocode.top/account/vertify.php",
                                          json={'email': email, 'code': code, 'password': password})
         if vertify_response.json().get('error'):
             return {"status": False, "message": vertify_response.json()['error']}
@@ -426,7 +440,7 @@ def user_vertify(email, code, password):
 
 def user_login(email, password, auto_login: bool = False, session: str = ""):
     try:
-        login_response = requests.post("http://adp.nekocode.top/account/login.php",
+        login_response = requests.post("https://adp.nekocode.top/account/login.php",
                                        json={'email': email, 'password': password,
                                              "auto_login": auto_login, "session": session})
         print(login_response.json())

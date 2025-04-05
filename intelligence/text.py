@@ -108,6 +108,11 @@ class TextGenerator:
     def generate_text(self, prompt, model, language: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja",
                       is_search_online: bool = False):
         def process_chunks(completion_, memories_, extra_body_, model_, external_):
+            """
+            递归函数
+
+            用于循环检测工具调用
+            """
             chunk_message = None
             for chunk in completion_:
                 if chunk.status_code != 200:

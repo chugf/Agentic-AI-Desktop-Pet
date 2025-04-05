@@ -111,8 +111,8 @@ class General(QFrame):
         self.scale_opacity.valueChanged.connect(
             lambda value: function.change_configure(
                 value / constants.OPACITY_PRECISION, "settings.transparency", self.configure))
-        webui_url = PushButton(f"{self.languages[154]} http://{gethostbyname(gethostname())}:5201", self)
-        webui_url.clicked.connect(lambda: open_webpage(f"http://{gethostbyname(gethostname())}:5201"))
+        webui_url = PushButton(f"{self.languages[154]} http://{gethostbyname(gethostname())}:52013", self)
+        webui_url.clicked.connect(lambda: open_webpage(f"http://{gethostbyname(gethostname())}:52013"))
         webui_url.setGeometry(QRect(0, 462, 400, 35))
         # 角色相关 Character Related
         self.click_add_character = PrimaryPushButton(self.languages[84], self)
@@ -128,17 +128,24 @@ class General(QFrame):
         def check_if_live2d(path: str):
             exist_v3_over = glob.glob(f"{path}/*.model3.json")
             if exist_v3_over:
-                return glob.glob(f"{path}/*.moc3")
+                return glob.glob(f"{path}/*.model3.json"), 3
             else:
-                return glob.glob(f"{path}/*.model.json") and os.path.exists(f"{path}/live2d")
+                return glob.glob(f"{path}/*.model.json"), 2
 
         character_model_path = function.select_folder(self, self.languages[84])
         if character_model_path:
-            if not check_if_live2d(character_model_path):
+            live2d, arch = check_if_live2d(character_model_path)
+            if not live2d:
                 widgets.pop_error(self, self.languages[140], self.languages[141])
                 return
             self.runtime_module.file.add_character(character_model_path)
-            self.select_character.addItem(character_model_path.split("/")[-1])
+            with open(f"./resources/model/{os.path.basename(character_model_path)}/{arch}", "w", encoding="utf-8") as f:
+                f.write(f"This is a architecture explanation file\nYour architecture is {arch}")
+                f.close()
+            if self.kwargs.get("live2d").LIVE2D_VERSION == arch:
+                self.select_character.addItem(character_model_path.split("/")[-1])
+            else:
+                widgets.pop_warning(self, self.languages[161], self.languages[162])
 
     def delete_character(self):
         list_character = os.listdir("./resources/model")
@@ -183,8 +190,8 @@ class General(QFrame):
     
     def change_watermark(self, value, type_: typing.Literal['name', 'value']):
         if type_ == "name":
-            self.scale_watermark.setRange(self.param_dict[value]['min'] * 10,
-                                          self.param_dict[value]['max'] * 10)
+            self.scale_watermark.setRange(int(self.param_dict[value]['min'] * 10),
+                                          int(self.param_dict[value]['max'] * 10))
             self.scale_watermark.setValue(int(float(self.configure['watermark'].split(";")[1]) * 10))
             function.change_configure(f"{value};{self.scale_watermark.value()}", "watermark", self.configure)
         else:

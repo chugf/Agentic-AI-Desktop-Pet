@@ -127,7 +127,6 @@ class ADPOpenGLCanvas(QOpenGLWidget):
         old_fbo = GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING)
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._canvas_framebuffer)
         self.on_draw()
-        # print("__draw_on_canvas3", GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING))
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, old_fbo)
 
     def initializeGL(self):

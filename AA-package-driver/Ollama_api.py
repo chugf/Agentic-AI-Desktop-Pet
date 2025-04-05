@@ -28,18 +28,26 @@ class Parameters(BaseModel):
 def chat(param: Parameters):
     """
     提供聊天功能的API接口。
+
+    使用请填入：http://<您的IP>:<当前年份>/chat
     """
     def event_generator():
-        # 对比API密钥
+        # 对比API密钥，检查传入的API密钥是否与允许的API密钥匹配
         if param.api != allowed_api:
+            # 如果API密钥不匹配，生成一个包含错误信息的JSON响应
             yield json.dumps({'message': {'content': 'Invalid API key'}})
         else:
+            # 调用ollama客户端的chat方法，进行流式聊天
             response = client.chat(
-                stream=True,
-                model=param.model,
-                messages=param.messages)
+                stream=True,  # 启用流式响应
+                model=param.model,  # 使用传入的模型参数
+                messages=param.messages)  # 使用传入的消息参数
+            # 遍历聊天响应的每个块
             for chunk in response:
+                # 将每个块的内容转换为JSON格式并生成响应
                 yield json.dumps({'message': {'content': chunk.message.content}})
+
+    # 返回一个StreamingResponse对象，内容类型为text/event-stream，用于流式传输事件
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 

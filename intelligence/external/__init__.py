@@ -1,10 +1,12 @@
-import time
+import ctypes
 from urllib.parse import unquote, urlparse
 import pathlib
 import json
-import ctypes
+import time
+
 import requests
 import dashscope
+
 
 def draw_picture_by_qwen(prompts):
     """画画工具"""
@@ -64,4 +66,3 @@ def save_file(filepath, content):
             return "success"
     except Exception as e:
         return f"failure: {e}"
-

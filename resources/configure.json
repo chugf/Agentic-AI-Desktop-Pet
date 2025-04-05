@@ -5,9 +5,9 @@
    "watermark": "ParamHairBack;0.0",
    "adult_level": 0,
    "settings": {
-      "language": "",
+      "language": "Chinese (Simplified)_China",
       "transparency": 1.0,
-      "compatibility": true,
+      "compatibility": false,
       "safety": "shut",
       "intelligence": "qwen-max-latest",
       "translate": "ai.tongyi",
@@ -41,7 +41,7 @@
          "gsv": "http://{ip}:{year} + 1",
          "rec": {
             "tool": "whisper",
-            "url": "ws://{ip}:{year}"
+            "url": "ws://{ip}:{year} + 3"
          }
       },
       "tts": {
@@ -49,7 +49,7 @@
          "top_k": 25,
          "top_p": 0.8,
          "temperature": 0.8,
-         "speed": 1.1,
+         "speed": 1.0,
          "batch_size": 3,
          "batch_threshold": 0.75,
          "parallel": true
@@ -60,11 +60,18 @@
          "top_p": 0.8,
          "top_k": 20
       },
-      "rec": "cloud",
+      "rec": {
+         "way": "cloud",
+         "silence_threshold": null,
+         "silence_duration": 0.6
+      },
       "understand": {
          "way": "cloud",
          "min": 3600,
          "max": 7200
+      },
+      "setting": {
+         "silence_threshold": null
       }
    },
    "model": {

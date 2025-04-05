@@ -11,7 +11,7 @@ app = FastAPI()
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[f"http://{gethostbyname(gethostname())}:5201"],
+    allow_origins=[f"http://{gethostbyname(gethostname())}:52013"],
     allow_credentials=True,
     allow_methods=["POST", "OPTIONS"],
     allow_headers=["*"],

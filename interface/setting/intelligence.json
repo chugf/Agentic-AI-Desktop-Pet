@@ -2,7 +2,7 @@
     "Inference": {
         "media": "cloud",
         "recognition": "cloud",
-        "text_output": "local",
+        "text_output": "cloud",
         "voice": "cloud"
     },
     "QFluentWidgets": {

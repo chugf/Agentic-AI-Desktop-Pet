@@ -3,6 +3,7 @@ from ..customize import function
 from .sub_local import gentext
 from .sub_local import paramtext
 from .sub_local import paramvoice
+from .sub_local import samplerec
 
 from PyQt5.Qt import QRect
 from PyQt5.QtWidgets import QWidget, QStackedWidget
@@ -12,7 +13,7 @@ from qfluentwidgets import BodyLabel, LineEdit, ComboBox, \
 
 
 class IntelligenceLocale(QWidget):
-    def __init__(self, languages, configure, api_config, reload):
+    def __init__(self, languages, configure, api_config, reload, main_pet, setting_window):
         super().__init__()
         self.languages = languages
         self.configure = configure
@@ -70,12 +71,15 @@ class IntelligenceLocale(QWidget):
 
         self.text_generator = gentext.TextGenerator(api_config, self)
 
+        self.recognition_sample = samplerec.SampleRecognition(configure, languages, main_pet, self, setting_window)
+
         self.addSubInterface(self.text_parameter, "TextParameter", self.languages[98])
         self.addSubInterface(self.voice_parameter, "VoiceParameter", self.languages[99])
         self.addSubInterface(self.text_generator, "TextGenerator", self.languages[127])
+        self.addSubInterface(self.recognition_sample, "SampleRecognition", self.languages[155])
 
         self.pivot_parameter.setGeometry(QRect(10, 222, 100, 35))
-        self.stacked_widget.setGeometry(QRect(30, 267, 500, 300))
+        self.stacked_widget.setGeometry(QRect(30, 267, 630, 300))
 
         self.stacked_widget.setCurrentWidget(self.text_parameter)
         self.pivot_parameter.setCurrentItem(self.text_parameter.objectName())

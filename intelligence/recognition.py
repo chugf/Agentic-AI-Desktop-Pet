@@ -30,33 +30,65 @@ API_SECRET = ""
 
 class WhisperRealTimeSpeechRecognizer:
     """
-    此API有严重问题
-    This API has serious problems
+    实时语音识别器，用于通过WebSocket连接到服务器进行语音识别。
     """
-    def __init__(self, success_func, failure_func, close_func, ws_url):
+
+    def __init__(self, success_func, failure_func, close_func, ws_url, configure, save_func):
+        """
+        初始化实时语音识别器。
+        """
+        # 初始化变量
         self.is_continue = True
         self.ws_url = ws_url
+        self.configure = configure
+        self.save_func = save_func
         self.success_func = success_func
         self.failure_func = failure_func
         self.close_func = close_func
 
-        self.silence_duration = RATE * 0.8
-        self.silence_threshold = 0.04
+        # 初始化运行时样本次数和采样次数
+        self.runtime_sample_times = self.sampled_times = 0
+        # 初始化算法和进度函数
+        self.algorithm = self.progress_func = None
+        # 初始化是否开始采样标志
+        self.is_started_sampling = False
+        # 获取静音阈值和持续时间
+        self.silence_threshold = self.configure['settings']['rec']['silence_threshold']
+        self.silence_duration = RATE * self.configure['settings']['rec']['silence_threshold']
+        # 初始化静音样本和音频缓冲区
+        self.silence_sample = []
         self.audio_buffer = []
 
     def on_message(self, ws, message):
+        """
+        处理WebSocket消息的函数。
+        """
+        # 调用成功回调函数处理识别结果，并清空音频缓冲区
         self.success_func(json.loads(message)['text'])
         self.audio_buffer = []
 
     def on_error(self, ws, error):
+        """
+        处理WebSocket错误的函数。
+        """
+        # 调用失败回调函数处理错误
         self.failure_func(ws, error)
 
     def on_close(self, ws, close_status_code, close_msg):
+        """
+        处理WebSocket关闭连接的函数。
+        """
+        # 设置继续标志为False，并调用关闭回调函数
         self.is_continue = False
         self.close_func()
 
     def on_open(self, ws):
+        """
+        处理WebSocket打开连接的函数。
+        """
+
         def run():
+            # 初始化PyAudio
             p = pyaudio.PyAudio()
             stream = p.open(
                 format=pyaudio.paInt16,
@@ -71,7 +103,10 @@ class WhisperRealTimeSpeechRecognizer:
                 if not data:
                     continue
                 audio_data = numpy.frombuffer(data, dtype=numpy.int16).astype(numpy.float32) / 32768.0
-                if not self.is_silent(audio_data):
+                if self.silence_threshold is None:
+                    self._compute_sample(audio_data)
+                    continue
+                if not self._is_silent(audio_data):
                     self.audio_buffer.append(data)
                     silence_counter = 0
                 else:
@@ -86,18 +121,79 @@ class WhisperRealTimeSpeechRecognizer:
             p.terminate()
             ws.close()
 
+        # 在新线程中运行
         threading.Thread(target=run).start()
 
-    def is_silent(self, audio_data):
+    def compute_sample(self, algorithm: int, progress_func: callable, times: int):
+        """
+        计算样本。
+        """
+        # 初始化静音样本和采样次数
+        self.silence_sample = []
+        self.sampled_times = 0
+        # 设置算法和进度函数
+        self.algorithm = algorithm
+        self.progress_func = progress_func
+        self.runtime_sample_times = times
+        # 设置静音阈值为None，表示开始自动采样
+        self.silence_threshold = None
+        self.is_started_sampling = True
+
+    def _compute_sample(self, audio_data):
+        """
+        自动采样
+
+        算法实用情况：
+        0 -> 家庭无嘈杂
+        1 -> 家庭有嘈杂
+        2 -> 室外无噪音
+        3 -> 地铁等高噪音
+        """
+        if not self.is_started_sampling:
+            return
+        # 根据算法计算当前阈值
+        if len(self.silence_sample) > 0 and self.algorithm == 0:
+            # 当算法为0时，当前阈值为静默样本的平均值
+            current_threshold = numpy.mean(self.silence_sample)
+        elif len(self.silence_sample) > 0 and self.algorithm == 1:
+            # 当算法为1时，当前阈值为静默样本的平均值加上最小值
+            current_threshold = numpy.mean(self.silence_sample) + min(self.silence_sample)
+        elif len(self.silence_sample) > 0 and self.algorithm == 2:
+            # 当算法为2时，当前阈值为静默样本的平均值加上最大值
+            current_threshold = numpy.mean(self.silence_sample) + max(self.silence_sample)
+        elif len(self.silence_sample) > 0 and self.algorithm == 3:
+            # 当算法为3时，当前阈值为静默样本平均值的两倍
+            current_threshold = numpy.mean(self.silence_sample) * 2
+        else:
+            # 当没有静默样本时，将当前阈值设为0
+            current_threshold = 0
+        if len(self.silence_sample) > self.runtime_sample_times:
+            if self.silence_threshold is None:
+                self.silence_threshold = current_threshold
+                self.configure['settings']['rec']['silence_threshold'] = float(self.silence_threshold)
+                self.save_func(self.configure)
+                print(f"[AUTO COMPUTE] average: {self.silence_threshold}")
+        if self.silence_threshold is None:
+            # 计算并添加当前音频数据的响度到静默样本列表中
+            self.silence_sample.append(numpy.sqrt(numpy.mean(numpy.square(audio_data))))
+            self.sampled_times += 1
+        self.progress_func(self.sampled_times - 1, current_threshold)
+
+    def _is_silent(self, audio_data):
+        """判断音频数据是否为静音"""
+        # 简易计算RMS
         return numpy.sqrt(numpy.mean(numpy.square(audio_data))) < self.silence_threshold
 
     def closed(self):
+        """关闭识别器"""
         self.is_continue = False
 
     def statued(self):
+        """状态更新"""
         pass
 
     def start_recognition(self):
+        """开始语音识别"""
         ws = websocket.WebSocketApp(self.ws_url,
                                     on_open=self.on_open,
                                     on_message=self.on_message,

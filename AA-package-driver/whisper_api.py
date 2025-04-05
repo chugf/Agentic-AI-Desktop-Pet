@@ -38,6 +38,10 @@ async def recognize_audio(websocket):
 
 
 def save_audio(audio_data, filename):
+    """
+    保存成wav文件进行识别
+    不要问我为什么，这样识别准一点……
+    """
     wf = wave.open(filename, 'wb')
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(pyaudio.get_sample_size(FORMAT))
@@ -47,6 +51,9 @@ def save_audio(audio_data, filename):
 
 
 async def start():
+    """
+    使用异步开启
+    """
     print(f'[INFO] start WebSocket Server on ws://{ip}:{port}')
     async with websockets.serve(recognize_audio, ip, port):
         await asyncio.Future()

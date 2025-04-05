@@ -45,6 +45,7 @@ WS_EX_TRANSPARENT: int = 0x00000020
 live2d_parameter: dict = {}
 switches_configure: dict = runtime.file.load_switch()
 configure, configure_default = runtime.file.load_configure(interface.subscribe)
+rules = runtime.file.load_rules(configure_default)
 api_config = runtime.file.load_api()
 languages: list[str] = runtime.file.load_language(configure)
 module_info: dict = intelligence.load_gpt_sovits(runtime.parse_local_url(configure['settings']['local']['gsv']))
@@ -58,6 +59,11 @@ engine.webapi.reload_data(configure['settings']['intelligence'],
                           api_config, configure['language_mapping'][configure['settings']['language']],
                           runtime.parse_local_url(configure['settings']['local']['text'])
                           if configure['settings']['text']['way'] == "local" else None)
+# 判断架构支持并重载
+if os.path.exists(f"./resources/model/{configure_default}/2"):
+    architecture.reload(2)
+else:
+    architecture.reload(3)
 
 
 class PictureShow(QWidget):
@@ -228,7 +234,8 @@ class Setting(FramelessWindow):
         self.general_page = interface.setting.general.General(
             intelligence, runtime,
             languages, configure, module_info, live2d_parameter,
-            play=self.reference, reload=self.reload_character)
+            play=self.reference, reload=self.reload_character, live2d=architecture.live2d
+        )
         self.switches_page = interface.setting.switches.Switches(languages, switches_configure, configure)
 
         def change(value, relative):
@@ -242,7 +249,7 @@ class Setting(FramelessWindow):
 
         self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure, change)
         self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(
-            languages, configure, api_config, change)
+            languages, configure, api_config, change, desktop, self)
         self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(
             languages, configure, self.reload_intelligence)
 
@@ -327,18 +334,41 @@ class Setting(FramelessWindow):
                                   if configure['settings']['text']['way'] == "local" else None)
 
     def reload_character(self, value, type_: typing.Literal['language', 'character']):
-        global desktop, languages, configure_default
+        global desktop, languages, configure_default, rules
+        desktop.internal_record.stop()
         desktop.close()
-        architecture.live2d.dispose()
-
-        architecture.live2d.init()
         if type_ == "character":
+            origin = configure_default
             configure_default = value
+            # 判断架构支持并重载
+            if os.path.exists(f"./resources/model/{configure_default}/2"):
+                if architecture.live2d.LIVE2D_VERSION != 2:
+                    if interface.setting.customize.widgets.pop_message(self, languages[161], languages[163]):
+                        architecture.reload(2)
+                    else:
+                        configure_default = origin
+                        desktop.internal_record.start()
+                        desktop.show()
+                        return
+                else:
+                    architecture.reload(2)
+            else:
+                if architecture.live2d.LIVE2D_VERSION != 3:
+                    if interface.setting.customize.widgets.pop_message(self, languages[161], languages[163]):
+                        architecture.reload(3)
+                    else:
+                        configure_default = origin
+                        desktop.internal_record.start()
+                        desktop.show()
+                        return
+                else:
+                    architecture.reload(3)
             runtime.file.load_template_model(configure, value)
         elif type_ == "language":
             languages = runtime.file.load_language(configure)
+        # 重载
+        rules = runtime.file.load_rules(configure_default)
         conversation.move(desktop.x(), desktop.y())
-        desktop.internal_record.stop()
         desktop = DesktopPet(desktop.x(), desktop.y())
         desktop.show()
         interface.subscribe.RegisterAttribute.SetWindow(desktop)
@@ -434,7 +464,7 @@ class Setting(FramelessWindow):
 
     def error(self, value):
         if value is False:
-            self.pop_error(languages[140], languages[140])
+            interface.setting.customize.widgets.pop_error(self, languages[64], languages[64])
 
     def resizeEvent(self, e):
         self.titleBar.move(46, 0)
@@ -484,24 +514,31 @@ class Conversation(QWidget):
         self.input_answer.setVisible(False)
 
     def pop_answer(self):
+        """回复框的拉伸动画"""
         def wrapper():
             nonlocal height
+            # 根据icon的值增加或减少height
             if icon == "UP":
                 height += 15
             elif icon == "DOWN":
                 height -= 20
+            # 如果height超出范围，则停止计时器
             if (icon == "UP" and height > 400) or (icon == "DOWN" and height < 80):
                 timer.stop()
+            # 更新UI组件的几何形状
             self.click_pop_answer.setGeometry(QRect(370, 0, 30, height))
             self.input_answer.setGeometry(QRect(0, 0, 370, height))
 
+        # 初始化height的值
         height = int(self.input_answer.height())
+        # 根据当前的icon值来设置新的icon值和图标
         if self.icon == "DOWN":
             self.icon = icon = "UP"
             self.click_pop_answer.setIcon(FluentIcon.UP)
         else:
             self.icon = icon = "DOWN"
             self.click_pop_answer.setIcon(FluentIcon.ARROW_DOWN)
+        # 创建并启动计时器，每2毫秒调用一次wrapper函数
         timer = QTimer(self)
         timer.timeout.connect(wrapper)
         timer.start(2)
@@ -679,14 +716,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             if not self.is_generating:
                 self.change_status_for_conversation("hide")
                 conversation.hide()
-
-        if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
-            with open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8") as sf:
-                json.dump({}, sf, indent=3, ensure_ascii=False)
-                sf.close()
-        with open(f"./intelligence/rules/{configure['default']}.json", "r", encoding="utf-8") as rf:
-            rules = json.load(rf)
-            rf.close()
 
         if current_index != self.continuous_conversation:
             return

@@ -32,6 +32,20 @@ def write_file(path: str, text: str) -> bool:
         return False
 
 
+def load_rules(configure_default) -> dict:
+    """加载规则文件"""
+    # 如果没有规则文件就创建
+    if not os.path.isfile(f"./intelligence/rules/{configure_default}.json"):
+        with open(f"./intelligence/rules/{configure_default}.json", "w", encoding="utf-8") as f:
+            json.dump({}, f, indent=3, ensure_ascii=False)
+            f.close()
+
+    with open(f"./intelligence/rules/{configure_default}.json", "r", encoding="utf-8") as f:
+        rules = json.load(f)
+        f.close()
+    return rules
+
+
 def load_api() -> dict:
     with open("./resources/api.json", "r", encoding="utf-8") as f:
         api = json.load(f)

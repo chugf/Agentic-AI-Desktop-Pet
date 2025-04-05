@@ -1,6 +1,6 @@
 {
    "General": {
-      "compatible": true,
+      "compatible": false,
       "adult": false,
       "recognition": false,
       "speaker": false,

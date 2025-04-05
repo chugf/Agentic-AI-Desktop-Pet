@@ -6,14 +6,12 @@ document.getElementById('send-button').addEventListener('click', async function(
         alert("请输入您的问题！");
         return;
     }
-
+    document.getElementById('message-input').value = "";
     var requestBody = {
         question: question
     };
-
     // 添加用户消息到聊天窗口
     addMessage(question, 'user');
-
     try {
         const response = await fetch('{PYTHON_UPLOAD_URL_ADDRESS}/chat', {
             method: 'POST',
@@ -43,6 +41,7 @@ document.getElementById('send-button').addEventListener('click', async function(
         aiMessageElement.appendChild(aiTextElement);
         document.getElementById('chat-window').appendChild(aiMessageElement);
         document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+        document.getElementById('result').innerText = '思考中';
 
         while (true) {
             const { done, value } = await reader.read();
@@ -51,10 +50,7 @@ document.getElementById('send-button').addEventListener('click', async function(
             const chunk = decoder.decode(value, { stream: true });
             partialMessage += chunk;
 
-            // 假设每条消息以换行符分隔
             const messages = partialMessage.split('\n');
-
-            // 如果partialMessage不以换行符结尾，则保留最后一部分作为下一个循环的开始
             partialMessage = messages.pop();
 
             for (const message of messages) {
@@ -69,7 +65,8 @@ document.getElementById('send-button').addEventListener('click', async function(
                             if (aiTextElement.textContent) {
                                 content = content.replace(aiTextElement.textContent, '');
                             }
-                            aiTextElement.textContent += content;
+                            document.getElementById('result').innerText = '输出中……';
+                            aiTextElement.innerHTML = marked.parse(content);
                             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
                         }
                     } catch (e) {
@@ -78,9 +75,17 @@ document.getElementById('send-button').addEventListener('click', async function(
                 }
             }
         }
+        document.getElementById('result').innerText = '';
     } catch (error) {
         console.error('Error:', error);
         addMessage('Failed to send message', 'ai');
+    }
+});
+
+document.getElementById('message-input').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // 阻止默认的换行行为
+        document.getElementById('send-button').click(); // 触发发送按钮的点击事件
     }
 });
 

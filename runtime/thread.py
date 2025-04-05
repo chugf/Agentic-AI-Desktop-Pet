@@ -137,14 +137,16 @@ class RecognitionThread(QThread):
         self.configure = configure
 
     def run(self):
-        if self.configure['settings']['rec'] == "cloud":
+        if self.configure['settings']['rec']['way'] == "cloud":
             func = intelligence.recognition.XFRealTimeSpeechRecognizer
         else:
             func = intelligence.recognition.WhisperRealTimeSpeechRecognizer
         self.parent().speech_recognition = func(
                 self.result.emit, self.parent().recognition_failure,
                 self.parent().recognition_closure,
-                runtime.parse_local_url(self.configure['settings']['local']['rec']['url']))
+                runtime.parse_local_url(self.configure['settings']['local']['rec']['url']),
+                self.configure, runtime.file.save_configure
+        )
         self.parent().speech_recognition.start_recognition()
 
 

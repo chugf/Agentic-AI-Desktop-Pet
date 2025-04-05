@@ -62,9 +62,9 @@ When Moving the Pet, It Will Never Exceed the Taskbar
 Formatting Instructions
 1. {year} represents the current year
 2. {ip} represents your device’s IP
-【BUG】 This reasoning mode has serious issues, do not use it! If you select this mode, you will receive a Python Traceback. If you can fix it, you can submit a pull request on GitHub to resolve the issue.
+No model input
 Bound action file names, ordered from top to bottom in the "motions" folder
-Probability affecting sampling (smaller value for repetition, larger value for pure luck)
+
 Start Recording: You need to click "Record" on your character. Click twice—once for the minimum value, once for the maximum value.
 Compilation Complete
 Confirm?
@@ -76,7 +76,7 @@ Restarting the program is required to enable the compatible model.
 Folder Path
 Run
 Terminate
-There is no model for {character} in the resources. Please bind it in the binding interface and try again!
+
 Function Entry
 Artificial Intelligence - AI
 Tongyi Qianwen - Tongyi
@@ -153,3 +153,12 @@ Get Captcha
 Remember me
 Record
 Local NetWork URL:
+Recognition Sampling
+Pure AVG（sum(s) / len(s)）
+AVG Min+（sum(s) / len(s) + min(s)）
+AVG Max+（sum(s) / len(s) + max(s)）
+Double AVG（sum(s) / len(s) * 2）
+Sampling needs to be done in a quiet environment, and it will record the environment and calculate the volume. The sampling data will be calculated based on the algorithm (Algorithm).
+Compatible architecture
+Your model architecture is not compatible with the current architecture. You need to restart the program to reload the architecture!
+It's different from the architecture version and the engine version. If you load it multiple times, it may cause the shader to crash.

@@ -14,5 +14,5 @@ def web():
 def run():
     log = getLogger('werkzeug')
     log.disabled = True
-    print(f"WebUI at http://{socket.gethostbyname(socket.gethostname())}:5201")
-    app.run(socket.gethostbyname(socket.gethostname()), 5201)
+    print(f"WebUI at http://{socket.gethostbyname(socket.gethostname())}:52013")
+    app.run(socket.gethostbyname(socket.gethostname()), 52013)

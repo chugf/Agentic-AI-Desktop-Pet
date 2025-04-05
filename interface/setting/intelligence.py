@@ -82,7 +82,7 @@ class Intelligence(ScrollArea):
             self.inference_group)
         self.card_recognition.optionChanged.connect(
             lambda value: function.change_configure(
-                value.value, "settings.rec", self.configure
+                value.value, "settings.rec.way", self.configure
             )
         )
         self.inference_group.addSettingCard(self.card_recognition)
