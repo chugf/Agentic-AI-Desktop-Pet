@@ -77,7 +77,7 @@ class Changer(BaseModel):
 
 @CommandReciever.post("/get_module_lists")
 def get_module_lists():
-    module_dirs_info = [list(zip([MODULE_LIST_PATH + item.split(';')[0]], [item.split(';')[1]])) for item in
+    module_dirs_info = [list(zip([MODULE_LIST_PATH + "\\" + item.split(';')[0]], [item.split(';')[1]])) for item in
                         os.listdir(MODULE_LIST_PATH) if ';' in item]
     module_lists: dict = {}
     for module in module_dirs_info:
