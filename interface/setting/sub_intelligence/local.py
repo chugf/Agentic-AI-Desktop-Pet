@@ -12,7 +12,7 @@ from qfluentwidgets import BodyLabel, LineEdit, ComboBox, \
 
 
 class IntelligenceLocale(QWidget):
-    def __init__(self, languages, configure, api_config):
+    def __init__(self, languages, configure, api_config, reload):
         super().__init__()
         self.languages = languages
         self.configure = configure
@@ -24,7 +24,7 @@ class IntelligenceLocale(QWidget):
         self.input_text_url.setText(self.configure["settings"]['local']['text'])
         self.input_text_url.setGeometry(QRect(120, 42, 300, 35))
         self.input_text_url.textChanged.connect(
-            lambda value: function.change_configure(value, "settings.local.text", self.configure))
+            lambda value: reload(value, "settings.local.text"))
 
         # 图像处理自定义URL
         BodyLabel(self.languages[94], self).setGeometry(QRect(10, 87, 100, 35))

@@ -1,13 +1,14 @@
 import glob
 import os
-import random
 import typing
+from webbrowser import open as open_webpage
+from socket import gethostbyname, gethostname
 
 from .customize import function, constants, widgets
 
 from PyQt5.Qt import QRect, Qt
 from PyQt5.QtWidgets import QFrame
-from qfluentwidgets import ComboBox, LineEdit, PrimaryPushButton, Slider, BodyLabel
+from qfluentwidgets import ComboBox, LineEdit, PrimaryPushButton, Slider, BodyLabel, PushButton
 
 
 class General(QFrame):
@@ -110,6 +111,9 @@ class General(QFrame):
         self.scale_opacity.valueChanged.connect(
             lambda value: function.change_configure(
                 value / constants.OPACITY_PRECISION, "settings.transparency", self.configure))
+        webui_url = PushButton(f"{self.languages[154]} http://{gethostbyname(gethostname())}:5201", self)
+        webui_url.clicked.connect(lambda: open_webpage(f"http://{gethostbyname(gethostname())}:5201"))
+        webui_url.setGeometry(QRect(0, 462, 400, 35))
         # 角色相关 Character Related
         self.click_add_character = PrimaryPushButton(self.languages[84], self)
         self.click_add_character.setGeometry(QRect(450, 462, 80, 35))

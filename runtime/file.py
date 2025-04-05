@@ -22,6 +22,16 @@ def logger(text: str, father_dir: str) -> None:
         f.close()
 
 
+def write_file(path: str, text: str) -> bool:
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.close()
+        return True
+    except:
+        return False
+
+
 def load_api() -> dict:
     with open("./resources/api.json", "r", encoding="utf-8") as f:
         api = json.load(f)

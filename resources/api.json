@@ -4,7 +4,7 @@
       "api-key": "heavynotfat",
       "messages": "messages",
       "model": "model",
-      "model-name": "neko:latest",
+      "model-name": "qwen2.5:3b",
       "tools": "",
       "endpoint": "message.content"
    }

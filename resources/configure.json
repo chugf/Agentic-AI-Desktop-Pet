@@ -46,16 +46,16 @@
       },
       "tts": {
          "way": "cloud",
-         "top_k": 9,
-         "top_p": 0.74,
-         "temperature": 0.77,
-         "speed": 1.09,
+         "top_k": 25,
+         "top_p": 0.8,
+         "temperature": 0.8,
+         "speed": 1.1,
          "batch_size": 3,
          "batch_threshold": 0.75,
          "parallel": true
       },
       "text": {
-         "way": "local",
+         "way": "cloud",
          "temperature": 0.8,
          "top_p": 0.8,
          "top_k": 20
@@ -193,10 +193,10 @@
    },
    "record": {
       "position": [
-         179,
-         99,
-         224,
-         287
+         -1,
+         -1,
+         -1,
+         -1
       ],
       "enable_position": false
    }

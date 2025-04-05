@@ -57,7 +57,7 @@ def reload_tools():
         ff.close()
 
 
-def TextGeneratorLocal(prompt, func, url, api_config):
+def TextGeneratorLocal(prompt, url, api_config):
     bodies = {}
     if api_config['text']['api']:
         bodies.update({api_config['text']['api']: api_config['text']['api-key']})
@@ -78,9 +78,9 @@ def TextGeneratorLocal(prompt, func, url, api_config):
                 if isinstance(response_result, dict) and key in response_result:
                     response_result = response_result[key]
             history += response_result
-            func(history)
-    memories.append({'role': 'assistant', 'content': history})
-    return history
+            yield history
+        memories.append({'role': 'assistant', 'content': history})
+    yield history
 
 
 class TextGenerator:
@@ -105,15 +105,15 @@ class TextGenerator:
             )
         return completion
 
-    def generate_text(self, prompt, model, func: callable,
-                      language: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja",
+    def generate_text(self, prompt, model, language: typing.Literal['zh-Hans', 'en', 'ja', 'ko'] = "ja",
                       is_search_online: bool = False):
         def process_chunks(completion_, memories_, extra_body_, model_, external_):
             chunk_message = None
             for chunk in completion_:
                 if chunk.status_code != 200:
-                    return (f"AI Answer failed to call: \n\n"
-                            f"{chunk.message}\n\n{translate.machine_translate(chunk.message, language)}")
+                    yield (f"AI Answer failed to call: \n\n"
+                           f"{chunk.message}\n\n{translate.machine_translate(chunk.message, language)}")
+                    return
                 chunk_message = chunk.output.choices[0].message
 
                 if 'tool_calls' in chunk_message:
@@ -128,26 +128,22 @@ class TextGenerator:
                         memories_.append(tool_info)
 
                         new_completion = self.get_response(extra_body_, model_)
-                        return process_chunks(new_completion, memories_, extra_body_, model_, external_)
+                        yield from process_chunks(new_completion, memories_, extra_body_, model_, external_)
+                        return
                 else:
                     memories_.append(chunk_message)
                     if 'reasoning_content' in chunk_message.keys() and \
                             not chunk_message.content.strip() and chunk_message['reasoning_content'].strip():
-                        func(f"<think>\n{chunk_message['reasoning_content']}\n</think>")
+                        yield f"<think>\n{chunk_message['reasoning_content']}\n</think>"
                     else:
-                        func(chunk_message.content)
-            return chunk_message.content
+                        yield chunk_message.content
+            yield chunk_message.content
 
         extra_body = {}
         extra_body.update({"enable_search": is_search_online})
         memories.append({"role": "user", "content": prompt})
         completion = self.get_response(extra_body, model)
-        check_answer = process_chunks(completion, memories, extra_body, model, external)
-        if check_answer is not False:
-            return check_answer
-        else:
-            completion = self.get_response(extra_body, model, False)
-            return process_chunks(completion, memories, extra_body, model, external)
+        yield from process_chunks(completion, memories, extra_body, model, external)
 
 
 class CustomGenerator:
@@ -155,7 +151,7 @@ class CustomGenerator:
         self.messages = messages
         self.is_translate = is_translate
 
-    def generate_text(self) -> str:
+    def generate_text(self):
         completion = dashscope.Generation().call(
             model="qwen-mt-turbo",
             messages=self.messages,
@@ -169,4 +165,4 @@ class CustomGenerator:
         except AttributeError:
             message = None
         self.messages.append({"role": "assistant", "content": message})
-        return message
+        yield message

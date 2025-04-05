@@ -15,7 +15,31 @@ import requests
 import uvicorn
 from pydantic import BaseModel
 
+# 需要更改这个
 MODULE_LIST_PATH = r""   # ./modules/
+"""
+MODULE_LIST_PATH: 对GPT-SOVITS模型的文件夹路径进行声明，输入父文件路径
+父文件路径下的子文件夹命名规则：
+子文件夹为两部分： 1.  模型名字    2.   模型语言
+                之间以英文分号“;”分割
+子文件夹下的模型： 1.  ckpt和pth模型无特殊要求
+                2.  参考音频文件的名字必须为参考音频文本
+
+比如您的文件树：
+- gsv
+├─────巧克力;ja
+│    │      ご主人様のお父様にいつかうまいって言わせてみせるって.wav
+│    │      巧克力-e60.ckpt
+│    │      巧克力_e10_s3600.pth
+│    │
+└────├─枫;ja
+            ところで、花椒。パンプキンケーキに合わせて茶葉を選んでみたけど。.wav
+            枫-e100.ckpt
+            枫_e10_s4510.pth
+
+则输入：r"<Your-GSV-Models-Folder>/gsv"
+
+"""
 
 ttk_port = int(time.strftime("%Y")) + 2
 command_port = int(time.strftime("%Y")) + 1

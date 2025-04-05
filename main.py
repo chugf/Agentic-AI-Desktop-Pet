@@ -4,6 +4,8 @@ import shutil
 import re
 import random
 import json
+from socket import gethostbyname, gethostname
+from threading import Thread
 
 # 运行时
 import runtime
@@ -51,6 +53,11 @@ intelligence.text.reload_tools()
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
                         configure["settings"]['cloud']['xunfei']['secret'], configure["settings"]['cloud']['aliyun'])
 runtime.thread.reload_module(interface, intelligence, runtime, logs)
+engine.webapi.reload_module(intelligence)
+engine.webapi.reload_data(configure['settings']['intelligence'],
+                          api_config, configure['language_mapping'][configure['settings']['language']],
+                          runtime.parse_local_url(configure['settings']['local']['text'])
+                          if configure['settings']['text']['way'] == "local" else None)
 
 
 class PictureShow(QWidget):
@@ -59,7 +66,7 @@ class PictureShow(QWidget):
         super().__init__()
         self.image_path = None
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.setWindowTitle("AudioVisualization - Ai Desktop Pet")
+        self.setWindowTitle("PictureShow - Ai Desktop Pet")
         self.setWindowIcon(QIcon('logo.ico'))
 
         self.image_show = QLabel(self)
@@ -224,9 +231,18 @@ class Setting(FramelessWindow):
             play=self.reference, reload=self.reload_character)
         self.switches_page = interface.setting.switches.Switches(languages, switches_configure, configure)
 
-        self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure)
+        def change(value, relative):
+            interface.setting.customize.function.change_configure(
+                value.value, relative, configure
+            )
+            engine.webapi.reload_data(configure['settings']['intelligence'],
+                                      api_config, configure['language_mapping'][configure['settings']['language']],
+                                      runtime.parse_local_url(configure['settings']['local']['text'])
+                                      if configure['settings']['text']['way'] == "local" else None)
+
+        self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure, change)
         self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(
-            languages, configure, api_config)
+            languages, configure, api_config, change)
         self.cloud_intelligence_page = interface.setting.sub_intelligence.cloud.IntelligenceCloud(
             languages, configure, self.reload_intelligence)
 
@@ -235,7 +251,8 @@ class Setting(FramelessWindow):
             languages, configure, desktop.model_json_path, architecture.addon,
             record=self.record_animation, live2d=architecture.live2d, pet_model=desktop.pet_model)
         self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(languages, configure, live2d_parameter)
-        self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(languages, configure, live2d_parameter)
+        self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(
+            languages, configure, live2d_parameter)
         self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(
             interface, self.run_code_for_plugin, languages, configure)
 
@@ -304,6 +321,10 @@ class Setting(FramelessWindow):
                                 configure["settings"]['cloud']['xunfei']['key'],
                                 configure["settings"]['cloud']['xunfei']['secret'],
                                 configure["settings"]['cloud']['aliyun'])
+        engine.webapi.reload_data(configure['settings']['intelligence'],
+                                  api_config, configure['language_mapping'][configure['settings']['language']],
+                                  runtime.parse_local_url(configure['settings']['local']['text'])
+                                  if configure['settings']['text']['way'] == "local" else None)
 
     def reload_character(self, value, type_: typing.Literal['language', 'character']):
         global desktop, languages, configure_default
@@ -660,9 +681,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 conversation.hide()
 
         if not os.path.isfile(f"./intelligence/rules/{configure['default']}.json"):
-            with open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8") as f:
-                json.dump({}, f, indent=3, ensure_ascii=False)
-                f.close()
+            with open(f"./intelligence/rules/{configure['default']}.json", "w", encoding="utf-8") as sf:
+                json.dump({}, sf, indent=3, ensure_ascii=False)
+                sf.close()
         with open(f"./intelligence/rules/{configure['default']}.json", "r", encoding="utf-8") as rf:
             rules = json.load(rf)
             rf.close()
@@ -1227,10 +1248,17 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             pass
         shutil.copy2("./resources/configure.json", "./logs/backup/configure.json")
         runtime.file.logger("程序退出 Program exit", logs.HISTORY_PATH)
+        runtime.file.write_file("./engine/static/scripts.js",
+                                js_code.replace(f"http://{gethostbyname(gethostname())}:12877",
+                                                "{PYTHON_UPLOAD_URL_ADDRESS}"))
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
 
 if __name__ == '__main__':
+    with open('./engine/static/scripts.js', 'r', encoding='utf-8') as f:
+        js_code = f.read().replace("{PYTHON_UPLOAD_URL_ADDRESS}", f"http://{gethostbyname(gethostname())}:12877")
+        f.close()
+    runtime.file.write_file("./engine/static/scripts.js", js_code)
     app = QApplication(sys.argv)
 
     translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
@@ -1256,5 +1284,7 @@ if __name__ == '__main__':
     interface.subscribe.views.RegisterSetting.register(setting)
     interface.subscribe.hooks.Register.HookSettingInterface(setting)
     interface.subscribe.hooks.Register.HookConversationInterface(conversation)
+    # 启动网页
+    Thread(target=engine.webui.run).start()
 
     sys.exit(app.exec())

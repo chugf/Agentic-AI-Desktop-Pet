@@ -23,7 +23,7 @@ class Config(QConfig):
 
 
 class Intelligence(ScrollArea):
-    def __init__(self, languages, configure):
+    def __init__(self, languages, configure, reload):
         super().__init__()
         self.languages = languages
         self.configure = configure
@@ -42,11 +42,7 @@ class Intelligence(ScrollArea):
             "",
             [self.languages[33], self.languages[34]],
             self.inference_group)
-        self.card_text_output.optionChanged.connect(
-            lambda value: function.change_configure(
-                value.value, "settings.text.way", self.configure
-            )
-        )
+        self.card_text_output.optionChanged.connect(lambda text: reload(text, "settings.text.way"))
         self.inference_group.addSettingCard(self.card_text_output)
         # 语音输出 Voice Output
         self.card_voice_output = OptionsSettingCard(

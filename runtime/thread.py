@@ -198,14 +198,15 @@ class TextGenerateThread(QThread):
 
     def run(self):
         try:
-            answer = intelligence.text_generator(
-                self.text, self.configure['settings']['intelligence'],
-                self.is_search_online, self.api_config,
-                lambda text: self.send(text, False),
-                language=self.configure['language_mapping'][self.configure['settings']['language']],
-                url=runtime.parse_local_url(
-                    self.configure['settings']['local']['text']) if
-                self.configure['settings']['text']['way'] == "local" else None)
+            for chunk in intelligence.text_generator(
+                    self.text, self.configure['settings']['intelligence'],
+                    self.is_search_online, self.api_config,
+                    language=self.configure['language_mapping'][self.configure['settings']['language']],
+                    url=runtime.parse_local_url(
+                        self.configure['settings']['local']['text']) if
+                    self.configure['settings']['text']['way'] == "local" else None):
+                answer = chunk
+                self.send(answer, False),
         except Exception:
             file.logger(f"子应用 - AI剧情问答 调用失败\n"
                         f"   Message: {traceback.format_exc()}", logs.HISTORY_PATH)
