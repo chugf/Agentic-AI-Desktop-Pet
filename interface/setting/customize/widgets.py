@@ -169,7 +169,7 @@ class CodeEdit(TextEdit):
 
         item_model = QStandardItemModel()
         for full_path, item_type, display_text in filtered_list:
-            icon = QIcon(f"./resources/image/{item_type}.png")
+            icon = QIcon(f"./resources/static/{item_type}.png")
             q_item = QStandardItem(icon, display_text)
             q_item.setData(full_path, Qt.UserRole)
             item_model.appendRow(q_item)

@@ -1,9 +1,10 @@
 import json
 from socket import gethostname, gethostbyname
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from uvicorn import run as serve
 
 app = FastAPI()
@@ -47,6 +48,18 @@ async def chat(request: Request):
             yield json.dumps({'message': {'content': chunk}}) + "\n"
 
     return StreamingResponse(generate(), media_type='application/json')
+
+
+@app.post("/upload-image")
+async def upload_image(request: Request):
+    upload_data = await request.json()
+    upload_url = upload_data.get('url')
+
+    if os.path.exists(upload_url):
+        os.rename(upload_url,
+                  f'{os.getcwd()}/engine/static/images/{os.path.basename(upload_url)}')
+    new_url = f"./static/images/{os.path.basename(upload_url)}"
+    return Response(json.dumps({"url": new_url}))
 
 
 def run():

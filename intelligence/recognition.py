@@ -54,7 +54,7 @@ class WhisperRealTimeSpeechRecognizer:
         self.is_started_sampling = False
         # 获取静音阈值和持续时间
         self.silence_threshold = self.configure['settings']['rec']['silence_threshold']
-        self.silence_duration = RATE * self.configure['settings']['rec']['silence_threshold']
+        self.silence_duration = RATE * self.configure['settings']['rec']['silence_duration']
         # 初始化静音样本和音频缓冲区
         self.silence_sample = []
         self.audio_buffer = []

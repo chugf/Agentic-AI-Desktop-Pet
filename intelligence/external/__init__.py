@@ -17,11 +17,13 @@ def draw_picture_by_qwen(prompts):
         filepath = f'./logs/picture/{file_name}'
         with open(filepath, 'wb+') as f:
             f.write(requests.get(result.url).content)
+            time.sleep(0.05)
             f.close()
+
     return json.dumps({'filepath': filepath})
 
 def picture_understand(description, image_path):
-    conversation = {'role': 'user', 'content': [{'image': f'file://{image_path}'}, {'text': description}]}
+    conversation = {'role': 'user', 'content': [{'static': f'file://{image_path}'}, {'text': description}]}
     completion = dashscope.MultiModalConversation().call(api_key=dashscope.api_key, model='qwen-vl-max', messages=[conversation])
     msg = completion['output']['choices'][0]['message'].content[0]['text']
     return msg

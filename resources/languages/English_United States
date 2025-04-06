@@ -64,7 +64,7 @@ Formatting Instructions
 2. {ip} represents your device’s IP
 No model input
 Bound action file names, ordered from top to bottom in the "motions" folder
-
+Keeping model, it can't be deleted
 Start Recording: You need to click "Record" on your character. Click twice—once for the minimum value, once for the maximum value.
 Compilation Complete
 Confirm?
@@ -76,7 +76,7 @@ Restarting the program is required to enable the compatible model.
 Folder Path
 Run
 Terminate
-
+Error
 Function Entry
 Artificial Intelligence - AI
 Tongyi Qianwen - Tongyi

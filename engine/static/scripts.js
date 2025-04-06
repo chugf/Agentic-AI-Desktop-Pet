@@ -43,6 +43,11 @@ document.getElementById('send-button').addEventListener('click', async function(
         document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
         document.getElementById('result').innerText = '思考中';
 
+        // 正则表达式匹配Markdown格式的图片
+        const imgRegex = /!\[.*?\]\((.*?)\)/g;
+
+        let hasProcessed = [];
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -57,7 +62,9 @@ document.getElementById('send-button').addEventListener('click', async function(
                 if (message.trim()) {  // 忽略空字符串
                     try {
                         const parsedMessage = JSON.parse(message);
-                        console.log('Received:', parsedMessage.message.content);
+
+                        console.log(parsedMessage)
+
                         // 截取message.content并更新UI
                         if (parsedMessage && parsedMessage.message.content) {
                             // 移除重复内容
@@ -66,7 +73,43 @@ document.getElementById('send-button').addEventListener('click', async function(
                                 content = content.replace(aiTextElement.textContent, '');
                             }
                             document.getElementById('result').innerText = '输出中……';
-                            aiTextElement.innerHTML = marked.parse(content);
+
+                            // 提取图片并渲染
+                            let imgMatch;
+                            while ((imgMatch = imgRegex.exec(content)) !== null) {
+                                const imgUrl = imgMatch[1];
+                                // 判断是否已经刷新过了
+                                if ((hasProcessed.find(value => value === imgUrl)) != undefined) {
+                                    break;
+                                }
+                                hasProcessed.push(imgUrl);
+                                // 发送图片URL到后端，获取新的URL
+                                const uploadResponse = await fetch('{PYTHON_UPLOAD_URL_ADDRESS}/upload-image', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ url: imgUrl })
+                                });
+                                if (uploadResponse.ok) {
+                                    const uploadResult = await uploadResponse.json();
+                                    const newImgUrl = uploadResult.url;
+                                    const imgElement = document.createElement('img');
+                                    imgElement.src = newImgUrl;
+                                    imgElement.style.maxWidth = '50%'; // 缩小图片到原来的一半
+                                    imgElement.style.height = 'auto'; // 保持图片比例
+                                    aiMessageElement.appendChild(imgElement); // 先添加图片
+                                } else {
+                                    console.error('Failed to upload image:', uploadResponse.statusText);
+                                }
+                            }
+
+                            // 渲染剩余文本
+                            const textContent = content.replace(imgRegex, '').trim();
+                            if (textContent) {
+                                aiTextElement.innerHTML = marked.parse(textContent);
+                            }
+
                             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
                         }
                     } catch (e) {

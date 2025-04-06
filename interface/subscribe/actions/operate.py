@@ -2,35 +2,35 @@ class Operate:
     def __init__(self, config):
         self.config = config
 
-    def GetDragEnterAction(self):
+    def GetDragEnterAction(self) -> list:
         return self.config['drag_enter_action']
 
-    def GetDragLeaveAction(self):
+    def GetDragLeaveAction(self) -> list:
         return self.config['drag_leave_action']
 
-    def GetDragMoveAction(self):
+    def GetDragMoveAction(self) -> list:
         return self.config['drag_move_action']
 
-    def GetDropAction(self):
+    def GetDropAction(self) -> list:
         return self.config['drag_drop_action']
 
-    def GetClckAction(self):
+    def GetClckAction(self) -> list:
         return self.config['click_action']
 
-    def GetMouseEnterAction(self):
+    def GetMouseEnterAction(self) -> list:
         return self.config['mouse_enter_action']
 
-    def GetMouseLeaveAction(self):
+    def GetMouseLeaveAction(self) -> list:
         return self.config['mouse_leave_action']
 
-    def GetMouseMoveAction(self):
+    def GetMouseMoveAction(self) -> list:
         return self.config['mouse_move_action']
 
-    def GetMouseDragAction(self):
+    def GetMouseDragAction(self) -> list:
         return self.config['mouse_drag_action']
 
-    def GetMouseReleaseAction(self):
+    def GetMouseReleaseAction(self) -> list:
         return self.config['mouse_release_action']
 
-    def GetAIOutput(self):
+    def GetAIOutput(self) -> list:
         return self.config['ai_output']

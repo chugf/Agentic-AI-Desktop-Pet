@@ -148,6 +148,9 @@ class General(QFrame):
                 widgets.pop_warning(self, self.languages[161], self.languages[162])
 
     def delete_character(self):
+        if self.select_character.currentText() in ("vanilla", "kasumi2"):
+            widgets.pop_error(self, self.languages[78], self.languages[66])
+            return
         list_character = os.listdir("./resources/model")
         list_character.remove(self.select_character.currentText())
         function.change_configure("vanilla", "default", self.configure)

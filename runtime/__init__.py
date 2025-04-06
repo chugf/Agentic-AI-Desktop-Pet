@@ -386,7 +386,7 @@ def capture() -> str:
     return f"{tempfile.gettempdir()}/screenshot.png".replace("\\", "/")
 
 
-def check_update():
+def check_update() -> bool | None:
     try:
         latest_version = requests.post("https://adp.nekocode.top/update/version.php").json()['version']
     except:
@@ -397,7 +397,7 @@ def check_update():
         return latest_version
 
 
-def get_notice_board():
+def get_notice_board() -> str:
     request = ""
     try:
         request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get.php").json())
@@ -406,7 +406,7 @@ def get_notice_board():
     return request
 
 
-def get_policy():
+def get_policy() -> str:
     request = ""
     try:
         request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get_policy.php").json())
@@ -415,7 +415,7 @@ def get_policy():
     return request
 
 
-def user_register(email):
+def user_register(email) -> dict:
     try:
         register_response = requests.post("https://adp.nekocode.top/account/register.php", json={'to': email})
         if register_response.json().get('error'):
@@ -426,7 +426,7 @@ def user_register(email):
         return {"status": False, "message": "发送邮件错误！"}
 
 
-def user_vertify(email, code, password):
+def user_vertify(email, code, password) -> dict:
     try:
         vertify_response = requests.post("https://adp.nekocode.top/account/vertify.php",
                                          json={'email': email, 'code': code, 'password': password})
@@ -438,7 +438,7 @@ def user_vertify(email, code, password):
         return {"status": False, "message": "验证错误！"}
 
 
-def user_login(email, password, auto_login: bool = False, session: str = ""):
+def user_login(email, password, auto_login: bool = False, session: str = "") -> dict:
     try:
         login_response = requests.post("https://adp.nekocode.top/account/login.php",
                                        json={'email': email, 'password': password,
@@ -457,7 +457,7 @@ def user_login(email, password, auto_login: bool = False, session: str = ""):
         return {"status": False, "message": "登录错误！"}
 
 
-def find_internal_recording_device(p):
+def find_internal_recording_device(p) -> int:
     """寻找内录设备"""
     target = '立体声混音'
     for i in range(p.get_device_count()):
@@ -467,7 +467,7 @@ def find_internal_recording_device(p):
     return -1
 
 
-def calculate_rms(data):
+def calculate_rms(data) -> float:
     """计算RMS音量标准"""
     length = len(data) / 2
     shorts = struct.unpack("%dh" % length, data)
