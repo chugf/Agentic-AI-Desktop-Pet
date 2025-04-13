@@ -84,10 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             $mail->isSMTP();
-            $mail->Host       = 'smtpdm.aliyun.com';
+            $mail->Host       = '';
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'nekocode@nekocode.top';
-            $mail->Password   = 'HFMvefH433mKGp5';
+            $mail->Username   = '';
+            $mail->Password   = '';
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 80;
 
