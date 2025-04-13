@@ -4,6 +4,7 @@ import shutil
 import re
 import random
 import json
+from difflib import get_close_matches
 from socket import gethostbyname, gethostname
 from threading import Thread
 
@@ -230,7 +231,6 @@ class Setting(FramelessWindow):
             self.move(display_x, display_y)
         else:
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
-
         self.general_page = interface.setting.general.General(
             intelligence, runtime,
             languages, configure, module_info, live2d_parameter,
@@ -256,7 +256,8 @@ class Setting(FramelessWindow):
         self.binding_page = interface.setting.binding.Binding(languages, configure, runtime, self.addSubInterface)
         self.animation_binding_page = interface.setting.sub_binding.animation.AnimationBinding(
             languages, configure, desktop.model_json_path, architecture.addon,
-            record=self.record_animation, live2d=architecture.live2d, pet_model=desktop.pet_model)
+            record=self.record_animation, live2d=architecture.live2d, desktop=desktop
+        )
         self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(languages, configure, live2d_parameter)
         self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(
             languages, configure, live2d_parameter)
@@ -363,7 +364,8 @@ class Setting(FramelessWindow):
                         return
                 else:
                     architecture.reload(3)
-            runtime.file.load_template_model(configure, value)
+            if configure_default not in configure['model'].keys():
+                runtime.file.load_template_model(configure, value)
         elif type_ == "language":
             languages = runtime.file.load_language(configure)
         # 重载
@@ -817,17 +819,21 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     # 加载模型事件
     def loadModelEvent(self, model):
         try:
-            if os.path.exists(f"./resources/model/"
-                              f"{model}/"
-                              f"{model.title()}.model{'3' if architecture.live2d.LIVE2D_VERSION == 3 else ''}"):
-                self.model_json_path = (f"./resources/model/"
-                                        f"{model}/{model.title()}."
-                                        f"model{'3' if architecture.live2d.LIVE2D_VERSION == 3 else ''}.json")
-                self.pet_model.LoadModelJson(self.model_json_path)
+            model_files = os.listdir(f"./resources/model/{model}")
+            # 寻找最像模型json文件的那一个文件
+            model_json_file = get_close_matches(f"{model}.model.json", model_files)[0]
+            self.model_json_path = (f"./resources/model/{model}/"
+                                    f"{model_json_file}")
+            # 加载架构
+            if model_json_file.split(".")[1] == "model3":
+                if architecture.live2d.LIVE2D_VERSION != 3:
+                    architecture.reload(3)
+            elif model_json_file.split(".")[1] == "model":
+                if architecture.live2d.LIVE2D_VERSION != 2:
+                    architecture.reload(2)
             else:
-                self.model_json_path = (f"./resources/model/{model}/"
-                                        f"{model}.model{'3' if architecture.live2d.LIVE2D_VERSION == 3 else ''}.json")
-                self.pet_model.LoadModelJson(self.model_json_path)
+                raise FileNotFoundError()
+            self.pet_model.LoadModelJson(self.model_json_path)
         except (KeyError, FileNotFoundError):
             configure['default'] = 'kasumi2'
             runtime.file.save_configure(configure)
@@ -851,11 +857,15 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                     architecture.live2d.MotionPriority.FORCE, onFinishMotionHandler=self.finishedAnimationEvent)
             return
         if (exp := runtime.file.get_configure_actions(
-                configure, configure_default)[animation_name]['expression'].strip()) != "":
+                configure, configure_default,
+                "nor" if "Touch" in animation_name or "Click" in animation_name else "spec")[
+            animation_name]['expression'].strip()) != "":
             self.pet_model.SetExpression(exp)
         else:
             group, _, index = runtime.file.get_configure_actions(
-                configure, configure_default)[animation_name]['motion'].split(":")
+                configure, configure_default,
+                "nor" if "Touch" in animation_name or "Click" in animation_name else "spec")[
+                animation_name]['motion'].split(":")
             self.pet_model.StartMotion(group, int(index), architecture.live2d.MotionPriority.FORCE,
                                        onFinishMotionHandler=self.finishedAnimationEvent)
 
@@ -951,11 +961,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.speaking_lists.clear()
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
-        try:
-            if configure['settings']['live2d']['enable']['AutoDrag']:
-                self.pet_model.Drag(local_x, local_y)
-        except SystemError:
-            pass
+        if configure['settings']['live2d']['enable']['AutoDrag']:
+            self.pet_model.Drag(local_x, local_y)
         # 检查是否开启全局鼠标穿透
         if switches_configure['Advanced']['penetration'] != "shut":
             self.setCanvasOpacity(0.4)
@@ -990,10 +997,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.internal_record.stop()
             visualization.hide()
 
-        # 循环次数
-        if self.amount > 100:
-            self.amount = 0
-        self.amount += 1
         # 检查表情
         if self.expression_count >= 300 * self.fps_refresh:
             self.is_playing_expression = False
@@ -1010,6 +1013,11 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.set_mouse_transparent(True)
             self.turn_count = 0
             self.click_in_area = False
+
+        # 循环次数
+        if self.amount > 100:
+            self.amount = 0
+        self.amount += 1
 
         self.update()
 
@@ -1230,7 +1238,12 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         architecture.live2d.glewInit()
         self.pet_model = architecture.live2d.LAppModel()
         self.loadModelEvent(configure_default)
+        # 初始化载入
+        self.playAnimationEvent("ActionLogin")
+        runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
+            configure, configure_default, "ActionLogin")).start()
         live2d_parameter.clear()
+
         for i in range(self.pet_model.GetParameterCount()):
             param = self.pet_model.GetParameter(i)
             live2d_parameter.update({str(param.id): {

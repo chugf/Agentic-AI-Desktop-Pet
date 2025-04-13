@@ -27,9 +27,18 @@ class AnimationBinding(QWidget):
 
         BodyLabel(self.languages[48], self).setGeometry(QRect(10, 52, 100, 30))
         self.select_actions = ComboBox(self)
+        self.select_actions.setCurrentIndex(0)
         self.select_actions.addItems(list(self.configure['model'][self.configure['default']]['action'].keys()))
         self.select_actions.currentTextChanged.connect(self.change_action)
         self.select_actions.setGeometry(QRect(100, 52, 200, 30))
+
+        self.select_special_actions = ComboBox(self)
+        self.select_special_actions.addItems(list(self.configure['model'][self.configure['default']][
+                                                      'special_action'].keys()))
+        self.select_special_actions.setText("")
+        self.select_special_actions.setCurrentIndex(-1)
+        self.select_special_actions.currentTextChanged.connect(self.change_special_action)
+        self.select_special_actions.setGeometry(QRect(310, 52, 200, 30))
 
         BodyLabel("min(X)", self).setGeometry(QRect(10, 92, 100, 30))
         self.input_min_y = LineEdit(self)
@@ -121,19 +130,24 @@ class AnimationBinding(QWidget):
             widgets.pop_error(self, "Error", self.languages[155])
 
     def save_animation(self):
-        self.configure["model"][self.configure['default']]['action'][self.select_actions.currentText()]['position'] = [
-            int(self.input_min_x.text()), int(self.input_max_x.text()),
-            int(self.input_min_y.text()), int(self.input_max_y.text())]
-        self.configure["model"][self.configure['default']]['action'][
-            self.select_actions.currentText()]['motion'] = (f"{self.select_motion_group.currentText()}:"
-                                                            f"{self.select_motion_name.currentText()}:"
-                                                            f"{self.select_motion_name.currentIndex()}")
-        self.configure["model"][self.configure['default']]['action'][
-            self.select_actions.currentText()]['expression'] = self.select_expression_name.currentText()
-        self.configure["model"][self.configure['default']]['action'][
-            self.select_actions.currentText()]['play_type'] = self.select_audio_play.currentText()
-        self.configure["model"][self.configure['default']]['action'][
-            self.select_actions.currentText()]['play'] = self.select_audio.currentText()
+        if self.select_actions.currentText().strip():
+            key = "action"
+            action = self.select_actions.currentText()
+            self.configure["model"][self.configure['default']][key][action]['position'] = [
+                int(self.input_min_x.text()), int(self.input_max_x.text()),
+                int(self.input_min_y.text()), int(self.input_max_y.text())]
+        else:
+            key = "special_action"
+            action = self.select_special_actions.currentText()
+        self.configure["model"][self.configure['default']][key][
+            action]['motion'] = (f"{self.select_motion_group.currentText()}:"
+                                 f"{self.select_motion_name.currentText()}:"
+                                 f"{self.select_motion_name.currentIndex()}")
+        self.configure["model"][self.configure['default']][key][action][
+            'expression'] = self.select_expression_name.currentText()
+        self.configure["model"][self.configure['default']][key][action][
+            'play_type'] = self.select_audio_play.currentText()
+        self.configure["model"][self.configure['default']][key][action]['play'] = self.select_audio.currentText()
         with open("./resources/configure.json", "w", encoding="utf-8") as sf:
             json.dump(self.configure, sf, indent=3, ensure_ascii=False)
             sf.close()
@@ -144,7 +158,26 @@ class AnimationBinding(QWidget):
         vl.append("random")
         self.select_audio_play.addItems(vl)
 
+    def change_special_action(self, text):
+        # 设置另一个不可用
+        self.select_actions.setText("")
+        self.select_actions.setCurrentIndex(-1)
+        self.click_auto_record.setEnabled(False)
+        self.input_max_x.setEnabled(False)
+        self.input_min_y.setEnabled(False)
+        self.input_max_y.setEnabled(False)
+        self.input_min_x.setEnabled(False)
+
     def change_action(self, text):
+        # 设置另一个不可用
+        self.select_special_actions.setText("")
+        self.select_special_actions.setCurrentIndex(-1)
+        self.click_auto_record.setEnabled(True)
+        self.input_max_x.setEnabled(True)
+        self.input_min_y.setEnabled(True)
+        self.input_max_y.setEnabled(True)
+        self.input_min_x.setEnabled(True)
+
         temp_config = self.configure['model'][self.configure['default']]['action'][text]
         self.input_min_x.setText(str(temp_config['position'][0]))
         self.input_max_x.setText(str(temp_config['position'][1]))
@@ -160,21 +193,25 @@ class AnimationBinding(QWidget):
         del temp_config
 
     def change_expression_name(self, text):
-        self.kwargs.get("pet_model").SetExpression(text)
+        self.kwargs.get("desktop").pet_model.SetExpression(text)
         self.select_motion_name.setText("")
         self.select_motion_group.setText("")
-        QTimer.singleShot(3000, lambda: self.kwargs.get("pet_model").ResetExpression())
+        QTimer.singleShot(8000, lambda: self.kwargs.get("desktop").pet_model.ResetExpression())
 
     def change_motion_name(self, text):
-        self.kwargs.get("pet_model").StartMotion(self.select_motion_group.currentText(),
-                                                 self.motion_dict[self.select_motion_group.currentText()].index(text),
-                                                 self.kwargs.get("live2d").MotionPriority.FORCE)
+        self.kwargs.get("desktop").pet_model.StartMotion(
+            self.select_motion_group.currentText(),
+            self.motion_dict[self.select_motion_group.currentText()].index(text),
+            self.kwargs.get("live2d").MotionPriority.FORCE,
+            onFinishMotionHandler=lambda: self.kwargs.get("desktop").finishedAnimationEvent())
 
     def change_motion_group(self, text):
         self.select_motion_name.clear()
         self.select_motion_name.addItems(self.motion_dict[text])
-        self.kwargs.get("pet_model").StartMotion(text, self.motion_dict[text].index(self.select_motion_name.currentText()),
-                                                 self.kwargs.get("live2d").MotionPriority.FORCE)
+        self.kwargs.get("desktop").pet_model.StartMotion(
+            text,
+            self.motion_dict[text].index(self.select_motion_name.currentText()),
+            self.kwargs.get("live2d").MotionPriority.FORCE)
         self.select_expression_name.setText("")
 
     def start_record(self):

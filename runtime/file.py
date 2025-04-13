@@ -5,6 +5,7 @@ import json
 import locale
 import random
 import difflib
+import typing
 
 
 def logger(text: str, father_dir: str) -> None:
@@ -82,9 +83,10 @@ def delete_character(configure: dict, model: str) -> bool:
     return True
 
 
-def get_configure_actions(configure: dict, configure_default: str) -> dict:
+def get_configure_actions(configure: dict, configure_default: str,
+                          type_: typing.Literal['nor', 'spec'] = 'nor') -> dict:
     """加载动作配置"""
-    return configure['model'][configure_default]['action']
+    return configure['model'][configure_default]['action' if type_ == 'nor' else 'special_action']
 
 
 def get_audio_path(configure: dict, configure_default: str, action: str) -> str:

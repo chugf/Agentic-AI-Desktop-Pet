@@ -189,6 +189,14 @@
                "welcome2.wav",
                "welcome3.wav"
             ]
+         },
+         "special_action": {
+            "ActionLogin": {
+               "motion": "NULL:motions/null.json:0",
+               "expression": "",
+               "play": "",
+               "play_type": ""
+            }
          }
       }
    },
