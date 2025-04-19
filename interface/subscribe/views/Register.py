@@ -1,6 +1,6 @@
-class RegisterSetting:
+class Register:
     def __init__(self, config):
         self.config = config
 
-    def register(self, master):
-        self.config.register("setting", master)
+    def register(self, relative, master):
+        self.config.register(relative, master)

@@ -148,15 +148,15 @@ class General(QFrame):
                 widgets.pop_warning(self, self.languages[161], self.languages[162])
 
     def delete_character(self):
-        if self.select_character.currentText() in ("vanilla", "kasumi2"):
+        if self.select_character.currentText() in ("Chocola", "kasumi2"):
             widgets.pop_error(self, self.languages[78], self.languages[66])
             return
         list_character = os.listdir("./resources/model")
         list_character.remove(self.select_character.currentText())
-        function.change_configure("vanilla", "default", self.configure)
-        self.kwargs.get("reload")("vanilla", "character")
+        function.change_configure("Chocola", "default", self.configure)
+        self.kwargs.get("reload")("Chocola", "character")
         self.runtime_module.file.delete_character(self.configure, self.select_character.currentText())
-        self.select_character.setCurrentText("vanilla")
+        self.select_character.setCurrentText("Chocola")
         self.select_character.removeItem(os.listdir("./resources/model").index(self.select_character.currentText()))
 
     def change_language(self, value):

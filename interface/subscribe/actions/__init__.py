@@ -4,16 +4,16 @@ from . import Register as _Register
 from . import operate
 
 
-class Operate(operate.Operate):
+class _Operate(operate.Operate):
     def __init__(self):
         super().__init__(Config)
 
 
-class Register(_Register.Register):
+class __Register(_Register.Register):
     def __init__(self):
         super().__init__(Config)
 
 
 Config = _Config.Config()
-Register = Register()
-Operate = Operate()
+Register = __Register()
+Operate = _Operate()

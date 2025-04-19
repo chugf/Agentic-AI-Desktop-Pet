@@ -1,8 +1,8 @@
 {
-   "name": "香草",
-   "voice_model": "香草",
-   "default": "vanilla",
-   "watermark": "ParamHairBack;0.0",
+   "name": "巧克力",
+   "voice_model": "巧克力",
+   "default": "Chocola",
+   "watermark": "Keep@NullParameter;0.0",
    "adult_level": 0,
    "settings": {
       "language": "Chinese (Simplified)_China",
@@ -75,7 +75,7 @@
       }
    },
    "model": {
-      "vanilla": {
+      "Chocola": {
          "adult": {
             "AdultContent": false,
             "AdultLevelMinimum": 1,
@@ -102,7 +102,7 @@
                   -1,
                   -1
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None.json:0",
                "expression": "",
                "play": "",
                "play_type": ""
@@ -114,7 +114,7 @@
                   -1,
                   -1
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None.json:0",
                "expression": "",
                "play": "",
                "play_type": ""
@@ -126,7 +126,7 @@
                   -1,
                   -1
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None.json:0",
                "expression": "",
                "play": "",
                "play_type": ""
@@ -138,7 +138,7 @@
                   -1,
                   -1
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None.json:0",
                "expression": "",
                "play": "",
                "play_type": ""
@@ -150,7 +150,7 @@
                   -1,
                   -1
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None.json:0",
                "expression": "",
                "play": "",
                "play_type": ""
@@ -162,37 +162,23 @@
                   -1,
                   -1
                ],
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None.json:0",
                "expression": "",
                "play": "",
                "play_type": ""
             }
          },
          "voice": {
-            "angry": [
-               "refuse1.wav"
-            ],
-            "coquetry": [
-               "grunt.wav",
-               "master1.wav",
-               "meow1.wav"
-            ],
+            "angry": [],
+            "coquetry": [],
             "happy": [],
             "sad": [],
-            "stable": [
-               "meow1.wav"
-            ],
-            "welcome": [
-               "greet_afternoon.wav",
-               "greet_morning.wav",
-               "welcome1.wav",
-               "welcome2.wav",
-               "welcome3.wav"
-            ]
+            "stable": [],
+            "welcome": []
          },
          "special_action": {
             "ActionLogin": {
-               "motion": "NULL:motions/null.json:0",
+               "motion": "None:motions/None`.json:0",
                "expression": "",
                "play": "",
                "play_type": ""

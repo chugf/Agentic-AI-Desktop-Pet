@@ -1,32 +1,39 @@
 from .Config import _Config
+from . import Register
 from . import operate
 from . import setting
 from . import menu
-from . import Register
+from . import control
 
 
-class ContentMenu(menu.ContentMenu):
+class _ContentMenu(menu.ContentMenu):
     def __init__(self):
         super().__init__(_Config)
 
 
-class Operate(operate.Operate):
+class _Operate(operate.Operate):
     def __init__(self):
         super().__init__(_Config)
 
 
-class Setting(setting.Setting):
+class _Setting(setting.Setting):
     def __init__(self):
         super().__init__(_Config)
 
 
-class RegisterSetting(Register.RegisterSetting):
+class _Control(control.Control):
+    def __init__(self):
+        super().__init__(_Config)
+
+
+class _Register(Register.Register):
     def __init__(self):
         super().__init__(_Config)
 
 
 _Config = _Config()
-Setting = Setting()
-ContentMenu = ContentMenu()
-Operate = Operate()
-RegisterSetting = RegisterSetting()
+Setting = _Setting()
+ContentMenu = _ContentMenu()
+Operate = _Operate()
+Control = _Control()
+Register = _Register()
