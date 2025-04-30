@@ -13,7 +13,7 @@ document.getElementById('send-button').addEventListener('click', async function(
     // 添加用户消息到聊天窗口
     addMessage(question, 'user');
     try {
-        const response = await fetch('http://192.168.1.164:12877/chat', {
+        const response = await fetch('{PYTHON_UPLOAD_URL_ADDRESS}/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -84,7 +84,7 @@ document.getElementById('send-button').addEventListener('click', async function(
                                 }
                                 hasProcessed.push(imgUrl);
                                 // 发送图片URL到后端，获取新的URL
-                                const uploadResponse = await fetch('http://192.168.1.164:12877/upload-image', {
+                                const uploadResponse = await fetch('{PYTHON_UPLOAD_URL_ADDRESS}/upload-image', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json'

@@ -5,6 +5,7 @@ import re
 import wave
 import pyaudio
 import io
+import subprocess
 
 from . import file
 
@@ -71,17 +72,22 @@ class StartInternalRecording(QThread):
 class RunPythonPlugin(QThread):
     """运行Python插件"""
     error = pyqtSignal(str)
+    attribute = pyqtSignal(subprocess.Popen)
 
-    def __init__(self, parent: QOpenGLWidget, codes, global_):
+    def __init__(self, parent: QOpenGLWidget, codes_or_file: str, global_: dict, is_python_exits: bool):
         super().__init__(parent)
-        self.codes = codes
+        self.codes_or_file = codes_or_file
         self.global_ = global_
+        self.is_python_exits = is_python_exits
 
     def run(self):
-        try:
-            exec(self.codes, self.global_)
-        except Exception:
-            self.error.emit(f"{traceback.format_exc()}")
+        if self.is_python_exits:
+            self.attribute.emit(subprocess.Popen(["python", self.codes_or_file], shell=True))
+        else:
+            try:
+                exec(self.codes_or_file, self.global_)
+            except Exception:
+                self.error.emit(f"{traceback.format_exc()}")
 
 
 class SpeakThread(QThread):

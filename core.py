@@ -4,6 +4,7 @@ import shutil
 import re
 import random
 import json
+import subprocess
 from difflib import get_close_matches
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -40,6 +41,12 @@ from qfluentwidgets import FluentIcon, NavigationItemPosition, FluentTranslator,
 from qframelesswindow import FramelessWindow, TitleBar
 
 # 初始化变量常亮和配置
+# 检测Python环境变量
+try:
+    subprocess.check_output(['python', '--version'], stderr=subprocess.STDOUT, text=True)
+    IS_PYTHON_EXITS = True
+except subprocess.CalledProcessError as e:
+    IS_PYTHON_EXITS = False
 PLUGIN_GLOBAL = {"print": typing.Any, "input": typing.Any, "interface": typing.Any}
 GWL_EX_STYLE: int = -20
 WS_EX_TRANSPARENT: int = 0x00000020
@@ -254,11 +261,15 @@ class Setting(FramelessWindow):
             languages, configure, self.reload_intelligence)
 
         self.binding_page = interface.setting.binding.Binding(languages, configure, runtime, self.addSubInterface)
+        self.character_sets_page = interface.setting.sub_binding.character.Character(
+            languages, configure, api_config, intelligence, runtime
+        )
         self.animation_binding_page = interface.setting.sub_binding.animation.AnimationBinding(
             languages, configure, desktop.model_json_path, architecture.addon,
             record=self.record_animation, live2d=architecture.live2d, desktop=desktop
         )
-        self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(languages, configure, live2d_parameter)
+        self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(
+            languages, configure, rules, desktop.model_json_path, architecture.addon, runtime)
         self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(
             languages, configure, live2d_parameter)
         self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(
@@ -286,6 +297,8 @@ class Setting(FramelessWindow):
                              parent=self.intelligence_page)
 
         self.addSubInterface(self.binding_page, FluentIcon.TRANSPARENT, languages[133])
+        self.addSubInterface(self.character_sets_page, QIcon("logo.ico"),
+                             languages[164], parent=self.binding_page)
         self.addSubInterface(self.animation_binding_page, FluentIcon.LIBRARY_FILL, languages[39],
                              parent=self.binding_page)
         self.addSubInterface(self.rule_binding_page, FluentIcon.ALIGNMENT, languages[49], parent=self.binding_page)
@@ -424,7 +437,12 @@ class Setting(FramelessWindow):
 
         elif type_ == 'independent':
             try:
-                thread_run = runtime.thread.RunPythonPlugin(self, codes, PLUGIN_GLOBAL)
+                if IS_PYTHON_EXITS:
+                    with open("logs/plugin_cache_runner.py", "w", encoding="utf-8") as pf:
+                        pf.write(codes)
+                        pf.close()
+                    codes = f"{os.getcwd()}/logs/plugin_cache_runner.py"
+                thread_run = runtime.thread.RunPythonPlugin(self, codes, PLUGIN_GLOBAL, IS_PYTHON_EXITS)
                 thread_run.error.connect(self.exception)
                 thread_run.start()
             except Exception:
@@ -568,6 +586,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.setFixedSize(400, 400)
 
         # 变量初始化
+        self.has_output_text = ""
         self.fps_refresh = int(1000 / 900)
         self.continuous_conversation = self.rms_volume = self.turn_count = self.expression_count = 0
         self.model_json_path: str = ""
@@ -687,7 +706,11 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     def audio_visualization(self):
         def draw(wav_bytes: bytes):
             self.rms_volume = runtime.calculate_rms(wav_bytes)
-            visualization.draw_rectangle(self.rms_volume)
+            if self.rms_volume > 0.1:
+                visualization.show()
+                visualization.draw_rectangle(self.rms_volume)
+            else:
+                visualization.hide()
 
         self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
         self.internal_record.data.connect(draw)
@@ -742,20 +765,26 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 _temp_timer.start(5000)
             else:
                 self.change_status_for_conversation("show", False)
-
+        if text.split(":")[0] == "None":
+            text = ':'.join(text.split(":")[1:])
+        new_add_text = text.replace(self.has_output_text, "")
+        exits_element = {k: v for k, v in rules.items() if k in new_add_text}
+        if exits_element:
+            self.playAnimationEvent(exits_element[list(rules.keys())[0]], "expr")
         if ((module_info and configure['settings']['tts']['way'] == "local") or
                 configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts'] and \
                 text.split(":")[0] == "None":
             if configure['settings']['enable']['tts']:
                 voice_generator = runtime.thread.VoiceGenerateThread(
-                    self, configure, module_info, ':'.join(text.split(":")[1:]))
+                    self, configure, module_info, text)
                 voice_generator.result.connect(lambda wave_bytes: runtime.thread.SpeakThread(self, wave_bytes).start())
                 voice_generator.start()
         else:
             interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.clear()
             interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setVisible(True)
             if text.split(":")[0] == "None":
-                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(':'.join(text.split(":")[1:]))
+                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text)
+                self.has_output_text = ""
             else:
                 self.is_generating = True
                 interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text)
@@ -763,6 +792,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             if text is not None:
                 if text[-2:] in rules.keys():
                     self.playAnimationEvent(rules[text[-2:]], "expr")
+        self.has_output_text = text
 
     def have_conversation(self, text: str | None = None, temp_action: bool | None = False):
         """进行聊天 Send conversation"""

@@ -162,3 +162,13 @@ Sampling needs to be done in a quiet environment, and it will record the environ
 Compatible architecture
 Your model architecture is not compatible with the current architecture. You need to restart the program to reload the architecture!
 It's different from the architecture version and the engine version. If you load it multiple times, it may cause the shader to crash.
+Character Sets
+Save Successfully!
+System role can only exits one
+Add System Permission Set
+Add User Permission Set
+Add Assistant Permission Set
+Delete Current Row
+Get Assistant Response
+Save and Apply
+UNDO!

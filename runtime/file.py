@@ -47,6 +47,16 @@ def load_rules(configure_default) -> dict:
     return rules
 
 
+def save_rules(rule: dict, configure_default: str):
+    try:
+        with open(f"./intelligence/rules/{configure_default}.json", "w", encoding="utf-8") as f:
+            json.dump(rule, f, indent=3, ensure_ascii=False)
+            f.close()
+        return True
+    except:
+        return False
+
+
 def load_api() -> dict:
     with open("./resources/api.json", "r", encoding="utf-8") as f:
         api = json.load(f)
