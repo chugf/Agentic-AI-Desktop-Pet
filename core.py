@@ -1,4 +1,5 @@
 import glob
+import multiprocessing
 import time
 import traceback
 import typing
@@ -10,7 +11,6 @@ import subprocess
 import math
 from difflib import get_close_matches
 from socket import gethostbyname, gethostname
-from multiprocessing import Process
 
 # 运行时
 import runtime
@@ -1657,7 +1657,8 @@ if __name__ != "__main__":
     picture = PictureShow()
 
     # 启动网页
-    webui = Process(target=engine.webui.run)
+    multiprocessing.freeze_support()
+    webui = multiprocessing.Process(target=engine.webui.run)
     webui.start()
 else:
     print("?")
