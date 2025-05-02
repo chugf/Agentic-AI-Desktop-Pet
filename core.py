@@ -1597,6 +1597,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             pass
 
     def exit_program(self):
+        webui.kill()
         system_tray.hide()
         architecture.live2d.dispose()
         self.close()
@@ -1656,7 +1657,8 @@ if __name__ != "__main__":
     picture = PictureShow()
 
     # 启动网页
-    Process(target=engine.webui.run).start()
+    webui = Process(target=engine.webui.run)
+    webui.start()
 else:
     print("?")
     sys.exit(0)
