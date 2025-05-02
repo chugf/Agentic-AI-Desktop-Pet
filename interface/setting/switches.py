@@ -1,6 +1,6 @@
 from .customize import function, constants
 
-from PyQt5.Qt import Qt
+from PyQt5.Qt import Qt, QIcon
 from PyQt5.QtWidgets import QWidget
 
 from qfluentwidgets import SettingCardGroup, SwitchSettingCard, OptionsSettingCard, \
@@ -29,6 +29,10 @@ class Config(QConfig):
     live2d_blink = OptionsConfigItem("Live2D", "AutoBlink", True, BoolValidator())
     live2d_breath = OptionsConfigItem("Live2D", "AutoBreath", True, BoolValidator())
     live2d_drag = OptionsConfigItem("Live2D", "AutoDrag", True, BoolValidator())
+
+    physics_switch = OptionsConfigItem("Physics", "physics", True, BoolValidator())
+    physics_bounce = OptionsConfigItem("Physics", "bounce", True, BoolValidator())
+    physics_dumping_motion = OptionsConfigItem("Physics", "dumping", True, BoolValidator())
 
 
 class Switches(ScrollArea):
@@ -236,11 +240,54 @@ class Switches(ScrollArea):
             ))
         self.live2d_group.addSettingCard(self.card_auto_drag)
 
+        # 物理模拟
+        self.physics_group = SettingCardGroup(self.languages[183], self.scroll_widgets)
+        self.total_switch = SwitchSettingCard(
+            configItem=Config.physics_switch,
+            icon=QIcon("./resources/static/physics.png"),
+            title=self.languages[184],
+            content=self.languages[185],
+            parent=self.physics_group
+        )
+        self.total_switch.checkedChanged.connect(
+            lambda value: self.change_configure(
+                value, "settings.physics.total",
+                value, "Physics.switch"
+            ))
+        self.physics_group.addSettingCard(self.total_switch)
+        self.bounce_switch = SwitchSettingCard(
+            configItem=Config.physics_bounce,
+            icon=QIcon("./resources/static/bounce.png"),
+            title=self.languages[186],
+            content=self.languages[187],
+            parent=self.physics_group
+        )
+        self.bounce_switch.checkedChanged.connect(
+            lambda value: self.change_configure(
+                value, "settings.physics.bounce",
+                value, "Physics.bounce"
+            ))
+        self.physics_group.addSettingCard(self.bounce_switch)
+        self.dumping_motion_switch = SwitchSettingCard(
+            configItem=Config.physics_dumping_motion,
+            icon=QIcon("./resources/static/dumping.png"),
+            title=self.languages[188],
+            content=self.languages[189],
+            parent=self.physics_group
+        )
+        self.dumping_motion_switch.checkedChanged.connect(
+            lambda value: self.change_configure(
+                value, "settings.physics.dumping",
+                value, "Physics.dumping"
+            ))
+        self.physics_group.addSettingCard(self.dumping_motion_switch)
+
         self.expand_layout.setSpacing(28)
         self.expand_layout.setContentsMargins(36, 52, 36, 0)
         self.expand_layout.addWidget(self.general_group)
         self.expand_layout.addWidget(self.advanced_group)
         self.expand_layout.addWidget(self.live2d_group)
+        self.expand_layout.addWidget(self.physics_group)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)

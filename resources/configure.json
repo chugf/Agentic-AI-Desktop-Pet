@@ -6,11 +6,17 @@
    "adult_level": 0,
    "settings": {
       "language": "Chinese (Simplified)_China",
+      "size": 1.0,
       "transparency": 1.0,
       "compatibility": false,
       "safety": "shut",
       "intelligence": "qwen-max-latest",
       "translate": "ai.tongyi",
+      "physics": {
+         "total": true,
+         "bounce": true,
+         "dumping": true
+      },
       "live2d": {
          "enable": {
             "AutoBlink": true,

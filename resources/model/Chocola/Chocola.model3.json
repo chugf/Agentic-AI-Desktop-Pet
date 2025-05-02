@@ -5,9 +5,23 @@
 		"Textures": [
 			"Chocola.1024/texture_00.png"
 		],
-		"DisplayInfo": "Chocola.cdi3.json"
+		"DisplayInfo": "Chocola.cdi3.json",
+		"Motions": {
+			"": [
+				{
+					"File": "motions/eat_folder.motion3.json"
+				}
+			]
+		}
 	},
 	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		},
 		{
 			"Target": "Parameter",
 			"Name": "EyeBlink",
@@ -15,13 +29,7 @@
 				"ParamEyeLOpen",
 				"ParamEyeROpen"
 			]
-		},
-		{
-			"Target": "Parameter",
-			"Name": "LipSync",
-			"Ids": [
-				"ParamMouthOpenY"
-			]
 		}
-	]
+	],
+	"HitAreas": []
 }

@@ -111,6 +111,15 @@ class General(QFrame):
         self.scale_opacity.valueChanged.connect(
             lambda value: function.change_configure(
                 value / constants.OPACITY_PRECISION, "settings.transparency", self.configure))
+        # 大小
+        BodyLabel(self.languages[190], self).setGeometry(QRect(5, 387, 80, 35))
+        self.scale_size = Slider(Qt.Horizontal, self)
+        self.scale_size.setRange(20, 100)
+        self.scale_size.setGeometry(QRect(100, 392, 230, 35))
+        self.scale_size.setValue(int(self.configure['settings']['size'] * 100))
+        self.scale_size.valueChanged.connect(
+            lambda value: function.change_configure(
+                value / 100, "settings.size", self.configure))
         webui_url = PushButton(f"{self.languages[154]} http://{gethostbyname(gethostname())}:52013", self)
         webui_url.clicked.connect(lambda: open_webpage(f"http://{gethostbyname(gethostname())}:52013"))
         webui_url.setGeometry(QRect(0, 462, 400, 35))

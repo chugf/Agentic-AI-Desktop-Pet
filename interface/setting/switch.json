@@ -22,5 +22,10 @@
    "QFluentWidgets": {
       "ThemeColor": "#ff009faa",
       "ThemeMode": "Light"
+   },
+   "Physics": {
+      "switch": true,
+      "bounce": true,
+      "dumping": true
    }
 }

@@ -2,6 +2,7 @@ import keyword
 import builtins
 import string
 import inspect
+from typing import Literal
 
 from PyQt5.Qt import Qt, QStringListModel, QStandardItemModel, QFont, QIcon, QStandardItem, QTimer
 from PyQt5.QtWidgets import QCompleter, QComboBox, QVBoxLayout
@@ -256,4 +257,20 @@ def pop_error(parent, title, content, duration=2000, orient=Qt.Horizontal):
         position=InfoBarPosition.TOP,
         duration=duration,
         parent=parent
+    )
+
+
+def pop_notification(title, content, type_: Literal['error', 'warning', 'success']):
+    if type_ == "error":
+        func = InfoBar.error
+    elif type_ == "warning":
+        func = InfoBar.warning
+    else:
+        func = InfoBar.success
+    func(
+        title=title,
+        content=content,
+        orient=Qt.Vertical,
+        position=InfoBarPosition.BOTTOM_RIGHT,
+        parent=InfoBar.desktopView()
     )

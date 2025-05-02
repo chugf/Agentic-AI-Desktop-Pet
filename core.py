@@ -1,3 +1,5 @@
+import glob
+import time
 import traceback
 import typing
 import shutil
@@ -5,9 +7,10 @@ import re
 import random
 import json
 import subprocess
+import math
 from difflib import get_close_matches
 from socket import gethostbyname, gethostname
-from threading import Thread
+from multiprocessing import Process
 
 # 运行时
 import runtime
@@ -35,9 +38,11 @@ from OpenGL import GL
 
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
     QMimeData, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale
-from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox
+from PyQt5.QtCore import QCoreApplication, QPoint
+from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox, QOpenGLWidget, QSystemTrayIcon
 from qfluentwidgets import FluentIcon, NavigationItemPosition, FluentTranslator, \
-    TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action
+    TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action, \
+    AvatarWidget, BodyLabel, CaptionLabel, SystemTrayMenu
 from qframelesswindow import FramelessWindow, TitleBar
 
 # 初始化变量常亮和配置
@@ -570,6 +575,168 @@ class Conversation(QWidget):
         desktop.have_conversation(self.input_question.text())
 
 
+class ProfileCard(QWidget):
+    def __init__(self, icon: str, model_name: str, name: str, description, parent=None):
+        super().__init__(parent=parent)
+        self.avatar = AvatarWidget(icon, self)
+        self.model_name_label = BodyLabel(model_name, self)
+        self.name_label = CaptionLabel(name, self)
+        self.information_label = BodyLabel(description, self)
+
+
+        self.name_label.setTextColor(QColor(96, 96, 96), QColor(206, 206, 206))
+
+        self.setFixedSize(307, 82)
+        self.avatar.setRadius(24)
+        self.avatar.move(2, 6)
+        self.model_name_label.move(64, 13)
+        self.name_label.move(64, 32)
+        self.information_label.move(52, 48)
+
+
+class SystemTray(QSystemTrayIcon):
+    """系统托盘"""
+    def __init__(self):
+        super().__init__()
+        self.setIcon(QIcon("logo.ico"))
+
+        menu = SystemTrayMenu()
+        menu.addActions([
+            Action(FluentIcon.SAVE_COPY, languages[192], self, triggered=self.delete_all),
+            Action(FluentIcon.CLOSE, languages[20], self, triggered=desktop.exit_program),
+        ])
+        self.setContextMenu(menu)
+
+    @staticmethod
+    def delete_all():
+        for pet in clone_pet_model:
+            pet.close()
+
+
+class ClonePet(QOpenGLWidget):
+    """角色克隆类"""
+    def __init__(self, direct_json_path: str | None = None):
+        super().__init__()
+        self.direct_json_path = direct_json_path
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFixedSize(400, 400)
+        self.move(desktop.x() - 50, desktop.y())
+
+        self.click_in_area = self.is_transparent_raise = False
+        self.drag_position = self.is_movement = None
+        self.pet_model: architecture.live2d.LAppModel | None = None
+
+    def delete_cloned(self):
+        self.close()
+
+    @staticmethod
+    def delete_all_cloned():
+        for pet in clone_pet_model:
+            pet.close()
+
+    def set_mouse_transparent(self, is_transparent: bool):
+        if self.is_transparent_raise:
+            return
+        window_handle = int(self.winId())
+        try:
+            current_ex_style = ctypes.windll.user32.GetWindowLongW(window_handle, GWL_EX_STYLE)
+            if is_transparent:
+                new_ex_style = current_ex_style | WS_EX_TRANSPARENT
+            else:
+                new_ex_style = current_ex_style & ~WS_EX_TRANSPARENT
+
+            ctypes.windll.user32.SetWindowLongW(window_handle, GWL_EX_STYLE, new_ex_style)
+        except:
+            self.is_transparent_raise = True
+
+    def is_in_live2d_area(self, click_x: int | None = None, click_y: int | None = None):
+        if click_x is None:
+            click_x = QCursor.pos().x() - self.x()
+        if click_y is None:
+            click_y = QCursor.pos().y() - self.y()
+        h = self.height()
+        try:
+            alpha = GL.glReadPixels(click_x * QGuiApplication.primaryScreen().devicePixelRatio(),
+                                    (h - click_y) * QGuiApplication.primaryScreen().devicePixelRatio(),
+                                    1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)[3]
+        except GL.error.GLError:
+            alpha = 0
+        return alpha > 0
+
+    def contextMenuEvent(self, a0):
+        menu = RoundMenu("CLONEMENU", self)
+
+        icon_path = _i[0] if (_i := glob.glob(f"./resources/model/{configure_default}/*.png")) else "logo.ico"
+        card = ProfileCard(icon_path, configure['name'], configure_default,
+                           languages[181].format(name=configure['name']), menu)
+        menu.addWidget(card, selectable=False)
+
+        menu.addSeparator()
+
+        delete_me = Action(FluentIcon.DELETE, languages[180], self)
+        delete_me.triggered.connect(self.delete_cloned)
+        menu.addAction(delete_me)
+
+        delete_all = Action(FluentIcon.CLOSE, languages[192], self)
+        delete_all.triggered.connect(self.delete_all_cloned)
+        menu.addAction(delete_all)
+
+        menu.exec_(a0.globalPos())
+
+    def timerEvent(self, a0):
+        if not self.isVisible():
+            return
+
+        local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
+        self.pet_model.Drag(local_x, local_y)
+
+        self.pet_model.SetScale(configure['settings']['size'])
+
+        if self.is_in_live2d_area(local_x, local_y):
+            self.set_mouse_transparent(False)
+            self.click_in_area = True
+        else:
+            self.set_mouse_transparent(True)
+            self.click_in_area = False
+
+        self.update()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.LeftButton:
+            self.is_movement = True
+            if self.drag_position is not None:
+                if self.click_in_area:
+                    new_pos = event.globalPos() - self.drag_position
+                    if configure['settings']['enable']['locktsk']:
+                        new_pos.setY(max(desktop.screen_geometry.height() - self.height(), new_pos.y()))
+                    self.move(new_pos)
+
+                event.accept()
+
+    def initializeGL(self):
+        self.pet_model = architecture.live2d.LAppModel()
+        if self.direct_json_path is None:
+            self.pet_model.LoadModelJson(desktop.model_json_path)
+        else:
+            self.pet_model.LoadModelJson(self.direct_json_path)
+        self.pet_model.SetScale(configure['settings']['size'])
+        self.startTimer(1)
+
+    def resizeGL(self, w, h):
+        self.pet_model.Resize(w, h)
+
+    def paintGL(self):
+        architecture.live2d.clearBuffer()
+        self.pet_model.Update()
+        self.pet_model.Draw()
+
+
 class DesktopPet(shader.ADPOpenGLCanvas):
     def __init__(self, display_x: int | None = None, display_y: int | None = None):
         super().__init__()
@@ -586,17 +753,20 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.setFixedSize(400, 400)
 
         # 变量初始化
-        self.has_output_text = ""
+        self.has_output_text: str = ""
         self.fps_refresh = int(1000 / 900)
         self.continuous_conversation = self.rms_volume = self.turn_count = self.expression_count = 0
         self.model_json_path: str = ""
         self.amount = self.click_in_area = self.click_x = self.click_y = -1
         self.speaking_lists: list[bool] = []
         self.is_playing_expression = self.is_penetration = self.is_playing_animation = self.is_movement = False
-        self.speech_recognition = self.enter_position = self.drag_position = None
-        self.image_path = self.direction = self.last_pos = None
+        self.physics_constant = None
+        self.speech_recognition = self.enter_position = self.drag_position = self.drag_start_position = None
+        self.last_time = self.last_hypotenuse = self.image_path = self.direction = self.last_pos = None
         self.pet_model: architecture.live2d.LAppModel | None = None
         self.is_continuous = self.is_generating = self.is_transparent_raise = False
+        # 物理模拟
+        self.speed_centimeter = self.angle_theta = 0.0
         # 初始化部分
         self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
         self.recognition_thread = runtime.thread.RecognitionThread(self, configure)
@@ -827,6 +997,53 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         text_generate.result.connect(lambda texts: self.conversation_display(
             texts, current, temp_action))
 
+    @staticmethod
+    def clone_pet(_=None, model=None):
+        json_model = None
+        if model is not None:
+            json_file = get_close_matches(f"{model}.model.json", os.listdir(f"./resources/model/{model}"))
+            json_model = f"./resources/model/{model}/{json_file[0]}"
+        clone_pet_model.append(ClonePet(json_model))
+        try:
+            clone_pet_model[-1].show()
+        except (KeyError, IndexError):
+            pass
+
+    def physics(self):
+        def animate():
+            if (-0.2 <= self.physics_constant.velocity_y <= 0.1 and
+                    self.pos().y() >= self.screen_geometry.height() - self.height()) or self.is_movement:
+                timer.stop()
+                return
+
+            self.physics_constant.velocity_y += self.physics_constant.acceleration
+            new_x = self.x() + self.physics_constant.velocity_x
+            new_y = self.y() + self.physics_constant.velocity_y
+
+            if new_y >= self.screen_geometry.height() - self.height():
+                new_y = self.screen_geometry.height() - self.height()
+                if configure['settings']['physics']['bounce']:
+                    self.physics_constant.velocity_y *= -self.physics_constant.restitution
+                    if abs(self.physics_constant.velocity_y) < 0.5:
+                        self.physics_constant.velocity_y = 0
+                else:
+                    self.physics_constant.velocity_y = 0
+
+            if new_x <= 0 or new_x + self.width() >= self.screen_geometry.width():
+                self.physics_constant.velocity_x *= -0.7
+
+            conversation.move(round(new_x), round(new_y) - 60)
+            visualization.move(round(new_x), round(new_y) - 20)
+            self.move(round(new_x), round(new_y))
+
+        self.physics_constant = engine.physics.BasePhysics()
+        if abs(self.speed_centimeter) >= 8 and self.angle_theta <= 70 and configure['settings']['physics']['dumping']:
+            self.physics_constant.velocity_y = -7.0
+            self.physics_constant.velocity_x = self.speed_centimeter
+        timer = QTimer(self)
+        timer.timeout.connect(animate)
+        timer.start(16)
+
     # 自定义事件
     @staticmethod
     def clear_memories():
@@ -851,7 +1068,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.pet_model.SetParameterValue(param, values['default'], 1)
 
     # 加载模型事件
-    def loadModelEvent(self, model):
+    def loadModelEvent(self, model, is_info: bool = False):
         try:
             model_files = os.listdir(f"./resources/model/{model}")
             # 寻找最像模型json文件的那一个文件
@@ -860,9 +1077,13 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                                     f"{model_json_file}")
             # 加载架构
             if model_json_file.split(".")[1] == "model3":
+                if is_info:
+                    return 3, self.model_json_path
                 if architecture.live2d.LIVE2D_VERSION != 3:
                     architecture.reload(3)
             elif model_json_file.split(".")[1] == "model":
+                if is_info:
+                    return 2, self.model_json_path
                 if architecture.live2d.LIVE2D_VERSION != 2:
                     architecture.reload(2)
             else:
@@ -917,6 +1138,13 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         content_menu = RoundMenu("MENU", parent=self)
 
+        icon_path = _i[0] if (_i := glob.glob(f"./resources/model/{configure_default}/*.png")) else "logo.ico"
+        card = ProfileCard(icon_path, configure['name'], configure_default,
+                           languages[182].format(name=configure['name']), content_menu)
+        content_menu.addWidget(card, selectable=False)
+
+        content_menu.addSeparator()
+
         settings_action = Action(FluentIcon.SETTING, languages[129], self)
         settings_action.triggered.connect(show_setting_logics)
         content_menu.addAction(settings_action)
@@ -930,6 +1158,21 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         # 分割线
         content_menu.addSeparator()
 
+        clone_action = Action(FluentIcon.COPY, languages[179], self)
+        clone_action.triggered.connect(self.clone_pet)
+        content_menu.addAction(clone_action)
+
+        # 其他角色克隆
+        as_another_clone_action = RoundMenu(languages[191], self)
+        as_another_clone_action.setIcon(FluentIcon.SAVE_COPY)
+        content_menu.addMenu(as_another_clone_action)
+        for model in os.listdir("./resources/model"):
+            if os.path.exists(f"./resources/model/{model}/{architecture.live2d.LIVE2D_VERSION}"):
+                clone_model = Action(model, self)
+                clone_model.triggered.connect(lambda _, m=model: self.clone_pet(m))
+                as_another_clone_action.addAction(clone_model)
+
+        # 插件
         for views_item in interface.subscribe.views.Operate.GetContentMenu():
             if isinstance(views_item, RoundMenu):
                 views_item.setParent(self)
@@ -971,6 +1214,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         if not self.isVisible():
             return
+        # 设置大小
+        self.pet_model.SetScale(configure['settings']['size'])
         # 设置透明度
         self.setCanvasOpacity(configure['settings']['transparency'])
         # 判断兼容性
@@ -1082,11 +1327,11 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         if self.is_in_live2d_area(QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()):
             self.click_in_area = True
             self.click_x, self.click_y = x, y
-            event.accept()
 
         if event.button() == Qt.LeftButton:
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
+            self.drag_start_position = QPoint(event.globalPos().x(), event.globalPos().y())
+        event.accept()
 
     def mouseMoveEvent(self, event):
         def checker(parameter: str, turn_count: int) -> bool:
@@ -1099,55 +1344,78 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             )
 
         x, y = QCursor.pos().x() - self.x(), QCursor.pos().y()
-        # 拖动事件
-        if event.buttons() & Qt.LeftButton:
+        current_pos = event.pos()
+        current_x = current_pos.x()
+        current_y = current_pos.y()
+        current_time = time.time()
+
+        # 算改变方向
+        if self.last_pos is not None:
+            last_x, last_y = self.last_pos.x(), self.last_pos.y()
+
+            # 状态
+            if current_x > last_x:
+                new_direction = 'right'
+            elif current_x < last_x:
+                new_direction = 'left'
+            else:
+                new_direction = self.direction
+
+            # 检查方向是否改变
+            if self.direction is not None and new_direction != self.direction:
+                self.turn_count += 1
+
+            self.direction = new_direction
+
+        self.last_pos = current_pos
+
+        # 接触式
+        if event.buttons() & Qt.LeftButton and self.drag_position is not None:
+            # 算物理模拟部分
+            # 距离原点的变化量
+            delta_x = QCursor.pos().x() - self.drag_start_position.x()
+            delta_y = QCursor.pos().y() - self.drag_start_position.y()
+            hypotenuse = math.sqrt(abs(delta_x) ** 2 + abs(delta_y) ** 2)
+            if delta_x != 0:
+                # 根据直角边由三角函数算出角度
+                self.angle_theta = math.degrees(math.atan(abs(delta_y) / abs(delta_x)))
+                if self.last_time is None:
+                    self.last_time = current_time
+                    self.last_hypotenuse = hypotenuse
+                else:
+                    time_difference = current_time - self.last_time
+                    if time_difference > 0:
+                        speed_pixel = hypotenuse / time_difference
+                        self.speed_centimeter = (speed_pixel * 2.54 / DPI_SCALE_NORMAL) * time_difference
+                        if self.direction == 'left':
+                            self.speed_centimeter = -self.speed_centimeter
+
+                    self.last_time = current_time
+                    self.last_hypotenuse = hypotenuse
+
             self.is_movement = True
-            if self.drag_position is not None:
-                if self.click_in_area:
-                    cv_new_pos = event.globalPos() - self.drag_position
-                    new_pos = event.globalPos() - self.drag_position
-                    if configure['settings']['enable']['locktsk']:
-                        new_pos.setY(max(self.screen_geometry.height() - self.height(), new_pos.y()))
-                        cv_new_pos.setY(max(self.screen_geometry.height() - self.height() - 60, new_pos.y() - 60))
-                    else:
-                        cv_new_pos.setY(new_pos.y() - 60)
-                    self.move(new_pos)
+            if self.click_in_area:
+                cv_new_pos = event.globalPos() - self.drag_position
+                new_pos = event.globalPos() - self.drag_position
+                if configure['settings']['enable']['locktsk']:
+                    new_pos.setY(max(self.screen_geometry.height() - self.height(), new_pos.y()))
+                    cv_new_pos.setY(max(self.screen_geometry.height() - self.height() - 60, new_pos.y() - 60))
+                else:
+                    cv_new_pos.setY(new_pos.y() - 60)
+                self.move(new_pos)
 
-                    for action_item in interface.subscribe.actions.Operate.GetMouseDragAction():
-                        action_item(x, y, self.x(), self.y())
+                for action_item in interface.subscribe.actions.Operate.GetMouseDragAction():
+                    action_item(x, y, self.x(), self.y())
 
-                    picture.move(self.x() - self.width(), self.y())
-                    interface.subscribe.hooks.Operate.GetConversationInterface().move(cv_new_pos)
-                    cv_new_pos.setY(cv_new_pos.y() + 40)
-                    visualization.move(cv_new_pos)
-                event.accept()
+                picture.move(self.x() - self.width(), self.y())
+                interface.subscribe.hooks.Operate.GetConversationInterface().move(cv_new_pos)
+                cv_new_pos.setY(cv_new_pos.y() + 40)
+                visualization.move(cv_new_pos)
+            event.accept()
 
         # 非接触悬浮鼠标的互动
-        if self.enter_position and not event.buttons() & Qt.LeftButton:
+        elif self.enter_position and not event.buttons() & Qt.LeftButton:
             # 处理互动事件/动画
-            current_pos = event.pos()
-            current_x = current_pos.x()
-            current_y = current_pos.y()
-
-            if self.last_pos is not None:
-                last_x, last_y = self.last_pos.x(), self.last_pos.y()
-
-                # 状态
-                if current_x > last_x:
-                    new_direction = 'right'
-                elif current_x < last_x:
-                    new_direction = 'left'
-                else:
-                    new_direction = self.direction
-
-                # 检查方向是否改变
-                if self.direction is not None and new_direction != self.direction:
-                    self.turn_count += 1
-
-                self.direction = new_direction
-
-            self.last_pos = current_pos
-
             # 互动事件/动画
             if self.click_in_area and not self.is_movement:
                 # 摸头互动
@@ -1230,6 +1498,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         for action_item in interface.subscribe.actions.Operate.GetMouseReleaseAction():
             action_item()
         self.is_movement = False
+        if configure['settings']['physics']['total']:
+            self.physics()
 
     # 鼠标进入事件 Mouse entry event
     def enterEvent(self, event):
@@ -1280,7 +1550,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     def on_init(self):
         architecture.live2d.glewInit()
         self.pet_model = architecture.live2d.LAppModel()
-        self.loadModelEvent(configure_default)
+        desktop.loadModelEvent(configure_default)
+        self.pet_model.SetScale(configure['settings']['size'])
         # 初始化载入
         self.playAnimationEvent("ActionLogin")
         runtime.thread.SpeakThread(self, runtime.file.get_audio_path(
@@ -1326,6 +1597,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             pass
 
     def exit_program(self):
+        system_tray.hide()
         architecture.live2d.dispose()
         self.close()
         try:
@@ -1340,12 +1612,16 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
 
+clone_pet_model: list[ClonePet] = []
 if __name__ != "__main__":
     with open('./engine/static/scripts.js', 'r', encoding='utf-8') as f:
         js_code = f.read().replace("{PYTHON_UPLOAD_URL_ADDRESS}", f"http://{gethostbyname(gethostname())}:12877")
         f.close()
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     runtime.file.write_file("./engine/static/scripts.js", js_code)
     app = QApplication(sys.argv)
+
+    DPI_SCALE_NORMAL = app.primaryScreen().logicalDotsPerInch()
 
     translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
     app.installTranslator(translator)
@@ -1362,6 +1638,7 @@ if __name__ != "__main__":
     desktop.show()
     setting = Setting()
     conversation = Conversation()
+    system_tray = SystemTray()
 
     # 注册接口
     interface.subscribe.interact.Register.SetLargeLanguageModel(
@@ -1374,12 +1651,12 @@ if __name__ != "__main__":
     interface.subscribe.hooks.Register.HookSettingInterface(setting)
 
     interface.subscribe.hooks.Operate.GetConversationInterface().move(desktop.x(), desktop.y() - 60)
+    system_tray.show()
     visualization.move(desktop.x(), desktop.y() - 20)
     picture = PictureShow()
 
     # 启动网页
-    Thread(target=engine.webui.run).start()
-
+    Process(target=engine.webui.run).start()
 else:
     print("?")
     sys.exit(0)

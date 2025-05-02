@@ -165,6 +165,7 @@ It's different from the architecture version and the engine version. If you load
 Character Sets
 Save Successfully!
 System role can only exits one
+Please select user group and try again
 Add System Permission Set
 Add User Permission Set
 Add Assistant Permission Set
@@ -172,3 +173,21 @@ Delete Current Row
 Get Assistant Response
 Save and Apply
 UNDO!
+Trigger Words
+Execute Expr
+Add
+Delete
+Clone Character
+Delete this Cloning...
+Cute cloning character --- {name}
+Cue the thunder... {name}’s in the house!
+Physics Simulation
+Physics Calculation
+enable physics calculation (Gravity acceleration, elastic potential energy)
+elastic potential energy
+Bounce up when it falls to the ground
+Damping Motion
+Consideration of reduction of kinetic energy based on resistance when throwing (parabolic motion)
+Character Size
+Clone
+Delete all cloning
