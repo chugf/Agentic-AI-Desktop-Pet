@@ -25,6 +25,7 @@ class Config(QConfig):
         "Advanced", "safety", "shut",
         OptionsValidator(["shut", "l1", "l2", "l3", "l4", "l5"]), restart=True)
     audio_visualization = OptionsConfigItem("Advanced", "visualization", False, BoolValidator())
+    realtime_api = OptionsConfigItem("Advanced", "realtime", False, BoolValidator())
 
     live2d_blink = OptionsConfigItem("Live2D", "AutoBlink", True, BoolValidator())
     live2d_breath = OptionsConfigItem("Live2D", "AutoBreath", True, BoolValidator())
@@ -154,6 +155,20 @@ class Switches(ScrollArea):
             lambda value: function.change_configure(
                 value.value, "Advanced.penetration", cache_config, constants.CACHE_CONFIGURE_PATH))
         self.advanced_group.addSettingCard(self.card_mouse_penetration)
+        self.card_realtime_api = SwitchSettingCard(
+            configItem=Config.realtime_api,
+            icon=QIcon("./resources/static/realtime.png"),
+            title="开启 Realtime(实时) API 选项",
+            content="用于独立程序的API接口",
+            parent=self.advanced_group
+        )
+        self.card_realtime_api.setIconSize(18, 18)
+        self.card_realtime_api.checkedChanged.connect(
+            lambda value: self.change_configure(
+                value, "settings.enable.realtimeAPI",
+                value, "Advanced.realtime"
+            ))
+        self.advanced_group.addSettingCard(self.card_realtime_api)
 
         self.card_taskbar_lock = SwitchSettingCard(
             configItem=Config.taskbar_lock,
@@ -254,6 +269,7 @@ class Switches(ScrollArea):
                 value, "settings.physics.total",
                 value, "Physics.switch"
             ))
+        self.total_switch.setIconSize(20, 20)
         self.physics_group.addSettingCard(self.total_switch)
         self.bounce_switch = SwitchSettingCard(
             configItem=Config.physics_bounce,
@@ -262,6 +278,7 @@ class Switches(ScrollArea):
             content=self.languages[187],
             parent=self.physics_group
         )
+        self.bounce_switch.setIconSize(20, 20)
         self.bounce_switch.checkedChanged.connect(
             lambda value: self.change_configure(
                 value, "settings.physics.bounce",
@@ -275,6 +292,7 @@ class Switches(ScrollArea):
             content=self.languages[189],
             parent=self.physics_group
         )
+        self.dumping_motion_switch.setIconSize(20, 20)
         self.dumping_motion_switch.checkedChanged.connect(
             lambda value: self.change_configure(
                 value, "settings.physics.dumping",

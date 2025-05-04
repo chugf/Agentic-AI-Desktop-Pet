@@ -14,7 +14,7 @@ class PluginManager(FluentWindow):
 
         self.plugin_list_interface = interfaces.plugin_list.PluginList()
 
-        self.addSubInterface(self.plugin_list_interface, FluentIcon.HOME, "插件列表")
+        self.addSubInterface(self.plugin_list_interface, FluentIcon.DELETE, "插件卸载")
 
 
 if __name__ == "__main__":

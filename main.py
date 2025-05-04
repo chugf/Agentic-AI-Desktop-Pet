@@ -1,4 +1,5 @@
 from typing import Literal
+import multiprocessing
 
 from PyQt5.Qt import QApplication, QPixmap, QIcon, QPainter, QLinearGradient, QColor, QFontMetrics, QTimer
 from PyQt5.QtCore import Qt, QRect
@@ -151,6 +152,7 @@ class StartUp(QWidget):
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     app = QApplication([])
     startup = StartUp()
     startup.show()

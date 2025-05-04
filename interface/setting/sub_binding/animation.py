@@ -78,9 +78,11 @@ class AnimationBinding(QWidget):
         BodyLabel(self.languages[45], self).setGeometry(QRect(10, 232, 100, 30))
         self.select_expression_name = ComboBox(self)
         self.select_expression_name.addItems(self.expression_lists)
+        self.select_expression_name.setCurrentText("")
         self.select_expression_name.setText("")
         self.select_expression_name.setGeometry(QRect(100, 232, 300, 30))
         self.select_expression_name.currentTextChanged.connect(self.change_expression_name)
+        self.select_expression_name.setCurrentIndex(-1)
 
         BodyLabel(self.languages[136], self).setGeometry(QRect(10, 272, 100, 30))
         self.input_import_audio = LineEdit(self)
@@ -194,6 +196,10 @@ class AnimationBinding(QWidget):
 
     def change_expression_name(self, text):
         self.kwargs.get("desktop").pet_model.SetExpression(text)
+        self.select_motion_name.setCurrentIndex(-1)
+        self.select_motion_group.setCurrentIndex(-1)
+        self.select_motion_name.setCurrentText("")
+        self.select_motion_group.setCurrentText("")
         self.select_motion_name.setText("")
         self.select_motion_group.setText("")
         QTimer.singleShot(8000, lambda: self.kwargs.get("desktop").pet_model.ResetExpression())
@@ -212,6 +218,8 @@ class AnimationBinding(QWidget):
             text,
             self.motion_dict[text].index(self.select_motion_name.currentText()),
             self.kwargs.get("live2d").MotionPriority.FORCE)
+        self.select_expression_name.setCurrentIndex(-1)
+        self.select_expression_name.setCurrentText("")
         self.select_expression_name.setText("")
 
     def start_record(self):

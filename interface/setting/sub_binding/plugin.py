@@ -4,17 +4,18 @@ from ..customize import function
 from ..customize import widgets, highlight
 
 from PyQt5.Qt import QRect, QFont, QFontDatabase
-from PyQt5.QtWidgets import QFrame, QButtonGroup
+from PyQt5.QtWidgets import QWidget, QButtonGroup
 
 from qfluentwidgets import PrimaryPushButton, BodyLabel, LineEdit, ComboBox, RadioButton, FluentIcon
 
 
-class PluginBinding(QFrame):
-    def __init__(self, interface_module, run_function: callable, languages, configure):
+class PluginBinding(QWidget):
+    def __init__(self, interface_module, run_function: callable, languages, configure, **kwargs):
         super().__init__()
         self.run_function = run_function
         self.languages = languages
         self.configure = configure
+        self.kwargs = kwargs
         self.setObjectName("PluginBinding")
 
         BodyLabel(self.languages[75], self).setGeometry(QRect(20, 52, 200, 30))
@@ -64,8 +65,12 @@ class PluginBinding(QFrame):
         self.button_groups.addButton(self.single_independent)
         self.button_groups.addButton(self.single_automatic)
 
-        self.click_compile = PrimaryPushButton(self.languages[38], self)
+        self.click_compile = PrimaryPushButton("准备编译", self)
+        self.click_compile.clicked.connect(self.compile)
         self.click_compile.setGeometry(QRect(10, 472, 620, 30))
+
+    def compile(self):
+        self.kwargs.get('compile_plugin')(self.button_groups.checkedId(), self.input_plugin_folder.text())
 
     def fill_plugin_information(self):
         folder_path = function.select_folder(self, self.languages[40], self.input_plugin_folder)

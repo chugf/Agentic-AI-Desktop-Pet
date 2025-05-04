@@ -133,6 +133,9 @@ class General(QFrame):
 
         self.fill_information()
 
+    def add_another_one(self, model):
+        self.select_character.addItem(model)
+
     def add_character(self):
         def check_if_live2d(path: str):
             exist_v3_over = glob.glob(f"{path}/*.model3.json")
@@ -160,13 +163,11 @@ class General(QFrame):
         if self.select_character.currentText() in ("Chocola", "kasumi2"):
             widgets.pop_error(self, self.languages[78], self.languages[66])
             return
-        list_character = os.listdir("./resources/model")
-        list_character.remove(self.select_character.currentText())
-        function.change_configure("Chocola", "default", self.configure)
-        self.kwargs.get("reload")("Chocola", "character")
-        self.runtime_module.file.delete_character(self.configure, self.select_character.currentText())
+        selected = self.select_character.currentText()
+        self.change_character("Chocola")
         self.select_character.setCurrentText("Chocola")
-        self.select_character.removeItem(os.listdir("./resources/model").index(self.select_character.currentText()))
+        self.select_character.removeItem(os.listdir("./resources/model").index(selected))
+        self.runtime_module.file.delete_character(self.configure, selected)
 
     def change_language(self, value):
         function.change_configure(value, "settings.language", self.configure)

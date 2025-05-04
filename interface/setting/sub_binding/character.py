@@ -94,7 +94,7 @@ class Character(QWidget):
                 if item is not None:
                     row_data.append(item.text())
                 else:
-                    row_data.append(None)
+                    row_data.append("")
             all_elements.append(row_data)
 
         return all_elements
@@ -154,12 +154,10 @@ class Character(QWidget):
                 new_number = ""
             else:
                 new_number = 1
-        if index == -1:
-            insert_index = self.table_character.rowCount() - 1
-        else:
-            insert_index = index
+        insert_index = index
         if is_insert is False:
             self.table_character.insertRow(self.table_character.rowCount())
+            insert_index = self.table_character.rowCount() - 1
             self.table_character.setItem(insert_index, 0,
                                          QTableWidgetItem(f"{type_}{new_number}"))
             self.table_character.setItem(insert_index, 1, QTableWidgetItem(text))

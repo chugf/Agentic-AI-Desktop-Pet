@@ -6,7 +6,24 @@ from typing import Literal
 
 from PyQt5.Qt import Qt, QStringListModel, QStandardItemModel, QFont, QIcon, QStandardItem, QTimer
 from PyQt5.QtWidgets import QCompleter, QComboBox, QVBoxLayout
-from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox
+from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox, IconWidget, CaptionLabel, ElevatedCardWidget
+
+
+class SimpleCard(ElevatedCardWidget):
+    def __init__(self, icon, name: str, parent=None):
+        super().__init__(parent)
+        self.iconWidget = IconWidget(icon)
+        self.label = CaptionLabel(name, self)
+
+        self.vBoxLayout = QVBoxLayout(self)
+        self.vBoxLayout.setAlignment(Qt.AlignCenter)
+        self.vBoxLayout.addStretch(1)
+        self.vBoxLayout.addWidget(self.iconWidget, 0, Qt.AlignCenter)
+        self.vBoxLayout.addStretch(1)
+        self.vBoxLayout.addWidget(self.label, 0, Qt.AlignHCenter | Qt.AlignBottom)
+
+        self.setFixedSize(70, 70)
+        self.iconWidget.setFixedSize(30, 30)
 
 
 class CodeEdit(TextEdit):
@@ -260,7 +277,7 @@ def pop_error(parent, title, content, duration=2000, orient=Qt.Horizontal):
     )
 
 
-def pop_notification(title, content, type_: Literal['error', 'warning', 'success']):
+def pop_notification(title, content, type_: Literal['error', 'warning', 'success'], duration=2500):
     if type_ == "error":
         func = InfoBar.error
     elif type_ == "warning":
@@ -272,5 +289,6 @@ def pop_notification(title, content, type_: Literal['error', 'warning', 'success
         content=content,
         orient=Qt.Vertical,
         position=InfoBarPosition.BOTTOM_RIGHT,
+        duration=duration,
         parent=InfoBar.desktopView()
     )

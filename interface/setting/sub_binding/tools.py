@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QWidget
 
 
-class ToolsBinding(QFrame):
+class ToolsBinding(QWidget):
     def __init__(self, languages, configure, param_dict):
         super().__init__()
         self.languages = languages

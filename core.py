@@ -39,10 +39,11 @@ from OpenGL import GL
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
     QMimeData, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale
 from PyQt5.QtCore import QCoreApplication, QPoint
-from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox, QOpenGLWidget, QSystemTrayIcon
+from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox, QOpenGLWidget, \
+    QSystemTrayIcon, QVBoxLayout
 from qfluentwidgets import FluentIcon, NavigationItemPosition, FluentTranslator, \
     TextEdit, LineEdit, PrimaryToolButton, qrouter, NavigationInterface, RoundMenu, Action, \
-    AvatarWidget, BodyLabel, CaptionLabel, SystemTrayMenu
+    AvatarWidget, BodyLabel, CaptionLabel, SystemTrayMenu, ScrollArea, PushButton
 from qframelesswindow import FramelessWindow, TitleBar
 
 # 初始化变量常亮和配置
@@ -199,6 +200,109 @@ class AudioVisualization(QWidget):
             x_offset += 15
 
 
+# 编译插件过程
+class CompileProgress(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon("logo.ico"))
+        self.setWindowTitle("CompileProgress - Agentic AI")
+        self.setGeometry(100, 100, 600, 400)
+        self.select_attr = ""
+        self.select_folder = ""
+
+        # 图标选择
+        BodyLabel("Step.1 选择图标", self).setGeometry(10, 10, 480, 30)
+        self.scroll_area = ScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.container = QWidget()
+        self.main_layout = QVBoxLayout(self.container)
+        self.main_layout.setAlignment(Qt.AlignTop)
+        self.main_layout.setSpacing(10)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
+
+        self.scroll_area.setWidget(self.container)
+        self.scroll_area.setGeometry(10, 40, 340, 350)
+
+        row = 0
+        col = 0
+        max_per_row = 4
+
+        for attr_name in dir(FluentIcon):
+            if attr_name.startswith("__") or attr_name in ("name", "value", "ICONS"):
+                continue
+
+            icon = getattr(FluentIcon, attr_name)
+            card = interface.setting.customize.widgets.SimpleCard(icon, attr_name, self.container)
+            card.clicked.connect(lambda i=icon: self.fill_information(str(i).split(".")[-1], 0))
+
+            if col == 0:
+                self.hbox = QHBoxLayout()
+                self.hbox.setSpacing(10)
+                self.hbox.setAlignment(Qt.AlignLeft)
+                self.main_layout.addLayout(self.hbox)
+
+            self.hbox.addWidget(card)
+            col += 1
+
+            if col >= max_per_row:
+                col = 0
+                row += 1
+        # 输入名称
+        BodyLabel("Step.2 输入名称", self).setGeometry(360, 10, 480, 30)
+        self.input_name = LineEdit(self)
+        self.input_name.setGeometry(360, 50, 200, 30)
+        self.input_name.setPlaceholderText("请输入名称")
+        self.input_name.textChanged.connect(lambda: self.fill_information(self.input_name.text(), 1))
+
+        # 信息展示
+        self.input_icon_show = LineEdit(self)
+        self.input_icon_show.setGeometry(360, 130, 200, 30)
+        self.input_icon_show.textChanged.connect(lambda: self.fill_information(self.input_icon_show.text(), 0))
+        self.input_name_show = LineEdit(self)
+        self.input_name_show.setGeometry(360, 165, 200, 30)
+
+        self.desc_show = TextEdit(self)
+        self.desc_show.setLineWrapMode(0)
+        self.desc_show.setGeometry(360, 205, 200, 140)
+
+        # 编译
+        self.click_compile = PushButton(languages[38], self)
+        self.click_compile.clicked.connect(self.save)
+        self.click_compile.setGeometry(360, 350, 200, 30)
+
+    def fill_information(self, value, index):
+        if index == 0:
+            self.input_icon_show.setText(value)
+        else:
+            self.input_name.setText(value)
+            self.input_name_show.setText(value)
+        self.desc_show.setText(json.dumps({os.path.basename(self.select_folder): {
+            "icon": self.input_icon_show.text(),
+            "name": self.input_name_show.text(),
+            "attr": self.select_attr}}, ensure_ascii=False, indent=3))
+
+    def set_attr(self, check_id):
+        self.select_attr = check_id
+
+    def set_folder(self, folder_path):
+        self.select_folder = folder_path
+
+    def save(self):
+        with open("./plugin/desc.json", "r", encoding='utf-8') as rpf:
+            desc = json.load(rpf)
+            rpf.close()
+        desc.update(json.loads(str(self.desc_show.toPlainText())))
+        if os.path.exists(f"./plugin/{os.path.basename(self.select_folder)}"):
+            shutil.rmtree(f"./plugin/{os.path.basename(self.select_folder)}")
+        shutil.copytree(self.select_folder, f"./plugin/{os.path.basename(self.select_folder)}")
+        with open("./plugin/desc.json", "w", encoding='utf-8') as wpf:
+            wpf.write(json.dumps(desc, ensure_ascii=False, indent=3))
+            wpf.close()
+
+
 # 设置界面
 class CustomTitleBar(TitleBar):
     def __init__(self, parent):
@@ -278,7 +382,12 @@ class Setting(FramelessWindow):
         self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(
             languages, configure, live2d_parameter)
         self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(
-            interface, self.run_code_for_plugin, languages, configure)
+            interface, self.run_code_for_plugin, languages, configure, compile_plugin=self.compile)
+
+        self.cloud_support_page = interface.setting.cloud.CloudDownload(
+            languages, configure, runtime,
+            self.general_page.add_another_one,
+            self.addSubInterface)
 
         self.about_page = interface.setting.about.About(languages, runtime)
         self.record_timer = QTimer(self)
@@ -419,7 +528,7 @@ class Setting(FramelessWindow):
         print(e_msg)
         interface.setting.customize.widgets.pop_error(self, "TraceBack", e_msg, 5000, Qt.Vertical)
 
-    def examine_and_run(self, codes, type_: typing.Literal['independent', 'enhancement']):
+    def examine_and_run(self, codes, type_: typing.Literal['independent', 'enhancement'], python_file: str | None = None):
         try:
             if runtime.PythonCodeExaminer(codes).optimize_infinite_loop:
                 interface.setting.customize.widgets.pop_warning(self, languages[157], languages[158], 5000)
@@ -443,17 +552,20 @@ class Setting(FramelessWindow):
         elif type_ == 'independent':
             try:
                 if IS_PYTHON_EXITS:
-                    with open("logs/plugin_cache_runner.py", "w", encoding="utf-8") as pf:
-                        pf.write(codes)
-                        pf.close()
-                    codes = f"{os.getcwd()}/logs/plugin_cache_runner.py"
-                thread_run = runtime.thread.RunPythonPlugin(self, codes, PLUGIN_GLOBAL, IS_PYTHON_EXITS)
+                    if python_file is None:
+                        with open("./logs/plugin_cache_runner.py", "w", encoding="utf-8") as pf:
+                            pf.write(codes)
+                            pf.close()
+                        execute_file = f"{os.getcwd()}/logs/plugin_cache_runner.py"
+                    else:
+                        execute_file = f"{python_file}"
+                thread_run = runtime.thread.RunPythonPlugin(self, execute_file, PLUGIN_GLOBAL, IS_PYTHON_EXITS)
                 thread_run.error.connect(self.exception)
                 thread_run.start()
             except Exception:
                 self.exception(traceback.format_exc())
 
-    def run_code_for_plugin(self, codes, run_type=-4):
+    def run_code_for_plugin(self, codes, run_type=-4, ban_independent: bool = False, python_file: str | None = None):
         # 自动选择
         if run_type == -4:
             try:
@@ -462,18 +574,20 @@ class Setting(FramelessWindow):
                 self.exception(traceback.format_exc())
                 return
             if parsed:
-                self.examine_and_run(codes, 'enhancement')
+                self.examine_and_run(codes, 'enhancement', python_file)
 
             else:
-                self.examine_and_run(codes, 'independent')
+                if not ban_independent:
+                    self.examine_and_run(codes, 'independent', python_file)
 
         # 程序增强
         elif run_type == -2:
-            self.examine_and_run(codes, 'enhancement')
+            self.examine_and_run(codes, 'enhancement', python_file)
 
         # 独立程序
         elif run_type == -3:
-            self.examine_and_run(codes, 'independent')
+            if not ban_independent:
+                self.examine_and_run(codes, 'independent', python_file)
 
     # 测试语音合成组
     def reference(self, text):
@@ -490,6 +604,12 @@ class Setting(FramelessWindow):
     def error(self, value):
         if value is False:
             interface.setting.customize.widgets.pop_error(self, languages[64], languages[64])
+
+    @staticmethod
+    def compile(check_id, folder_path):
+        compile_progress.set_attr(check_id)
+        compile_progress.set_folder(folder_path)
+        compile_progress.show()
 
     def resizeEvent(self, e):
         self.titleBar.move(46, 0)
@@ -602,6 +722,7 @@ class SystemTray(QSystemTrayIcon):
 
         menu = SystemTrayMenu()
         menu.addActions([
+            Action(FluentIcon.LINK, "关闭鼠标穿透", self, triggered=desktop.save_change),
             Action(FluentIcon.SAVE_COPY, languages[192], self, triggered=self.delete_all),
             Action(FluentIcon.CLOSE, languages[20], self, triggered=desktop.exit_program),
         ])
@@ -771,6 +892,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.internal_record = runtime.thread.StartInternalRecording(visualization, 0.002)
         self.recognition_thread = runtime.thread.RecognitionThread(self, configure)
         self.recognition_thread.result.connect(self.recognition_success)
+        self.look_timer = QTimer(self)
 
         # 移动位置
         self.screen_geometry = QApplication.desktop().availableGeometry()
@@ -958,7 +1080,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             else:
                 self.is_generating = True
                 interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text)
-            interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.moveCursor(interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.textCursor().End)
+            interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.moveCursor(
+                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.textCursor().End)
             if text is not None:
                 if text[-2:] in rules.keys():
                     self.playAnimationEvent(rules[text[-2:]], "expr")
@@ -1016,7 +1139,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 timer.stop()
                 return
 
-            self.physics_constant.velocity_y += self.physics_constant.acceleration
+            self.physics_constant.velocity_y += self.physics_constant.acceleration * configure['settings']['size']
             new_x = self.x() + self.physics_constant.velocity_x
             new_y = self.y() + self.physics_constant.velocity_y
 
@@ -1037,7 +1160,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.move(round(new_x), round(new_y))
 
         self.physics_constant = engine.physics.BasePhysics()
-        if abs(self.speed_centimeter) >= 8 and self.angle_theta <= 70 and configure['settings']['physics']['dumping']:
+        if (abs(self.speed_centimeter) >= 6 and 10 <= self.angle_theta <= 70 and
+                configure['settings']['physics']['dumping']) and not configure['settings']['enable']['locktsk']:
             self.physics_constant.velocity_y = -7.0
             self.physics_constant.velocity_x = self.speed_centimeter
         timer = QTimer(self)
@@ -1136,6 +1260,12 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             if hwnd:
                 win32gui.SetForegroundWindow(hwnd)
 
+        def run_plugin(code, plugin_folder_, plugin_name_):
+            interface.setting.customize.widgets.pop_notification(f"{plugin_name_}启动中……",
+                                                                 "请稍等插件初始化", "warning", 1500)
+            setting.run_code_for_plugin(
+                code, -3, python_file=f"{os.getcwd()}/plugin/{plugin_folder_}/main.py")
+
         content_menu = RoundMenu("MENU", parent=self)
 
         icon_path = _i[0] if (_i := glob.glob(f"./resources/model/{configure_default}/*.png")) else "logo.ico"
@@ -1169,10 +1299,34 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         for model in os.listdir("./resources/model"):
             if os.path.exists(f"./resources/model/{model}/{architecture.live2d.LIVE2D_VERSION}"):
                 clone_model = Action(model, self)
-                clone_model.triggered.connect(lambda _, m=model: self.clone_pet(m))
+                clone_model.triggered.connect(lambda _, m=model: self.clone_pet(_, m))
                 as_another_clone_action.addAction(clone_model)
 
-        # 插件
+        # 插件启动
+        for independent_plugin_list in independent_plugin_lists:
+            with open(f"./plugin/{independent_plugin_list}/main.py", "r", encoding="utf-8") as pf:
+                plugin_codes = pf.read()
+                pf.close()
+            try:
+                if hasattr(FluentIcon, plugin_requirements[independent_plugin_list]['icon']):
+                    icon = getattr(FluentIcon, plugin_requirements[independent_plugin_list]['icon'])
+                else:
+                    if os.path.exists(plugin_requirements[independent_plugin_list]['icon']):
+                        icon = QIcon(plugin_requirements[independent_plugin_list]['icon'])
+                    else:
+                        icon = QIcon("./resources/static/extension.png")
+                _run_python_plugin_action = Action(icon,
+                                                   plugin_requirements[independent_plugin_list]['name'],
+                                                   self)
+                _run_python_plugin_action.triggered.connect(
+                    lambda _, p=plugin_codes,
+                           ipf=independent_plugin_list,
+                           npf=plugin_requirements[independent_plugin_list]['name']: run_plugin(p, ipf, npf))
+                content_menu.addAction(_run_python_plugin_action)
+            except KeyError:
+                continue
+
+        # 插件的内置interface
         for views_item in interface.subscribe.views.Operate.GetContentMenu():
             if isinstance(views_item, RoundMenu):
                 views_item.setParent(self)
@@ -1189,16 +1343,16 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         content_menu.exec_(self.mapToGlobal(event.pos()))
 
+    def save_change(self):
+        self.is_penetration = False
+        # 刷新设置的缓存文件
+        switches_configure['Advanced']['penetration'] = "shut"
+        runtime.file.save_switch(switches_configure)
+        self.set_mouse_transparent(False)
+        self.setCanvasOpacity(configure['settings']['transparency'])
+
     # 定时器事件 Timer events
     def timerEvent(self, a0: QTimerEvent | None) -> None:
-        def save_change():
-            self.is_penetration = False
-            # 刷新设置的缓存文件
-            switches_configure['Advanced']['penetration'] = "shut"
-            runtime.file.save_switch(switches_configure)
-            self.set_mouse_transparent(False)
-            self.setCanvasOpacity(configure['settings']['transparency'])
-
         def check_mouse_pressed(left_condition: str, right_condition: str):
             if not MouseListener.isListening:
                 MouseListener.start_listening()
@@ -1233,15 +1387,18 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.speech_recognition.closed()
 
         # 定时器检查
-        # if not configure['settings']['enable']['media']:
-        #     if self.look_timer.isActive():
-        #         self.look_timer.stop()
-        # else:
-        #     if not self.look_timer.isActive():
-        #         self.look_timer.start(random.randint(
-        #             configure['settings']['understand']['min'],
-        #             configure['settings']['understand']['max']) * 1000)
-
+        if not configure['settings']['enable']['media']:
+            if self.look_timer.isActive():
+                self.look_timer.stop()
+        else:
+            if not self.look_timer.isActive():
+                self.look_timer.start(random.randint(
+                    configure['settings']['understand']['min'],
+                    configure['settings']['understand']['max']) * 1000)
+        if configure['settings']['enable']['realtimeAPI'] and not RealtimeServer.running:
+            RealtimeServer.start()
+        elif not configure['settings']['enable']['realtimeAPI']:
+            RealtimeServer.stop()
         # 释放资源
         # 检查说话列表的可用性
         if len(self.speaking_lists) == self.speaking_lists.count(False) and not self.speaking_lists:
@@ -1259,22 +1416,22 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             # 如果start有以下几种情况，则取消全局鼠标穿透
             # 下次启动时取消全局鼠标穿透
             if switches_configure['Advanced']['penetration'] == "next" and self.amount == -1:
-                save_change()
+                self.save_change()
             # 鼠标左键或右键在顶部按下时取消全局鼠标穿透
             elif switches_configure['Advanced']['penetration'] in ('left-top', 'right-top'):
                 if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-top', 'right-top') and \
-                        80 > local_y > 0:
+                        80 / configure['settings']['size'] > local_y > 0:
                     MouseListener.stop_listening()
-                    save_change()
+                    self.save_change()
             # 鼠标左键或右键在底部按下时取消全局鼠标穿透
             elif switches_configure['Advanced']['penetration'] in ('left-bottom', 'right-bottom'):
                 if self.is_in_live2d_area(local_x, local_y) and check_mouse_pressed('left-bottom',
                                                                                     'right-bottom') and \
-                        self.height() > local_y > self.height() - 80:
+                        self.height() > local_y > (self.height() - 80) * configure['settings']['size']:
                     MouseListener.stop_listening()
-                    save_change()
+                    self.vsave_change()
         elif switches_configure['Advanced']['penetration'] == "shut" and self.amount == 0:
-            save_change()
+            self.save_change()
 
         # 检查是否开启音频可视化
         if configure['settings']['enable']['visualization']:
@@ -1524,11 +1681,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             action_item(event, action.analyzed_action)
         event.accept()
 
-    def dragLeaveEvent(self, event: QMimeData):
-        action = engine.actions.ActionsEngine(configure, languages, interface)
-        action.analyze_action(event.mimeData().text())
+    def dragLeaveEvent(self, event):
         for action_item in interface.subscribe.actions.Operate.GetDragLeaveAction():
-            action_item(event, action.analyzed_action)
+            action_item(event, None)
         event.accept()
 
     def dragMoveEvent(self, event: QMimeData):
@@ -1613,8 +1768,30 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
 
+def realtime_api(calling, parameter):
+    calling_blocks = calling.split(".")
+    enum_call = getattr(interface, calling_blocks[0])
+    for calling_block in calling_blocks:
+        if calling_block == calling_blocks[0]:
+            continue
+        enum_call = getattr(enum_call, calling_block)
+    if callable(enum_call):
+        if isinstance(parameter, dict):
+            return enum_call(**parameter)
+        else:
+            return enum_call(*parameter)
+    else:
+        return enum_call
+
 clone_pet_model: list[ClonePet] = []
+plugin_lists: list[subprocess.Popen] = []
+independent_plugin_lists = []
+MouseListener = runtime.MouseListener()
+RealtimeServer = interface.realtime.UDPServer(get_interface_answer=realtime_api)
 if __name__ != "__main__":
+    # 前置
+    # Pyinstaller
+    multiprocessing.freeze_support()
     with open('./engine/static/scripts.js', 'r', encoding='utf-8') as f:
         js_code = f.read().replace("{PYTHON_UPLOAD_URL_ADDRESS}", f"http://{gethostbyname(gethostname())}:12877")
         f.close()
@@ -1627,8 +1804,6 @@ if __name__ != "__main__":
     translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
     app.installTranslator(translator)
 
-    MouseListener = runtime.MouseListener()
-
     PluginLogCollector = interface.setting.plog.PluginLogCollector()
     PLUGIN_GLOBAL['interface'] = interface
     PLUGIN_GLOBAL['print'] = PluginLogCollector.print_
@@ -1638,6 +1813,7 @@ if __name__ != "__main__":
     desktop = DesktopPet()
     desktop.show()
     setting = Setting()
+    compile_progress = CompileProgress()
     conversation = Conversation()
     system_tray = SystemTray()
 
@@ -1656,8 +1832,24 @@ if __name__ != "__main__":
     visualization.move(desktop.x(), desktop.y() - 20)
     picture = PictureShow()
 
+    # 启动插件
+    with open("./plugin/desc.json", "r", encoding="utf-8") as f:
+        plugin_requirements = json.load(f)
+        f.close()
+    for plugin_folder in os.listdir(f"./plugin"):
+        if plugin_folder == "desc.json":
+            continue
+        with open(f"./plugin/{plugin_folder}/main.py", "r", encoding="utf-8") as f:
+            codes = f.read()
+            f.close()
+        try:
+            if plugin_requirements[plugin_folder]['attr'] in (-2, -4):
+                setting.run_code_for_plugin(codes, plugin_requirements[plugin_folder]['attr'], True)
+            else:
+                independent_plugin_lists.append(plugin_folder)
+        except KeyError:
+            continue
     # 启动网页
-    multiprocessing.freeze_support()
     webui = multiprocessing.Process(target=engine.webui.run)
     webui.start()
 else:

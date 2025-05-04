@@ -31,7 +31,8 @@
          "online": false,
          "trans": false,
          "rec": false,
-         "locktsk": true
+         "locktsk": true,
+         "realtimeAPI": false
       },
       "cloud": {
          "aliyun": "",

@@ -22,7 +22,7 @@ class ActionsEngine(basic.BaseEngine):
                 else:
                     self.analyzed_action.append(("drag_folder", mime_data[1]))
             else:
-                self.analyzed_action.append(("drag_pure_text", mime_data[1]))
+                self.analyzed_action.append(("drag_pure_text", mime_data[0]))
         print("ANALYZE ACTION: ", self.analyzed_action)
 
     def accept_action(self):

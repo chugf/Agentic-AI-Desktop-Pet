@@ -1,6 +1,6 @@
 {
    "General": {
-      "compatible": false,
+      "compatible": true,
       "adult": false,
       "recognition": false,
       "speaker": false,
@@ -12,7 +12,8 @@
       "locktsk": true,
       "media": true,
       "safety": "shut",
-      "visualization": false
+      "visualization": false,
+      "realtime": false
    },
    "Live2D": {
       "AutoBlink": true,
@@ -24,7 +25,7 @@
       "ThemeMode": "Light"
    },
    "Physics": {
-      "switch": true,
+      "switch": false,
       "bounce": true,
       "dumping": true
    }

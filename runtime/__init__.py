@@ -21,13 +21,17 @@ class PassedNoneContent(object):
     pass
 
 
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
+HEADERS = {
+    "User-Agent": USER_AGENT,
+}
 SENSITIVE_CONTENT = [
     "/resources/configure.json",
     PassedNoneContent(),  # 占位符
     PassedNoneContent(),  # 占位符
 ]
 major = "3"
-minor = "9"
+minor = "10"
 patch = "0"
 
 
@@ -388,7 +392,8 @@ def capture() -> str:
 
 def check_update() -> bool | None:
     try:
-        latest_version = requests.post("https://adp.nekocode.top/update/version.php").json()['version']
+        latest_version = requests.post("https://adp.nekocode.top/update/version.php",
+                                       headers=HEADERS).json()['version']
     except:
         return None
     if latest_version == f"{major}.{minor}.{patch}":
@@ -400,7 +405,8 @@ def check_update() -> bool | None:
 def get_notice_board() -> str:
     request = ""
     try:
-        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get.php").json())
+        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get.php",
+                                         headers=HEADERS).json(),)
     except:
         pass
     return request
@@ -409,7 +415,8 @@ def get_notice_board() -> str:
 def get_policy() -> str:
     request = ""
     try:
-        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get_policy.php").json())
+        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get_policy.php",
+                                         headers=HEADERS).json())
     except:
         pass
     return request
@@ -417,10 +424,11 @@ def get_policy() -> str:
 
 def user_register(email) -> dict:
     try:
-        register_response = requests.post("https://adp.nekocode.top/account/register.php", json={'to': email})
+        register_response = requests.post("https://adp.nekocode.top/account/register.php", json={'to': email},
+                                          headers=HEADERS)
         if register_response.json().get('error'):
             return {"status": False, "message": register_response.json()['error']}
-        elif register_response.json().get('success'):
+        else:
             return {"status": True, "message": register_response.json()['success']}
     except:
         return {"status": False, "message": "发送邮件错误！"}
@@ -429,10 +437,11 @@ def user_register(email) -> dict:
 def user_vertify(email, code, password) -> dict:
     try:
         vertify_response = requests.post("https://adp.nekocode.top/account/vertify.php",
-                                         json={'email': email, 'code': code, 'password': password})
+                                         json={'email': email, 'code': code, 'password': password},
+                                         headers=HEADERS)
         if vertify_response.json().get('error'):
             return {"status": False, "message": vertify_response.json()['error']}
-        elif vertify_response.json().get('success'):
+        else:
             return {"status": True, "message": vertify_response.json()['success']}
     except:
         return {"status": False, "message": "验证错误！"}
@@ -442,12 +451,12 @@ def user_login(email, password, auto_login: bool = False, session: str = "") -> 
     try:
         login_response = requests.post("https://adp.nekocode.top/account/login.php",
                                        json={'email': email, 'password': password,
-                                             "auto_login": auto_login, "session": session})
-        print(login_response.json())
+                                             "auto_login": auto_login, "session": session},
+                                       headers=HEADERS)
         if login_response.json().get('error'):
             return {"status": False, "token": None,
                     "message": login_response.json()['error']}
-        elif login_response.json().get('success'):
+        else:
             t = ""
             if auto_login:
                 t = login_response.json()['session']
@@ -455,6 +464,25 @@ def user_login(email, password, auto_login: bool = False, session: str = "") -> 
                     "message": login_response.json()['success']}
     except:
         return {"status": False, "message": "登录错误！"}
+
+
+def get_shop_model() -> dict:
+    try:
+        model_lists = requests.get("https://adp.nekocode.top/model/get_model.php").json()
+        return {"name": list(map(lambda v: ".".join(v.split(".")[:-1]), model_lists['archives'])),
+                "list": model_lists['archives'],
+                "url": model_lists['urls'],
+                "icon": model_lists['icons'],
+                "description": model_lists['descriptions'],
+                }
+    except:
+        return {
+            "name": [],
+            "list": [],
+            "url": [],
+            "icon": [],
+            "description": [],
+        }
 
 
 def find_internal_recording_device(p) -> int:
@@ -477,3 +505,7 @@ def calculate_rms(data) -> float:
         sum_squares += n * n
     rms = numpy.sqrt(sum_squares / length)
     return rms * 1000
+
+
+if __name__ == '__main__':
+    print(get_shop_model())

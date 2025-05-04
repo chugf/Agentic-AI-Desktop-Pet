@@ -8,3 +8,4 @@ from . import intelligence
 from . import binding
 from . import plog
 from . import about
+from . import cloud

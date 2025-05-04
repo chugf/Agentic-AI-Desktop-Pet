@@ -89,6 +89,8 @@ def delete_character(configure: dict, model: str) -> bool:
         save_configure(configure)
     if os.path.exists(f"./intelligence/prompts/{model}.json"):
         os.remove(f"./intelligence/prompts/{model}.json")
+    if os.path.exists(f"./intelligence/rules/{model}.json"):
+        os.remove(f"./intelligence/rules/{model}.json")
     shutil.rmtree(f"./resources/model/{model}")
     return True
 
