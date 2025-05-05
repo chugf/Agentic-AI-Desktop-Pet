@@ -1,6 +1,6 @@
 {
    "General": {
-      "compatible": true,
+      "compatible": false,
       "adult": false,
       "recognition": false,
       "speaker": false,
@@ -9,7 +9,7 @@
    },
    "Advanced": {
       "penetration": "shut",
-      "locktsk": true,
+      "locktsk": false,
       "media": true,
       "safety": "shut",
       "visualization": false,
@@ -25,7 +25,7 @@
       "ThemeMode": "Light"
    },
    "Physics": {
-      "switch": false,
+      "switch": true,
       "bounce": true,
       "dumping": true
    }

@@ -43,7 +43,7 @@ from typing import Callable
 
 
 class UDPServer:
-    def __init__(self, host='0.0.0.0', port=12345, get_interface_answer: Callable | None = None):
+    def __init__(self, host='0.0.0.0', port=8210, get_interface_answer: Callable | None = None):
         self.host = host
         self.port = port
         self.get_interface_answer = get_interface_answer

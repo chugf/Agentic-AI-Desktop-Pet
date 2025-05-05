@@ -1,6 +1,7 @@
 # 为外部导入做好准备
 from . import thread
 from . import file
+from . import reg
 
 import os
 import tempfile
@@ -31,7 +32,7 @@ SENSITIVE_CONTENT = [
     PassedNoneContent(),  # 占位符
 ]
 major = "3"
-minor = "10"
+minor = "11"
 patch = "0"
 
 
@@ -224,8 +225,7 @@ class PythonCodeExaminer(ast.NodeVisitor):
         self.analyze()
 
     def analyze(self):
-        code = re.sub(r'^.*interface\.subscribe.*$\n?', '', self.code, flags=re.MULTILINE)
-        tree = ast.parse(code)
+        tree = ast.parse(self.code)
         self.visit(tree)
 
     # 判断
@@ -485,6 +485,27 @@ def get_shop_model() -> dict:
         }
 
 
+def get_plugin() -> dict:
+    try:
+        model_lists = requests.get("https://adp.nekocode.top/plugin/get_plugin.php").json()
+        return {"name": list(map(lambda v: ".".join(v.split(".")[:-1]), model_lists['archives'])),
+                "list": model_lists['archives'],
+                "url": model_lists['urls'],
+                "icon": model_lists['icons'],
+                "config": model_lists['config'],
+                "description": model_lists['descriptions'],
+                }
+    except:
+        return {
+            "name": [],
+            "list": [],
+            "url": [],
+            "icon": [],
+            "config": [],
+            "description": [],
+        }
+
+
 def find_internal_recording_device(p) -> int:
     """寻找内录设备"""
     target = '立体声混音'
@@ -508,4 +529,4 @@ def calculate_rms(data) -> float:
 
 
 if __name__ == '__main__':
-    print(get_shop_model())
+    print(get_plugin())

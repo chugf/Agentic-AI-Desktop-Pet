@@ -189,7 +189,7 @@ class MediaUnderstandThread(QThread):
 
 class TextGenerateThread(QThread):
     """文本生成器线程 Text Generation Thread"""
-    result = pyqtSignal(str)
+    result = pyqtSignal(list)
 
     def __init__(self, parent: QOpenGLWidget, configure: dict, api_config: dict,
                  text: str, is_search_online: bool = False):
@@ -200,11 +200,12 @@ class TextGenerateThread(QThread):
         self.is_search_online = is_search_online
 
     def send(self, text: str, is_finished: bool):
-        self.result.emit(text)
+        self.result.emit([text, is_finished])
         for action_item in interface.subscribe.actions.Operate.GetAIOutput():
             action_item(text, is_finished)
 
     def run(self):
+        answer = ""
         try:
             for chunk in intelligence.text_generator(
                     self.text, self.configure['settings']['intelligence'],
@@ -222,7 +223,7 @@ class TextGenerateThread(QThread):
             return
         file.logger(f"子应用 - AI剧情问答 调用成功\n"
                     f"   Message: {answer}", logs.HISTORY_PATH)
-        self.send(f"None:{answer}", True)
+        self.send(answer, True)
 
 
 class VoiceGenerateThread(QThread):

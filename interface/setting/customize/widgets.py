@@ -6,13 +6,17 @@ from typing import Literal
 
 from PyQt5.Qt import Qt, QStringListModel, QStandardItemModel, QFont, QIcon, QStandardItem, QTimer
 from PyQt5.QtWidgets import QCompleter, QComboBox, QVBoxLayout
-from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox, IconWidget, CaptionLabel, ElevatedCardWidget
+from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox, IconWidget, ImageLabel, \
+    CaptionLabel, ElevatedCardWidget
 
 
 class SimpleCard(ElevatedCardWidget):
     def __init__(self, icon, name: str, parent=None):
         super().__init__(parent)
-        self.iconWidget = IconWidget(icon)
+        if isinstance(icon, str):
+            self.iconWidget = ImageLabel(icon, self)
+        else:
+            self.iconWidget = IconWidget(icon)
         self.label = CaptionLabel(name, self)
 
         self.vBoxLayout = QVBoxLayout(self)

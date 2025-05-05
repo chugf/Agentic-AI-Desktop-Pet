@@ -159,7 +159,7 @@ class Switches(ScrollArea):
             configItem=Config.realtime_api,
             icon=QIcon("./resources/static/realtime.png"),
             title="开启 Realtime(实时) API 选项",
-            content="用于独立程序的API接口",
+            content="用于独立程序的API接口 (http://127.0.0.1:8210)",
             parent=self.advanced_group
         )
         self.card_realtime_api.setIconSize(18, 18)

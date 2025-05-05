@@ -211,7 +211,7 @@ class CompileProgress(QWidget):
         self.select_folder = ""
 
         # 图标选择
-        BodyLabel("Step.1 选择图标", self).setGeometry(10, 10, 480, 30)
+        BodyLabel(languages[194], self).setGeometry(10, 10, 480, 30)
         self.scroll_area = ScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -251,10 +251,10 @@ class CompileProgress(QWidget):
                 col = 0
                 row += 1
         # 输入名称
-        BodyLabel("Step.2 输入名称", self).setGeometry(360, 10, 480, 30)
+        BodyLabel(languages[195], self).setGeometry(360, 10, 480, 30)
         self.input_name = LineEdit(self)
         self.input_name.setGeometry(360, 50, 200, 30)
-        self.input_name.setPlaceholderText("请输入名称")
+        self.input_name.setPlaceholderText(languages[196])
         self.input_name.textChanged.connect(lambda: self.fill_information(self.input_name.text(), 1))
 
         # 信息展示
@@ -722,7 +722,7 @@ class SystemTray(QSystemTrayIcon):
 
         menu = SystemTrayMenu()
         menu.addActions([
-            Action(FluentIcon.LINK, "关闭鼠标穿透", self, triggered=desktop.save_change),
+            Action(FluentIcon.LINK, languages[200], self, triggered=desktop.save_change),
             Action(FluentIcon.SAVE_COPY, languages[192], self, triggered=self.delete_all),
             Action(FluentIcon.CLOSE, languages[20], self, triggered=desktop.exit_program),
         ])
@@ -1028,7 +1028,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         if enable_chat_box:
             interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setVisible(status)
 
-    def conversation_display(self, text: str, current_index: int, temp_action: bool = False):
+    def conversation_display(self, text: list, current_index: int, temp_action: bool = False):
         def __temp():
             _temp_timer.stop()
             if not self.is_generating:
@@ -1043,9 +1043,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             self.change_status_for_conversation("show", False)
             return
 
-        if text.split(":")[0] == "None":
+        if text[1]:
             self.is_generating = False
-            markdown_images = re.findall(r'!\[.*?]\((.*?)\)', text.split(":")[1])
+            markdown_images = re.findall(r'!\[.*?]\((.*?)\)', text[0])
             for markdown_image in markdown_images:
                 picture.open(markdown_image)
                 picture.show()
@@ -1057,35 +1057,33 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 _temp_timer.start(5000)
             else:
                 self.change_status_for_conversation("show", False)
-        if text.split(":")[0] == "None":
-            text = ':'.join(text.split(":")[1:])
-        new_add_text = text.replace(self.has_output_text, "")
+        new_add_text = text[0].replace(self.has_output_text, "")
         exits_element = {k: v for k, v in rules.items() if k in new_add_text}
         if exits_element:
             self.playAnimationEvent(exits_element[list(rules.keys())[0]], "expr")
         if ((module_info and configure['settings']['tts']['way'] == "local") or
                 configure['settings']['tts']['way'] == "cloud") and configure['settings']['enable']['tts'] and \
-                text.split(":")[0] == "None":
+                text[1]:
             if configure['settings']['enable']['tts']:
                 voice_generator = runtime.thread.VoiceGenerateThread(
-                    self, configure, module_info, text)
+                    self, configure, module_info, text[0])
                 voice_generator.result.connect(lambda wave_bytes: runtime.thread.SpeakThread(self, wave_bytes).start())
                 voice_generator.start()
         else:
             interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.clear()
             interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setVisible(True)
-            if text.split(":")[0] == "None":
-                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text)
+            if text[1]:
+                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text[0])
                 self.has_output_text = ""
             else:
                 self.is_generating = True
-                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text)
+                interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.setMarkdown(text[0])
             interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.moveCursor(
                 interface.subscribe.hooks.Operate.GetConversationInterface().input_answer.textCursor().End)
             if text is not None:
-                if text[-2:] in rules.keys():
-                    self.playAnimationEvent(rules[text[-2:]], "expr")
-        self.has_output_text = text
+                if text[0][-2:] in rules.keys():
+                    self.playAnimationEvent(rules[text[0][-2:]], "expr")
+        self.has_output_text = text[0]
 
     def have_conversation(self, text: str | None = None, temp_action: bool | None = False):
         """进行聊天 Send conversation"""
@@ -1262,7 +1260,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         def run_plugin(code, plugin_folder_, plugin_name_):
             interface.setting.customize.widgets.pop_notification(f"{plugin_name_}启动中……",
-                                                                 "请稍等插件初始化", "warning", 1500)
+                                                                 "初始化", "warning", 1500)
             setting.run_code_for_plugin(
                 code, -3, python_file=f"{os.getcwd()}/plugin/{plugin_folder_}/main.py")
 
@@ -1652,8 +1650,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 except Exception as e:
                     interface.setting.customize.widgets.pop_error(setting, 'Error', str(e))
             event.accept()
-        for action_item in interface.subscribe.actions.Operate.GetMouseReleaseAction():
-            action_item()
+        if not self.is_movement and event.button() == Qt.LeftButton:
+            for action_item in interface.subscribe.actions.Operate.GetMouseReleaseAction():
+                action_item()
         self.is_movement = False
         if configure['settings']['physics']['total']:
             self.physics()
@@ -1667,7 +1666,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
     # 鼠标离开事件 Mouse leave event
     def leaveEvent(self, event):
-        self.is_movement = False
+        # self.is_movement = False
         self.enter_position = None
         self.is_playing_animation = False
         for action_item in interface.subscribe.actions.Operate.GetMouseLeaveAction():
@@ -1769,6 +1768,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
 
 def realtime_api(calling, parameter):
+    """Realtime API 实时 API获得参数的设定"""
     calling_blocks = calling.split(".")
     enum_call = getattr(interface, calling_blocks[0])
     for calling_block in calling_blocks:
@@ -1784,7 +1784,6 @@ def realtime_api(calling, parameter):
         return enum_call
 
 clone_pet_model: list[ClonePet] = []
-plugin_lists: list[subprocess.Popen] = []
 independent_plugin_lists = []
 MouseListener = runtime.MouseListener()
 RealtimeServer = interface.realtime.UDPServer(get_interface_answer=realtime_api)

@@ -12,15 +12,5 @@
             "attr": "<See '@// comments //@' for details>"
          }
       }
-   ],
-   "area_capture": {
-      "icon": "",
-      "name": "区域截屏@ADPOfficial",
-      "attr": -3
-   },
-   "plugin_manager": {
-      "icon": "TILES",
-      "name": "插件管理@ADPOfficial",
-      "attr": -3
-   }
+   ]
 }

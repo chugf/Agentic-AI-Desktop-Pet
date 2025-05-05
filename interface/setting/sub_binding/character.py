@@ -100,12 +100,12 @@ class Character(QWidget):
         return all_elements
 
     def auto_fill_assistant(self):
-        def filler(text: str):
-            if text.split(":")[0] == "None":
-                self.table_character.setItem(generate_id, 1, QTableWidgetItem(':'.join(text.split(":")[1:])))
+        def filler(text: list):
+            if text[1]:
+                self.table_character.setItem(generate_id, 1, QTableWidgetItem(text[0]))
                 self.histories.append(("auto-fill", generate_id))
             else:
-                self.table_character.setItem(generate_id, 1, QTableWidgetItem(text))
+                self.table_character.setItem(generate_id, 1, QTableWidgetItem(text[0]))
 
         selected_row = self.table_character.currentRow()
         if selected_row != -1:

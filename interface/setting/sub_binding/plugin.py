@@ -65,7 +65,7 @@ class PluginBinding(QWidget):
         self.button_groups.addButton(self.single_independent)
         self.button_groups.addButton(self.single_automatic)
 
-        self.click_compile = PrimaryPushButton("准备编译", self)
+        self.click_compile = PrimaryPushButton(self.languages[193], self)
         self.click_compile.clicked.connect(self.compile)
         self.click_compile.setGeometry(QRect(10, 472, 620, 30))
 
