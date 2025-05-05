@@ -80,7 +80,7 @@ The following is a list of core libraries this project depends on:
 - [x] Multimodal AI Support
 - [x] Hot Reload Models
 - [x] Plugin System
-- [ ] Full Cloud Support
+- [x] Full Cloud Support
 - [ ] Additional International Languages
 
 ---

@@ -89,7 +89,7 @@ def process_human_information(name: str, age: int, gender: str):
 - [x] 多模态AI支持
 - [x] 热重载模型
 - [x] 插件系统
-- [ ] 完全云支持
+- [x] 完全云支持
 - [ ] 更多国际化语言
 
 ---
