@@ -1,0 +1,37 @@
+# This is a sample to register dragging function
+# Go Plugin Logger to see the result of printing
+# Go https://nekocode.top/?p=65 to see details
+
+from PyQt5.Qt import QRect, QPoint
+from PyQt5.QtWidgets import QWidget, QLabel
+from qfluentwidgets import FluentIcon
+
+
+class ShowDraggingResult(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setObjectName('ShowDraggingResult')
+        self.label = QLabel(self)
+        self.label.setGeometry(QRect(0, 50, 500, 400))
+
+
+def execute_file_dragging(original_mime: str, analyzed_mime: list):
+    """
+    Receive parameter: The PyQt5 original MimeData and The program has analyzed the MimeData
+    """
+    # show the result in interface
+    ShowDraggingResult.label.setText(original_mime)
+    print(original_mime, analyzed_mime)
+
+
+def execute_mouse_dragging(mouse_x: int, mouse_y: int, pet_x: int, pet_y: int):
+    print(mouse_x, mouse_y, pet_x, pet_y)
+
+
+# Initialize the widget (SubInterface)
+ShowDraggingResult = ShowDraggingResult()
+# Register functions into Pre-Executed config
+interface.subscribe.actions.Register.SetDragAction(execute_file_dragging)
+interface.subscribe.actions.Register.SetMouseDragAction(execute_mouse_dragging)
+# Register the widget into Setting
+interface.subscribe.views.Setting.InsertInterface(ShowDraggingResult, FluentIcon.HOME, 'ShowDraggingResult')
