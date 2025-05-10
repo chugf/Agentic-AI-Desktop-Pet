@@ -10,12 +10,14 @@ import threading
 import time
 import re
 import struct
+from pathlib import Path
 
 import mss
+import numpy
 import requests
 import win32api
 import win32con
-import numpy
+import win32com.client
 
 
 class PassedNoneContent(object):
@@ -32,7 +34,7 @@ SENSITIVE_CONTENT = [
     PassedNoneContent(),  # 占位符
 ]
 major = "3"
-minor = "11"
+minor = "12"
 patch = "0"
 
 
@@ -515,6 +517,45 @@ def find_internal_recording_device(p) -> int:
             return i
     return -1
 
+
+def get_disk_storage_info() -> dict[str, list[int]]:
+    """
+    获取磁盘信息 (MB)
+    :return
+    {
+        "<DiskID Symbol>": [<Current ID Total Size>, <Current ID Free Size>],
+        "*": [<Disk Total Size>, <Disk Free Size>]
+    }
+    """
+    total_space = 0
+    free_space = 0
+    storage_data = {}
+
+    c = win32com.client.GetObject('winmgmts:')
+    disks = c.ExecQuery("Select * from Win32_LogicalDisk Where DriveType=3")
+    for disk in disks:
+        storage_data.update({str(disk.DeviceID): [int(disk.Size) // (1024 ** 2), int(disk.FreeSpace) // (1024 ** 2)]})
+        total_space += int(disk.Size)
+        free_space += int(disk.FreeSpace)
+    storage_data.update({"*": [total_space // (1024 ** 2), free_space // (1024 ** 2)]})
+    return storage_data
+
+
+def get_program_used_storage() -> int:
+    """获取程序已使用的存储 (MB)"""
+    total_size = 0
+    folder_path = Path(os.getcwd())
+
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for filename in filenames:
+            file_path = folder_path / dirpath / filename
+            try:
+                total_size += file_path.stat().st_size
+            except (OSError, FileNotFoundError):
+                continue
+
+    total_size_gb = round(total_size / (1024 ** 2), 2)
+    return total_size_gb
 
 def calculate_rms(data) -> float:
     """计算RMS音量标准"""

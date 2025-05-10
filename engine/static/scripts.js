@@ -48,11 +48,11 @@ document.getElementById('send-button').addEventListener('click', async function(
 
         let hasProcessed = [];
 
-        while (true) {
+        while (True) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
+            const chunk = decoder.decode(value, { stream: True });
             partialMessage += chunk;
 
             const messages = partialMessage.split('\n');

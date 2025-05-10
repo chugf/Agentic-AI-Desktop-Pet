@@ -1,118 +1,229 @@
-# README.md
-
 <div align="center">
-    <h1 style="margin: 0;">AI Desktop Companion</h1>
+    <h1 style="margin: 0;">🤖 AI Desktop Pet</h1>
     <br/>
-    <b><a href="README.md">English</a></b> | <b><a href="README_zh.md">简体中文</a></b>
+    <b><a href="README.md">English</a></b> | <b><a href="README_zh.md">Simplified Chinese</a></b>
+    <br/>
+    <a href="api_usage.md">📚 API Documentation</a>
     <br/>
 </div>
 
+![OverViewer](./github-show/overview.png)
+![ModelDownloader](./github-show/download.png)
+
+---
+
 ## 🌟 Project Overview
 
-This is an AI-driven desktop pet application that supports highly customizable character appearances, animations, and
-conversation features. It can interact with users through voice recognition and respond in real-time to touch
-operations. Whether you are a tech enthusiast or a regular user, you can easily get started and enjoy a personalized
-experience.
+This is a cross-platform desktop pet driven by artificial intelligence, supporting highly customizable appearance and
+interactive behaviors. The project employs a modular design, integrating the following core features:
 
-> [!NOTE]
-> This is not just a desktop pet, but your digital assistant!
+- 🎭 Multi-form Character Support (2D Models)
+- 🗣️ Intelligent Voice Interaction (Speech Recognition + NLP)
+- ✨ Physics-Engine-Driven Realistic Behavior Simulation
+- 🔌 Plugin-Based Extension System (Python)
 
 ---
 
 ## 🚀 Key Features
 
-- **Intelligent Conversation**  
-  Based on advanced AI technology, it achieves lively and natural conversational interactions.
+### 🌈 Interactive Features
 
-- **Fully Open Source**  
-  Open source, secure, and stable! Transparent code, contributions welcome.
-
-- **Multilingual Support**  
-  Supports Chinese, English, Japanese, and other languages, with easy expansion for additional languages.
-
-- **Highly Customizable**  
-  Customize character models, animations, sounds, conversations, and more to create a unique desktop companion.
-
-- **Plugin System**  
-  Provides rich plugins and API interfaces to make your AI smarter and more flexible.
-
----
-
-## 🛠 Usage Guide
-
-### Extension Tools
-
-Extension tools allow you to define new function call capabilities for the AI. For example:
-
-```python 
-def process_human_information(name: str, age: int, gender: str):
-    """ Example function to process human information. """
-    return "Processing Complete!"
+```mermaid
+graph TD
+    A[User Input] --> B{Input Type}
+    B -->|Speech| C[Whisper Speech Recognition]
+    B -->|Touch| D[Contact Point Analysis]
+    C --> E[Natural Language Processing]
+    D --> F[Physical Behavior Response]
+    E --> G[Multi-modal Response Generation]
+    G --> H[TTS Speech Synthesis]
+    H --> I[Character Animation]
+    F --> I
 ```
----
-
-## 📦 Supported External Libraries
-
-The following is a list of core libraries this project depends on:
-
-| Library Name     | Version |
-|------------------|---------|
-| pyqt5            | latest  |
-| pyopengl         | latest  |
-| pypiwin32        | latest  |
-| live2d-py        | latest  |
-| dashscope        | latest  |
-| requests         | latest  |
-| pyaudio          | latest  |
-| numpy            | latest  |
-| websocket-client | latest  |
-| mss              | latest  |
-| pydantic         | latest  |
-| uvicorn          | latest  |
-| fastapi          | latest  |
 
 ---
 
-## 🎯 Feature Checklist
+## 🛠️ Quick Deployment
 
-- [x] Live2D Model Support
-- [x] AI Conversation Engine
-- [x] Multimodal AI Support
-- [x] Hot Reload Models
-- [x] Plugin System
-- [ ] Full Cloud Support
-- [ ] Additional International Languages
+### System Requirements
 
----
+- Windows 10/11 x64
+- NVIDIA GPU (RTX 20 series or higher recommended)
 
-## 💡 Detailed Highlights
+### Installation Steps
 
-- **Tooltip**: Displays detailed descriptions when hovering over elements.
-- **Shader Optimization**: Optimized for older devices.
-- **Taskbar Compatibility**: Pet stays within taskbar boundaries.
-- **Multilingual Expansion**: Easily add support for new languages.
+1. Download the latest version from the [Releases page](https://github.com/HeavyNotFat/Agentic-AI-Desktop-Pet/releases)
+2. Extract to the target directory (recommended to use an English path)
+   ```bash
+   Ai Desktop Pet.exe
+   ```
+3. API Key Configuration ([Guidelines](#-api-key-configuration))
 
 ---
 
-## 🙏 Acknowledgments
+## 🔑 API Key Configuration
 
-Thank you to the following open-source projects for their contributions:
+### Alibaba Cloud Bailian Large Model
 
-- [Live2D-Py](https://github.com/Arkueid/live2d-py)
-- [PyOpenGL](https://github.com/mcfletch/pyopengl.git)
-- [Python](https://github.com/python/cpython.git)
-- [PyQt5](https://github.com/PyQt5/PyQt.git)
-- [FFmpeg](https://github.com/FFmpeg/FFmpeg.git)
+1. Log in to the [Bailian Console](https://bailian.console.aliyun.com/)
+2. Create an application → Obtain API Key
+3. Fill in the configuration → AI → Cloud Inference
 
----
+### Xunfei Speech Service
 
-## 🤝 Contribution Guidelines
-
-Welcome to submit Issues or Pull Requests! Let's make this project even better together!
+1. Log in to the [Xunfei Cloud Console](https://www.xfyun.cn/)
+2. Create a `Streaming Speech Recognition` application → Obtain API Information
+3. Fill in the configuration → AI → Cloud Inference
 
 ---
 
-## 📜 License
+## 🧩 Plugin Development
 
-This project is licensed under the GPLv3.0 License. See the [LICENSE](./LICENSE) file for details.
+### Official Plugin Market
 
+| Plugin Name    | Description                            | Version |
+|----------------|----------------------------------------|---------|
+| Plugin Manager | Manage installed plugins               | 0.0.2   |
+| Raising System | Intelligent Training and Growth System | 0.5.0   |
+
+---
+
+<div align="center">
+    <h2>🔧 Local Deployment Guide</h2>
+    <h3>🚨 Important Note: Local deployment requires <i>1.42GB</i> or more of available storage space</h3>
+</div>
+
+---
+
+## 🌐 Service Architecture Topology
+
+```mermaid
+graph LR
+    A[Main Program] --> B[Whisper Speech Recognition]
+    A --> C[Ollama Language Model]
+    A --> D[GPT-SoVITS Speech Synthesis]
+    B --> E[Local CPU Inference]
+    C --> F[Local GPU Inference]
+    D --> G[Local GPU Inference]
+```
+
+---
+
+## 🎙️ Speech Recognition Deployment (Whisper)
+
+### 📦 Environment Setup
+
+```bash
+# Enter the driver directory
+cd AA-package-driver
+
+# Install dependencies (recommended to use a virtual environment)
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 🚀 Start the Service
+
+```bash
+python Whisper_api.py
+```
+
+---
+
+## 🗣️ Speech Synthesis Deployment (GPT-SoVITS)
+
+### 📂 Model Directory Structure
+
+```bash
+gsv/
+├── Chocolate;ja/
+│   ├── ご主人様のお父様にいつかうまいって言わせてみせるって.wav
+│   ├── Chocolate-e60.ckpt
+│   └── Chocolate_e10_s3600.pth
+└── Maple;ja/
+    ├── ところで、花椒。パンプキンケーキに合わせて茶葉を選んでみたけど。.wav
+    ├── Maple-e100.ckpt
+    └── Maple_e10_s4510.pth
+```
+
+### ⚠️ Key Requirements
+
+1. Folder naming format: `Character Name;Language Code` (e.g., `Chocolate;ja`)
+2. WAV file names must match the complete text content of the corresponding speech
+3. Must include the following three file types:
+    - `.wav` reference audio
+    - `.pth` generation model
+    - `.ckpt` fine-tuning weights
+
+---
+
+## 🤖 Local Large Model Deployment (Ollama)
+
+### 🛠️ Installation and Configuration
+
+1. Download the [Ollama Windows version](https://ollama.com/download)
+2. Set environment variables (optional):
+   ```powershell
+   # Modify the model storage path
+   [Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "<Your Model Path>", "User")
+   ```
+3. Restart the terminal to apply the configuration
+
+### 🧠 Recommended Model Configurations
+
+| VRAM Capacity | Recommended Model | Startup Command           |
+|---------------|-------------------|---------------------------|
+| 4-6GB         | Qwen2-0.5B        | `ollama run qwen2.5:0.5b` |
+| 6-8GB         | Qwen2-1.8B        | `ollama run qwen2.5:1.8b` |
+| 8-12GB        | Qwen2-7B          | `ollama run qwen2.5:7b`   |
+| 12GB+         | Qwen2-72B         | `ollama run qwen2.5:72b`  |
+
+---
+
+## 🔄 API Interface Configuration
+
+### 📡 Server Endpoint Settings
+
+```json
+{
+  "api": "heavynotfat",
+  "model": "qwen2.5:3b",
+  "messages": "{{messages}}",
+  "tools": "{{tools}}",
+  "Answer Index": "message.content"
+}
+```
+
+[API Configuration Screenshot](./github-show/textAPI.png)
+
+### 🔑 Key Field Descriptions
+
+![API配置界面截图](./github-show/textAPI.png)
+
+| Field          | Required | Description                                        |
+|----------------|----------|----------------------------------------------------|
+| `messages`     | ✓        | Chat history (automatically filled by the program) |
+| `Answer Index` | ✓        | Response parsing path (e.g., `message.content`)    |
+| `Model`        | ✓        | Model name                                         |
+| `API-Key`      | ✓        | API key                                            |
+| `tools`        | x        | Available tools list (in JSON format)              |
+
+---
+
+## 📜 Open Source License
+
+This project uses the **GPL-3.0 License**, with the following key restrictions:
+
+- Modified code must be open-sourced
+- Derivative works must explicitly credit the original copyright
+- Cannot be used for military purposes
+
+For commercial use, contact the author to obtain a commercial license.
+
+---
+
+<div align="center">
+    <p>📧 Contact Developer: 2953911716@qq.com</p>
+    <p>🌐 Official Community: https://github.com/HeavyNotFat/Agentic-AI-Desktop-Pet/discussions</p>
+</div>

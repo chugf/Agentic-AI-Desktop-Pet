@@ -178,7 +178,7 @@ def load_language(configure: dict) -> list[str]:
 
 def load_switch() -> dict:
     """加载开关配置"""
-    with open("./interface/setting/switch.json", "r", encoding="utf-8") as f:
+    with open("./interface/setting/sub_general/switch.json", "r", encoding="utf-8") as f:
         switch = json.load(f)
         f.close()
     return switch
@@ -186,7 +186,7 @@ def load_switch() -> dict:
 
 def save_switch(switch: dict) -> None:
     """保存开关配置"""
-    with open("./interface/setting/switch.json", "w", encoding="utf-8") as f:
+    with open("./interface/setting/sub_general/switch.json", "w", encoding="utf-8") as f:
         json.dump(switch, f, indent=3, ensure_ascii=False)
         f.close()
 

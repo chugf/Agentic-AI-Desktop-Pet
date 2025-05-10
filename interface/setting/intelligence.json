@@ -3,7 +3,7 @@
         "media": "cloud",
         "recognition": "cloud",
         "text_output": "cloud",
-        "voice": "local"
+        "voice": "cloud"
     },
     "QFluentWidgets": {
         "ThemeColor": "#ff009faa",

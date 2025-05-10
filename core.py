@@ -1,5 +1,4 @@
 import glob
-import multiprocessing
 import time
 import traceback
 import typing
@@ -8,6 +7,7 @@ import re
 import random
 import json
 import subprocess
+import threading
 import math
 from difflib import get_close_matches
 from socket import gethostbyname, gethostname
@@ -24,6 +24,7 @@ import logs
 import intelligence
 # 引擎
 import engine
+from engine import webui
 # 架构
 import architecture
 
@@ -68,8 +69,8 @@ intelligence.text.reload_tools()
 intelligence.reload_api(configure["settings"]['cloud']['xunfei']['id'], configure["settings"]['cloud']['xunfei']['key'],
                         configure["settings"]['cloud']['xunfei']['secret'], configure["settings"]['cloud']['aliyun'])
 runtime.thread.reload_module(interface, intelligence, runtime, logs)
-engine.webapi.reload_module(intelligence)
-engine.webapi.reload_data(configure['settings']['intelligence'],
+webui.reload_module(intelligence)
+webui.reload_data(configure['settings']['intelligence'],
                           api_config, configure['language_mapping'][configure['settings']['language']],
                           runtime.parse_local_url(configure['settings']['local']['text'])
                           if configure['settings']['text']['way'] == "local" else None)
@@ -328,6 +329,15 @@ class CustomTitleBar(TitleBar):
 
 class Setting(FramelessWindow):
     def __init__(self, display_x: int | None = None, display_y: int | None = None, point_index: int = 0):
+        def change(value, relative):
+            interface.setting.customize.function.change_configure(
+                value.value, relative, configure
+            )
+            webui.reload_data(configure['settings']['intelligence'],
+                              api_config, configure['language_mapping'][configure['settings']['language']],
+                              runtime.parse_local_url(configure['settings']['local']['text'])
+                              if configure['settings']['text']['way'] == "local" else None)
+
         super().__init__()
         self.setTitleBar(CustomTitleBar(self))
         self.setWindowIcon(QIcon("logo.ico"))
@@ -347,21 +357,16 @@ class Setting(FramelessWindow):
             self.move(display_x, display_y)
         else:
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
+
         self.general_page = interface.setting.general.General(
             intelligence, runtime,
             languages, configure, module_info, live2d_parameter,
             play=self.reference, reload=self.reload_character, live2d=architecture.live2d
         )
-        self.switches_page = interface.setting.switches.Switches(languages, switches_configure, configure)
-
-        def change(value, relative):
-            interface.setting.customize.function.change_configure(
-                value.value, relative, configure
-            )
-            engine.webapi.reload_data(configure['settings']['intelligence'],
-                                      api_config, configure['language_mapping'][configure['settings']['language']],
-                                      runtime.parse_local_url(configure['settings']['local']['text'])
-                                      if configure['settings']['text']['way'] == "local" else None)
+        self.switches_page = interface.setting.sub_general.switches.Switches(
+            languages, switches_configure, configure)
+        self.storage_page = interface.setting.sub_general.storage.StorageManager(
+            languages, configure, runtime)
 
         self.intelligence_page = interface.setting.intelligence.Intelligence(languages, configure, change)
         self.local_intelligence_page = interface.setting.sub_intelligence.local.IntelligenceLocale(
@@ -379,9 +384,9 @@ class Setting(FramelessWindow):
         )
         self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(
             languages, configure, rules, desktop.model_json_path, architecture.addon, runtime)
-        self.tools_binding_page = interface.setting.sub_binding.tools.ToolsBinding(
+        self.tools_binding_page = interface.setting.sub_develop.tools.ToolsBinding(
             languages, configure, live2d_parameter)
-        self.plugin_binding_page = interface.setting.sub_binding.plugin.PluginBinding(
+        self.plugin_binding_page = interface.setting.sub_develop.plugin.PluginBinding(
             interface, self.run_code_for_plugin, languages, configure, compile_plugin=self.compile)
 
         self.cloud_support_page = interface.setting.cloud.CloudDownload(
@@ -402,7 +407,10 @@ class Setting(FramelessWindow):
         self.navigation_interface.displayModeChanged.connect(self.titleBar.raise_)
 
         self.addSubInterface(self.general_page, FluentIcon.SETTING, languages[1])
-        self.addSubInterface(self.switches_page, FluentIcon.DEVELOPER_TOOLS, languages[10])
+        self.addSubInterface(self.switches_page, FluentIcon.DEVELOPER_TOOLS, languages[10],
+                             parent=self.general_page)
+        self.addSubInterface(self.storage_page, FluentIcon.PIE_SINGLE, languages[211],
+                             parent=self.general_page)
 
         self.addSubInterface(self.intelligence_page, FluentIcon.EDUCATION, languages[27])
         self.addSubInterface(self.cloud_intelligence_page, FluentIcon.CLOUD, languages[29],
@@ -416,12 +424,14 @@ class Setting(FramelessWindow):
         self.addSubInterface(self.animation_binding_page, FluentIcon.LIBRARY_FILL, languages[39],
                              parent=self.binding_page)
         self.addSubInterface(self.rule_binding_page, FluentIcon.ALIGNMENT, languages[49], parent=self.binding_page)
-        self.addSubInterface(self.tools_binding_page, FluentIcon.EMOJI_TAB_SYMBOLS, languages[36],
-                             parent=self.binding_page)
-        self.addSubInterface(self.plugin_binding_page, FluentIcon.IOT, languages[132], parent=self.binding_page)
 
-        self.addSubInterface(PluginLogCollector, FluentIcon.COMMAND_PROMPT, languages[101],
+        self.addSubInterface(DeveloperOptions, FluentIcon.DEVELOPER_TOOLS, languages[101],
                              position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.tools_binding_page, FluentIcon.EMOJI_TAB_SYMBOLS, languages[36],
+                             parent=DeveloperOptions)
+        self.addSubInterface(self.plugin_binding_page, FluentIcon.IOT, languages[132], 
+                             parent=DeveloperOptions)
+
         self.addSubInterface(self.about_page, FluentIcon.INFO, languages[130], position=NavigationItemPosition.BOTTOM)
 
         qrouter.setDefaultRouteKey(self.stack_widget, self.general_page.objectName())
@@ -456,7 +466,7 @@ class Setting(FramelessWindow):
                                 configure["settings"]['cloud']['xunfei']['key'],
                                 configure["settings"]['cloud']['xunfei']['secret'],
                                 configure["settings"]['cloud']['aliyun'])
-        engine.webapi.reload_data(configure['settings']['intelligence'],
+        webui.reload_data(configure['settings']['intelligence'],
                                   api_config, configure['language_mapping'][configure['settings']['language']],
                                   runtime.parse_local_url(configure['settings']['local']['text'])
                                   if configure['settings']['text']['way'] == "local" else None)
@@ -1180,7 +1190,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.is_playing_animation = False
         self.turn_count = 0
         self.resetDefaultValueEvent()
-        print("END")
 
     # 重置默认值事件
     def resetDefaultValueEvent(self):
@@ -1610,7 +1619,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         click_x, click_y = event.globalPos().x() - self.x(), event.globalPos().y() - self.y()
         if event.button() == Qt.LeftButton and self.click_in_area:
-            print(f"meet the requirements. CLICK pos: {click_x, click_y}")
             # 记录位置
             if configure['record']['enable_position']:
                 if configure['record']['position'][:2].count(-1) == len(configure['record']['position'][:2]):
@@ -1751,7 +1759,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             pass
 
     def exit_program(self):
-        webui.kill()
         system_tray.hide()
         architecture.live2d.dispose()
         self.close()
@@ -1762,7 +1769,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         shutil.copy2("./resources/configure.json", "./logs/backup/configure.json")
         runtime.file.logger("程序退出 Program exit", logs.HISTORY_PATH)
         runtime.file.write_file("./engine/static/scripts.js",
-                                js_code.replace(f"http://{gethostbyname(gethostname())}:12877",
+                                js_code.replace(f"http://{gethostbyname(gethostname())}:52013",
                                                 "{PYTHON_UPLOAD_URL_ADDRESS}"))
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
@@ -1789,10 +1796,8 @@ MouseListener = runtime.MouseListener()
 RealtimeServer = interface.realtime.UDPServer(get_interface_answer=realtime_api)
 if __name__ != "__main__":
     # 前置
-    # Pyinstaller
-    multiprocessing.freeze_support()
     with open('./engine/static/scripts.js', 'r', encoding='utf-8') as f:
-        js_code = f.read().replace("{PYTHON_UPLOAD_URL_ADDRESS}", f"http://{gethostbyname(gethostname())}:12877")
+        js_code = f.read().replace("{PYTHON_UPLOAD_URL_ADDRESS}", f"http://{gethostbyname(gethostname())}:52013")
         f.close()
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     runtime.file.write_file("./engine/static/scripts.js", js_code)
@@ -1803,10 +1808,10 @@ if __name__ != "__main__":
     translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
     app.installTranslator(translator)
 
-    PluginLogCollector = interface.setting.plog.PluginLogCollector()
+    DeveloperOptions = interface.setting.dev.DeveloperOptions()
     PLUGIN_GLOBAL['interface'] = interface
-    PLUGIN_GLOBAL['print'] = PluginLogCollector.print_
-    PLUGIN_GLOBAL['input'] = PluginLogCollector.input_
+    PLUGIN_GLOBAL['print'] = DeveloperOptions.print_
+    PLUGIN_GLOBAL['input'] = DeveloperOptions.input_
 
     visualization = AudioVisualization()
     desktop = DesktopPet()
@@ -1849,8 +1854,7 @@ if __name__ != "__main__":
         except KeyError:
             continue
     # 启动网页
-    webui = multiprocessing.Process(target=engine.webui.run)
-    webui.start()
+    threading.Thread(target=webui.run).start()
 else:
     print("?")
     sys.exit(0)

@@ -144,7 +144,7 @@ class Download(QObject):
         with open(f"./resources/model/{model_name}/{arch}", "w", encoding="utf-8") as f:
             f.write(f"This is a architecture explanation file\nYour architecture is {arch}")
             f.close()
-        self.parent().cards[self.index].button.setText(self.languages[205])
+        self.parent().cards[self.index].button.setText(self.parent().languages[205])
         widgets.pop_notification(self.parent().languages[209],
                                  f"{model_name} {self.parent().languages[209]}", "success")
         self.finished.emit(model_name)

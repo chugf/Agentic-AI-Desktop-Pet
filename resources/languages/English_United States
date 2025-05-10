@@ -99,7 +99,7 @@ iFlytek Secret
 Text Output Parameters
 Voice Parameters
 Playback Failed
-Plugin Log Recording
+Developer Tools
 Check for Updates
 To Be Checked
 Yay! You’re on the Latest Version!!
@@ -209,3 +209,4 @@ Downloading
 {name} is downloading, please wait...
 Download Completed!
 Plugin Download
+Storage Manager

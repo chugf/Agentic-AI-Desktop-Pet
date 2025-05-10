@@ -6,12 +6,12 @@ from PyQt5.QtWidgets import QFrame
 from qfluentwidgets import TextEdit, ComboBox, LineEdit, ToolButton, FluentIcon
 
 
-class PluginLogCollector(QFrame):
+class DeveloperOptions(QFrame):
     input_finished = pyqtSignal()
 
     def __init__(self):
         super().__init__()
-        self.setObjectName("PluginLogCollector")
+        self.setObjectName("DeveloperOptions")
 
         self.input_result = None
         self.current_waiting_id = None
@@ -19,7 +19,7 @@ class PluginLogCollector(QFrame):
         self.input_lists = []
         self.input_id = 1
 
-        font_id = QFontDatabase.addApplicationFont("./interface/setting/JetBrainsMono-Bold.ttf")
+        font_id = QFontDatabase.addApplicationFont("./interface/setting/sub_general/JetBrainsMono-Bold.ttf")
         font_families = QFontDatabase.applicationFontFamilies(font_id)
         jetbrains_mono = QFont(font_families[0], 10)
         self.input_logger = TextEdit(self)

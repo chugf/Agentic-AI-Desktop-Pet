@@ -26,7 +26,7 @@ class PluginBinding(QWidget):
         self.click_select_folder.setGeometry(QRect(530, 52, 100, 35))
         self.click_select_folder.clicked.connect(self.fill_plugin_information)
 
-        font_id = QFontDatabase.addApplicationFont("./interface/setting/JetBrainsMono-Bold.ttf")
+        font_id = QFontDatabase.addApplicationFont("./interface/setting/sub_general/JetBrainsMono-Bold.ttf")
         font_families = QFontDatabase.applicationFontFamilies(font_id)
         jetbrains_mono = QFont(font_families[0], 10)
         self.input_codes = widgets.CodeEdit(interface_module, self)

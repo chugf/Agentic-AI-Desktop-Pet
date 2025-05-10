@@ -1,4 +1,4 @@
-from .customize import function, constants
+from ..customize import function, constants
 
 from PyQt5.Qt import Qt, QIcon
 from PyQt5.QtWidgets import QWidget
