@@ -75,30 +75,41 @@ class ADPOpenGLCanvas(QOpenGLWidget):
     def __init__(self):
         super().__init__()
         self.__canvas_opacity = 1.0
+        self.__rotation_angle = 0.0
 
     def __create_program(self):
         vertex_shader = """#version 330 core
         layout(location = 0) in vec2 a_position;
         layout(location = 1) in vec2 a_texCoord;
+        
         out vec2 v_texCoord;
+        uniform float rotation_angle;
+        
         void main() {
             gl_Position = vec4(a_position, 0.0, 1.0);
-            v_texCoord = a_texCoord;
+        
+            float angle = radians(rotation_angle);
+            mat2 rotationMatrix = mat2(cos(angle), -sin(angle),
+                                       sin(angle), cos(angle));
+        
+            vec2 centeredTexCoord = a_texCoord - vec2(0.5, 0.5);
+            v_texCoord = rotationMatrix * centeredTexCoord + vec2(0.5, 0.5);
         }
         """
         frag_shader = """#version 330 core
         in vec2 v_texCoord;
         uniform sampler2D canvas;
         uniform float opacity;
+
         void main() {
             vec4 color = texture(canvas, v_texCoord);
             color *= opacity;
-            gl_FragColor =  color;
+            gl_FragColor = color;
         }
         """
         self._program = create_program(vertex_shader, frag_shader)
         self._opacity_loc = GL.glGetUniformLocation(self._program, "opacity")
-
+        self._rotation_angle_loc = GL.glGetUniformLocation(self._program, "rotation_angle")
     def __create_vao(self):
         vertices = np.array([
             # 位置
@@ -139,22 +150,27 @@ class ADPOpenGLCanvas(QOpenGLWidget):
         self.on_resize(w, h)
 
     def paintGL(self):
-        # 先绘制到 canvas buffer First draw to canvas buffer
-        # 再设置整个 canvas buffer 的透明度 Set the opacity of the whole canvas buffer
-        # 最后将 canvas buffer 绘制到 qt opengl 窗口上 Finally draw the canvas buffer to the qt opengl window
         self.__draw_on_canvas()
         GL.glClearColor(0.0, 0.0, 0.0, 0.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+
         GL.glBindVertexArray(self._vao)
         GL.glUseProgram(self._program)
+
         GL.glProgramUniform1f(self._program, self._opacity_loc, self.__canvas_opacity)
+        GL.glProgramUniform1f(self._program, self._rotation_angle_loc, self.__rotation_angle)
+
         GL.glActiveTexture(GL.GL_TEXTURE0)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._canvas_texture)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6)
+
         GL.glBindVertexArray(0)
 
     def setCanvasOpacity(self, value):
         self.__canvas_opacity = value
+
+    def setRotationAngle(self, angle):
+        self.__rotation_angle = angle
 
     @abstractmethod
     def on_init(self):

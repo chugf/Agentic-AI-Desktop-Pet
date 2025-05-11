@@ -76,11 +76,11 @@ class StorageManager(QWidget):
     def __init__(self, languages, configure, runtime):
         super().__init__()
         storage_info = runtime.get_disk_storage_info()
-        current_used = runtime.get_program_used_storage()
+        current_used = int(runtime.get_program_used_storage() * 100)
         current_disk_symbol = str(os.getcwd()).split('\\')[0]
-        current_used_in_disk = storage_info[current_disk_symbol][0] * 100
-        used_rate_total = int(current_used * 100) // (storage_info["*"][0] * 100)
-        used_rate_current_disk = round(int(current_used * 100) / current_used_in_disk, 1)
+        total_space_in_disk = storage_info[current_disk_symbol][0] * 100
+        used_rate_total = round(current_used / (storage_info["*"][0] * 100), 2) * 100
+        used_rate_current_disk = round(current_used / total_space_in_disk, 2) * 100
 
         self.languages = languages
         self.configure = configure
@@ -88,8 +88,8 @@ class StorageManager(QWidget):
 
         BodyLabel(f"程序在 {current_disk_symbol} 的占用比例", self).setGeometry(QRect(0, 250, 650, 30))
         self.ring_current_disk = ProgressRing(self)
-        self.ring_current_disk.setRange(0, current_used_in_disk)
-        self.ring_current_disk.setValue(int(current_used * 100))
+        self.ring_current_disk.setRange(0, total_space_in_disk)
+        self.ring_current_disk.setValue(current_used)
         self.ring_current_disk.setTextVisible(True)
         self.ring_current_disk.setFixedSize(200, 200)
         self.ring_current_disk.setStrokeWidth(4)
@@ -99,7 +99,7 @@ class StorageManager(QWidget):
         BodyLabel(f"程序在 磁盘 的占用比例", self).setGeometry(QRect(440, 250, 650, 30))
         self.ring_total_disk = ProgressRing(self)
         self.ring_total_disk.setRange(0, storage_info["*"][0] * 100)
-        self.ring_total_disk.setValue(int(current_used * 100))
+        self.ring_total_disk.setValue(current_used)
         self.ring_total_disk.setTextVisible(True)
         self.ring_total_disk.setFixedSize(200, 200)
         self.ring_total_disk.setStrokeWidth(4)
@@ -150,6 +150,7 @@ INITIAL_CONFIGURE = {
    "adult_level": 0,
    "settings": {
       "language": "",
+      "angle": 0.0,
       "size": 1.0,
       "transparency": 1.0,
       "compatibility": False,

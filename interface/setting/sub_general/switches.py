@@ -46,7 +46,7 @@ class Switches(ScrollArea):
 
         self.scroll_widgets = QWidget()
         self.expand_layout = ExpandLayout(self.scroll_widgets)
-        qconfig.load("./interface/setting/switch.json", Config)
+        qconfig.load("./interface/setting/sub_general/switch.json", Config)
         # 常规设置
         self.general_group = SettingCardGroup(self.languages[11], self.scroll_widgets)
         self.card_compatible_capture = SwitchSettingCard(

@@ -120,6 +120,15 @@ class General(QFrame):
         self.scale_size.valueChanged.connect(
             lambda value: function.change_configure(
                 value / 100, "settings.size", self.configure))
+        # 旋转角度
+        BodyLabel("旋转角度", self).setGeometry(QRect(5, 417, 80, 35))
+        self.scale_angle = Slider(Qt.Horizontal, self)
+        self.scale_angle.setRange(0, 360)
+        self.scale_angle.setGeometry(QRect(100, 427, 360, 35))
+        self.scale_angle.setValue(int(self.configure['settings']['angle']))
+        self.scale_angle.valueChanged.connect(
+            lambda value: function.change_configure(value, "settings.angle", self.configure))
+
         webui_url = PushButton(f"{self.languages[154]} http://{gethostbyname(gethostname())}:52013", self)
         webui_url.clicked.connect(lambda: open_webpage(f"http://{gethostbyname(gethostname())}:52013"))
         webui_url.setGeometry(QRect(0, 462, 400, 35))

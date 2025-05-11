@@ -31,7 +31,7 @@ class Intelligence(ScrollArea):
 
         self.scroll_widgets = QWidget()
         self.expand_layout = ExpandLayout(self.scroll_widgets)
-        qconfig.load("./interface/setting/intelligence.json", Config)
+        qconfig.load("./interface/setting/sub_general/intelligence.json", Config)
 
         self.inference_group = SettingCardGroup(self.languages[28], self.scroll_widgets)
         # 文本输出 Text Output

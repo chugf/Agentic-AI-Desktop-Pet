@@ -20,13 +20,13 @@
       4、 parameter如果为列表(list)，就以传入的顺序传参
    示例：
       {
-        "instance": "Character.GetName",
+        "instance": "subscribe.Character.GetName",
         "parameter": []
       }
       Character.GetName是实例路径
       和
       {
-        "instance": "Character",
+        "instance": "subscribe.Character",
         "method": "GetName"
         "parameter": []
       }
@@ -38,56 +38,64 @@
 """
 import socket
 import json
-import threading
-from typing import Callable
+from PyQt5.QtCore import QThread, pyqtSignal
 
 
-class UDPServer:
-    def __init__(self, host='0.0.0.0', port=8210, get_interface_answer: Callable | None = None):
+class UDPServer(QThread):
+    calling = pyqtSignal(str, list)
+    error_occurred = pyqtSignal(str, tuple)
+    server_stopped = pyqtSignal()
+    server_started = pyqtSignal()
+
+    def __init__(self, host='0.0.0.0', port=8210):
+        super().__init__()
         self.host = host
         self.port = port
-        self.get_interface_answer = get_interface_answer
         self.server_socket = None
         self.running = False
-        self.receive_thread = None
 
-    def start(self):
-        """启动UDP服务器"""
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_socket.bind((self.host, self.port))
-        self.running = True
-        print(f"UDP Server started at {self.host}:{self.port}")
+    def run(self):
+        """启动UDP服务器并开始接收数据"""
+        try:
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.server_socket.bind((self.host, self.port))
+            self.running = True
+            self.server_started.emit()
+            print(f"UDP Server started at {self.host}:{self.port}")
 
-        self.receive_thread = threading.Thread(target=self._receive_loop, daemon=True)
-        self.receive_thread.start()
-
-    def _receive_loop(self):
-        """持续接收数据包"""
-        while self.running:
-            address = None
-            try:
+            while self.running:
                 data, address = self.server_socket.recvfrom(65535)
                 interface_data = json.loads(data.decode('utf-8'))
                 print(f"[{address}]: {interface_data}")
 
-                if "method" in interface_data.keys():
-                    calling = f"subscribe.{interface_data['instance']}.{interface_data['method']}"
-                else:
-                    calling = f"subscribe.{interface_data['instance']}"
-                self.handle_message(self.get_interface_answer(
-                    calling, interface_data['parameter']
-                ), address)
+                # 处理请求逻辑
+                try:
+                    if "method" in interface_data:
+                        calling = f"{interface_data['instance']}.{interface_data['method']}"
+                    else:
+                        calling = interface_data['instance']
 
-            except Exception as e:
-                if address is not None:
-                    self.handle_message(f"Error: {e}", address)
+                    response = self.calling.emit(calling, interface_data.get('parameter', []))
+                    self.handle_message(response, address)
+                except Exception as e:
+                    print(f"Error occurred: {e}")
+                    self.error_occurred.emit(f"Error: {e}", address)
+
+        except Exception as e:
+            print(f"Server error: {e}")
+        finally:
+            self.stop()
 
     def handle_message(self, callback, address):
-        """处理客户端消息"""
-        self.server_socket.sendto(callback.encode('utf-8'), address)
+        """处理客户端消息并发送响应"""
+        self.server_socket.sendto(str(callback).encode('utf-8'), address)
 
     def stop(self):
         """停止服务端"""
+        if self.running is False:
+            return
         self.running = False
         if self.server_socket:
             self.server_socket.close()
+        self.server_stopped.emit()
+        print("UDP Server stopped.")

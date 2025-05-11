@@ -538,14 +538,15 @@ class Setting(FramelessWindow):
         print(e_msg)
         interface.setting.customize.widgets.pop_error(self, "TraceBack", e_msg, 5000, Qt.Vertical)
 
-    def examine_and_run(self, codes, type_: typing.Literal['independent', 'enhancement'], python_file: str | None = None):
+    def examine_and_run(self, to_be_run_codes, type_: typing.Literal['independent', 'enhancement'],
+                        python_file: str | None = None):
         try:
-            if runtime.PythonCodeExaminer(codes).optimize_infinite_loop:
+            if runtime.PythonCodeExaminer(to_be_run_codes).optimize_infinite_loop:
                 interface.setting.customize.widgets.pop_warning(self, languages[157], languages[158], 5000)
                 return
             safety_level = configure['settings']['safety']
             if safety_level != "shut":
-                attr = getattr(runtime.PythonCodeExaminer(codes), f"is_{safety_level}")
+                attr = getattr(runtime.PythonCodeExaminer(to_be_run_codes), f"is_{safety_level}")
                 if list(attr)[-1] or list(attr)[0]:
                     interface.setting.customize.widgets.pop_warning(self, languages[157], languages[159], 5000)
                     return
@@ -555,7 +556,7 @@ class Setting(FramelessWindow):
             return
         if type_ == 'enhancement':
             try:
-                exec(codes, PLUGIN_GLOBAL)
+                exec(to_be_run_codes, PLUGIN_GLOBAL)
             except Exception:
                 self.exception(traceback.format_exc())
 
@@ -564,7 +565,7 @@ class Setting(FramelessWindow):
                 if IS_PYTHON_EXITS:
                     if python_file is None:
                         with open("./logs/plugin_cache_runner.py", "w", encoding="utf-8") as pf:
-                            pf.write(codes)
+                            pf.write(to_be_run_codes)
                             pf.close()
                         execute_file = f"{os.getcwd()}/logs/plugin_cache_runner.py"
                     else:
@@ -575,29 +576,30 @@ class Setting(FramelessWindow):
             except Exception:
                 self.exception(traceback.format_exc())
 
-    def run_code_for_plugin(self, codes, run_type=-4, ban_independent: bool = False, python_file: str | None = None):
+    def run_code_for_plugin(self, to_be_ran_codes, run_type=-4, ban_independent: bool = False,
+                            python_file: str | None = None):
         # 自动选择
         if run_type == -4:
             try:
-                parsed = runtime.PythonCodeParser(codes).has_subscribe
+                parsed = runtime.PythonCodeParser(to_be_ran_codes).has_subscribe
             except Exception:
                 self.exception(traceback.format_exc())
                 return
             if parsed:
-                self.examine_and_run(codes, 'enhancement', python_file)
+                self.examine_and_run(to_be_ran_codes, 'enhancement', python_file)
 
             else:
                 if not ban_independent:
-                    self.examine_and_run(codes, 'independent', python_file)
+                    self.examine_and_run(to_be_ran_codes, 'independent', python_file)
 
         # 程序增强
         elif run_type == -2:
-            self.examine_and_run(codes, 'enhancement', python_file)
+            self.examine_and_run(to_be_ran_codes, 'enhancement', python_file)
 
         # 独立程序
         elif run_type == -3:
             if not ban_independent:
-                self.examine_and_run(codes, 'independent', python_file)
+                self.examine_and_run(to_be_ran_codes, 'independent', python_file)
 
     # 测试语音合成组
     def reference(self, text):
@@ -621,7 +623,7 @@ class Setting(FramelessWindow):
         compile_progress.set_folder(folder_path)
         compile_progress.show()
 
-    def resizeEvent(self, e):
+    def resizeEvent(self, a0):
         self.titleBar.move(46, 0)
         self.titleBar.resize(self.width() - 46, self.titleBar.height())
 
@@ -895,7 +897,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         self.speech_recognition = self.enter_position = self.drag_position = self.drag_start_position = None
         self.last_time = self.last_hypotenuse = self.image_path = self.direction = self.last_pos = None
         self.pet_model: architecture.live2d.LAppModel | None = None
-        self.is_continuous = self.is_generating = self.is_transparent_raise = False
+        self.is_suction = self.is_continuous = self.is_generating = self.is_transparent_raise = False
         # 物理模拟
         self.speed_centimeter = self.angle_theta = 0.0
         # 初始化部分
@@ -931,9 +933,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
             # 应用新的样式
             ctypes.windll.user32.SetWindowLongW(window_handle, GWL_EX_STYLE, new_ex_style)
-        except Exception as e:
+        except Exception as mte:
             self.is_transparent_raise = True
-            QMessageBox.warning(self, languages[105], f"{type(e).__name__}: {e}")
+            QMessageBox.warning(self, languages[105], f"{type(e).__name__}: {mte}")
 
     def set_window_below_taskbar(self):
         """设置低于任务栏(高于其它除了任务栏的应用)"""
@@ -1375,6 +1377,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         if not self.isVisible():
             return
+        # 设置旋转交
+        self.setRotationAngle(configure['settings']['angle'])
         # 设置大小
         self.pet_model.SetScale(configure['settings']['size'])
         # 设置透明度
@@ -1655,12 +1659,28 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             for action_item in interface.subscribe.actions.Operate.GetClckAction():
                 try:
                     action_item()
-                except Exception as e:
-                    interface.setting.customize.widgets.pop_error(setting, 'Error', str(e))
+                except Exception as me:
+                    interface.setting.customize.widgets.pop_error(setting, 'Error', str(me))
             event.accept()
         if not self.is_movement and event.button() == Qt.LeftButton:
             for action_item in interface.subscribe.actions.Operate.GetMouseReleaseAction():
                 action_item()
+        # 查看是否靠近右侧屏幕
+        print(self.x())
+        if self.x() + (self.width() // 2) > self.screen_geometry.width() - 50:
+            # 旋转15度吸附
+            self.is_suction = True
+            self.move(self.screen_geometry.width() - (self.width() // 2) + 10, self.y())
+            configure['settings']['angle'] = 15
+        elif self.x() < -170:
+            self.is_suction = True
+            self.move(-200, self.y())
+            configure['settings']['angle'] = -15
+        else:
+            if self.is_suction:
+                self.is_suction = False
+                configure['settings']['angle'] = 0
+
         self.is_movement = False
         if configure['settings']['physics']['total']:
             self.physics()
@@ -1774,7 +1794,15 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         os.kill(os.getpid(), __import__("signal").SIGINT)
 
 
-def realtime_api(calling, parameter):
+def realtime_api_started():
+    interface.setting.customize.widgets.pop_notification("Realtime API", languages[212], "warning")
+
+
+def realtime_api_stopped():
+    interface.setting.customize.widgets.pop_notification("Realtime API", languages[213], "success")
+
+
+def realtime_api_caller(calling, parameter):
     """Realtime API 实时 API获得参数的设定"""
     calling_blocks = calling.split(".")
     enum_call = getattr(interface, calling_blocks[0])
@@ -1790,10 +1818,10 @@ def realtime_api(calling, parameter):
     else:
         return enum_call
 
+
 clone_pet_model: list[ClonePet] = []
 independent_plugin_lists = []
 MouseListener = runtime.MouseListener()
-RealtimeServer = interface.realtime.UDPServer(get_interface_answer=realtime_api)
 if __name__ != "__main__":
     # 前置
     with open('./engine/static/scripts.js', 'r', encoding='utf-8') as f:
@@ -1804,6 +1832,11 @@ if __name__ != "__main__":
     app = QApplication(sys.argv)
 
     DPI_SCALE_NORMAL = app.primaryScreen().logicalDotsPerInch()
+    # 实时API服务
+    RealtimeServer = interface.realtime.UDPServer()
+    RealtimeServer.calling.connect(realtime_api_caller)
+    RealtimeServer.server_started.connect(realtime_api_started)
+    RealtimeServer.server_stopped.connect(realtime_api_stopped)
 
     translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
     app.installTranslator(translator)
