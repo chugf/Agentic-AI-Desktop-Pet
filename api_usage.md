@@ -1,27 +1,22 @@
 <div align="center">
-    <h2>简体中文 API 文档</h2>
-    <h3>⚠️ Because author is a Chinese, so this document is written in Chinese.</h3>
-    <h3>🌸 If you have enough energy, please help me translate it into more language.</h3>
+    <h1>📚 实时 API 与订阅 API 开发文档</h1>
+    <h3>⚠️ 本文档以中文编写，欢迎贡献多语言翻译！ 🌍</h3>
 </div>
 
-# API 接口 说明
+---
 
-> [!WARNING]
-> API 接口 主要说明为 订阅(subscribe) API 的文档
+## 📡 实时 API（UDP 协议）
 
-> [!WARNING]
-> 实时API (realtime) 用法和subscribe语法相同，但依赖Socket套字节UDP协议运行
+### 核心特性
 
-# 实时 API
+- 基于 UDP 协议的轻量级通信
+- 独立程序专用接口
+- 线程安全设计，支持异步调用
+- 完全兼容订阅 API 语法规则
 
-> [!NOTE]
-> 此专为 `独立程序` 设计，**程序增强请使用 `订阅(subscribe) API`**
+---
 
-其继承**完全参照** [订阅(subscribe)](#订阅API) API 的文档
-
-传入参数时就是将interface去掉
-
-可将下面的代码嵌入你的本体代码中
+### 🛠️ 快速接入
 
 ```python
 import socket
@@ -32,9 +27,12 @@ import threading
 class RealtimeAPI(threading.Thread):
     def __init__(self, interface, address=('127.0.0.1', 8210)):
         """
-        初始化UDP客户端线程
-        :param interface: 必填
-        :param address: 服务器地址，默认为 ('127.0.0.1', 8210)
+        初始化 UDP 客户端线程
+        :param interface: dict - 必填，接口配置字典
+            - instance: str 实例路径（格式：模块.类）
+            - method: str 调用方法名
+            - parameter: list 参数列表
+        :param address: tuple - 服务端地址，默认本地 8210 端口
         """
         super().__init__()
         self.address = address
@@ -43,47 +41,33 @@ class RealtimeAPI(threading.Thread):
 
     def _send_request(self, message_dict):
         self.client_socket.sendto(json.dumps(message_dict).encode('utf-8'), self.address)
-
-        response, server_address = self.client_socket.recvfrom(1024)
-        response_data = None if response.decode('utf-8') == "None" else response.decode('utf-8')
-
-        print(f"[{self.address[0]}:{self.address[1]}] Return Response: {response_data}")
-        return response_data
+        response = self.client_socket.recvfrom(1024)[0]
+        return response.decode('utf-8') if response != b"None" else None
 
     def run(self):
-        """
-        线程启动时执行的方法
-        """
         try:
-            self._send_request(self.interface)
+            result = self._send_request(self.interface)
+            print(f"[{self.address[0]}:{self.address[1]}] 响应: {result}")
         finally:
             self.client_socket.close()
-
 ```
 
-## interface要求
+### 📝 接口规范
 
-1. 如果不传入method，instance就传入全部的路径
-2. 如果传入method，instance就只传入继承路径
-3. parameter如果为字典(dict)，字典的键为传入的参数名，对应的值为传入的参数值
-4. parameter如果为列表(list)，就以传入的顺序传参
+| 字段          | 类型     | 必填 | 说明                            |
+|-------------|--------|----|-------------------------------|
+| `instance`  | string | ✅  | 实例路径（例：`subscribe.Character`） |
+| `parameter` | list   | ✅  | 参数列表，支持顺序传参或字典传参              |
+| `method`    | string | ❌  | 调用方法名（省略时需完整路径）               |
 
 ---
 
-使用时写入 
-```python
-RealtimeAPI(
-    {'instance': '', 
-     'method': '', 
-     'parameter': []
-})
-```
+### 🎯 使用示例
 
-最后在`start()`即可
-
-例如：
+#### 基础调用
 
 ```python
+# 获取角色名称
 RealtimeAPI({
     "instance": "subscribe.Character",
     "method": "GetName",
@@ -91,117 +75,121 @@ RealtimeAPI({
 }).start()
 ```
 
-## 高级调用
+#### 高级调用
 
 ```python
+# 发送系统通知
 RealtimeAPI({
     "instance": "setting.customize.widgets",
     "method": "pop_notification",
-    "parameter": ["RealtimeAPI 实例", "setting interface 调用成功！", "success"]
+    "parameter": [
+        "操作成功",
+        "实时接口调用完成！",
+        "success"
+    ]
 }).start()
 ```
 
 ---
 
-# 订阅API
+## 📡 订阅 API（程序增强）
 
-> [!NOTE]
-> 此专为 `程序增强` 设计，**独立程序请使用 `实时(realtime) API`**
+### 核心特性
 
-使用时请写入
+- 面向插件开发的增强接口
+- 链式调用语法
+- 完善的类型支持
+
+---
+
+### 🧩 基础 API
+
+#### Character 模块
 
 ```javascript
-interface.subscribe.<InterfaceBelow>
+interface.subscribe.Character
 ```
 
-## 基础 API
+| 方法               | 参数 | 返回值   | 说明          |
+|------------------|----|-------|-------------|
+| `GetCharacter()` | 无  | `str` | 获取角色模型名称    |
+| `GetName()`      | 无  | `str` | 获取用户命名的角色名称 |
+
+**示例：**
+
+```python
+# 获取当前角色名称
+name = interface.subscribe.Character.GetName()
+```
 
 ---
 
-### Character
+#### Window 模块
 
-#### GetCharacter
+```javascript
+interface.subscribe.Window
+```
 
-> 用于获取角色模型名称 
+| 方法                    | 参数 | 返回值     | 说明                             |
+|-----------------------|----|---------|--------------------------------|
+| `GetWindowPosition()` | 无  | `tuple` | 获取窗口位置信息 (width, height, x, y) |
 
-传入参数：
+**数据结构：**
 
-- 无参数
+```json
+{
+  "width": 1920,
+  "height": 1080,
+  "x": 100,
+  "y": 50
+}
+```
 
-返回值：
+#### Live2D 模块
 
-- **`name`**: `str` 字符串类型
+```javascript
+interface.subscribe.Live2D
+```
 
-#### GetName
+| 方法            | 参数 | 返回值                | 说明          |
+|---------------|----|--------------------|-------------|
+| `GetLive2D()` | 无  | `live2d.LAppModel` | 获取Live2D的属性 |
 
-> 获取用户给角色取的名字
- 
-传入参数：
+**示例：**
 
-- 无参数
+```python
+# 获取当前角色名称
+live2d_attr = interface.subscribe.Live2D.GetLive2D()
+```
 
-返回值：
+#### Model 模块
 
-- **`name`**: `str` 字符串类型
+```javascript
+interface.subscribe.Model
+```
 
----
+| 方法                | 参数 | 返回值   | 说明         |
+|-------------------|----|-------|------------|
+| `GetVoiceModel()` | 无  | `str` | 获取角色语音模型名称 |
 
-### Live2D
+**示例：**
 
-#### GetLive2D
-
-> 获取程序内部的Live2D属性，参照[Live2D-PY](https://github.com/Arkueid/live2d-py)
-
-传入参数：
-
-- 无参数
-
-返回值：
-
-- **`attr`**: `live2d.LAppModel` [Live2D-PY](https://github.com/Arkueid/live2d-py) 中的LAppModel类型
-
----
-
-### Model
-
-#### GetVoiceModel
-
-> 获取选择的语音模型
-
-传入参数：
-
-- 无参数
-
-返回值：
-
-- **`voice_name`**: `str` 字符串类型
+```python
+# 获取当前角色语音模型名称
+voice_model = interface.subscribe.Model.GetVoiceModel()
+```
 
 ---
 
-### Window
+## 📌 最佳实践
 
-#### GetWindowPosition
+1. 优先使用订阅 API 进行功能扩展
+2. 实时 API 推荐用于低延迟场景（如游戏交互）
+3. 复杂参数建议使用字典格式提升可读性
 
-> 获取窗口位置
+---
 
-传入参数：
-
-- 无参数
-
-返回值：
-
-- **`position`**: `tuple` 字符串类型
-  - width: `int` 窗口宽度
-  - height: `int` 窗口高度
-  - x: `int` 窗口x坐标
-  - y: `int` 窗口y坐标
-
-## 视图 View API
-
-## 截断 Hooks API
-
-## 行为 Actions API
-
-## 交互 Interact API
-
-## 标准常量 Standards API
+<div align="center">
+    <h3>🚀 期待您的创意实现！</h3>
+    <p>遇到问题？欢迎提交 Issue 或 Pull Request</p>
+</div>
