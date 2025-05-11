@@ -7,9 +7,9 @@
 # API 接口 说明
 
 > [!WARNING]
-> API 接口 说明为 订阅(subscribe) API 的文档
+> API 接口 主要说明为 订阅(subscribe) API 的文档
 
-> [!NOTE]
+> [!WARNING]
 > 实时API (realtime) 用法和subscribe语法相同，但依赖Socket套字节UDP协议运行
 
 # 实时 API
@@ -17,7 +17,7 @@
 > [!NOTE]
 > 此专为 `独立程序` 设计，**程序增强请使用 `订阅(subscribe) API`**
 
-其继承**完全参照** [订阅(subscribe)](#-订阅API) API 的文档
+其继承**完全参照** [订阅(subscribe)](#订阅API) API 的文档
 
 传入参数时就是将interface去掉
 
@@ -41,12 +41,7 @@ class RealtimeAPI(threading.Thread):
         self.interface = interface
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def send_request(self, message_dict):
-        """
-        发送UDP请求并接收响应
-        :param message_dict: 要发送的消息字典
-        :return: 响应数据字符串
-        """
+    def _send_request(self, message_dict):
         self.client_socket.sendto(json.dumps(message_dict).encode('utf-8'), self.address)
 
         response, server_address = self.client_socket.recvfrom(1024)
@@ -60,7 +55,7 @@ class RealtimeAPI(threading.Thread):
         线程启动时执行的方法
         """
         try:
-            self.send_request(self.interface)
+            self._send_request(self.interface)
         finally:
             self.client_socket.close()
 
@@ -68,7 +63,7 @@ class RealtimeAPI(threading.Thread):
 
 ## interface要求
 
-1. 如果不穿入method，instance就传入全部的路径
+1. 如果不传入method，instance就传入全部的路径
 2. 如果传入method，instance就只传入继承路径
 3. parameter如果为字典(dict)，字典的键为传入的参数名，对应的值为传入的参数值
 4. parameter如果为列表(list)，就以传入的顺序传参
