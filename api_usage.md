@@ -116,6 +116,8 @@ interface.subscribe.<InterfaceBelow>
 
 ## 基础 API
 
+---
+
 ### Character
 
 #### GetCharacter
@@ -142,6 +144,8 @@ interface.subscribe.<InterfaceBelow>
 
 - **`name`**: `str` 字符串类型
 
+---
+
 ### Live2D
 
 #### GetLive2D
@@ -156,6 +160,8 @@ interface.subscribe.<InterfaceBelow>
 
 - **`attr`**: `live2d.LAppModel` [Live2D-PY](https://github.com/Arkueid/live2d-py) 中的LAppModel类型
 
+---
+
 ### Model
 
 #### GetVoiceModel
@@ -169,6 +175,8 @@ interface.subscribe.<InterfaceBelow>
 返回值：
 
 - **`voice_name`**: `str` 字符串类型
+
+---
 
 ### Window
 
