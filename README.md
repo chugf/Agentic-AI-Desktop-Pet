@@ -1,7 +1,7 @@
 <div align="center">
     <h1 style="margin: 0;">🤖 AI Desktop Pet</h1>
     <br/>
-    <b><a href="README.md">English</a></b> | <b><a href="README_zh.md">Simplified Chinese</a></b>
+    <b><a href="README.md">English</a></b> | <b><a href="README_zh.md">简体中文</a></b>
     <br/>
     <a href="api_usage.md">📚 API Documentation</a>
     <br/>
@@ -47,8 +47,14 @@ graph TD
 
 ### System Requirements
 
+#### Recommended System Requirements
 - Windows 10/11 x64
 - NVIDIA GPU (RTX 20 series or higher recommended)
+
+#### Least Requirements
+
+- Windows 10/11 x32
+- i5-4 Series
 
 ### Installation Steps
 
@@ -90,7 +96,8 @@ graph TD
 
 <div align="center">
     <h2>🔧 Local Deployment Guide</h2>
-    <h3>🚨 Important Note: Local deployment requires <i>1.42GB</i> or more of available storage space</h3>
+    <h3>🚨 Important Note: Local deployment requires <i>1.42GB</i> for BASIC RUNTIME</h3>
+    <h3>⚠️ The least space requirement is <i>3.22GB for FULL</i></h3>
 </div>
 
 ---
@@ -172,12 +179,16 @@ gsv/
 
 ### 🧠 Recommended Model Configurations
 
+> [!WARNING]
+> All the command must run on `Windows PowerShell` platform
+
 | VRAM Capacity | Recommended Model | Startup Command           |
 |---------------|-------------------|---------------------------|
-| 4-6GB         | Qwen2-0.5B        | `ollama run qwen2.5:0.5b` |
-| 6-8GB         | Qwen2-1.8B        | `ollama run qwen2.5:1.8b` |
-| 8-12GB        | Qwen2-7B          | `ollama run qwen2.5:7b`   |
-| 12GB+         | Qwen2-72B         | `ollama run qwen2.5:72b`  |
+| 1-4GB         | Qwen2.5-0.5B      | `ollama run qwen2.5:0.5b` |
+| 4-6GB         | Qwen2.5-1.5B      | `ollama run qwen2.5:1.5b` |
+| 6-15GB        | Qwen2.5-7B        | `ollama run qwen2.5:7b`   |
+| 18-22GB       | Qwen2.5-14B       | `ollama run qwen2.5:14b`  |
+| 22-26GB       | Qwen2.5-32B       | `ollama run qwen2.5:32b`  |
 
 ---
 
@@ -206,7 +217,7 @@ gsv/
 | `messages`     | ✓        | Chat history (automatically filled by the program) |
 | `Answer Index` | ✓        | Response parsing path (e.g., `message.content`)    |
 | `Model`        | ✓        | Model name                                         |
-| `API-Key`      | ✓        | API key                                            |
+| `API-Key`      | x        | API key                                            |
 | `tools`        | x        | Available tools list (in JSON format)              |
 
 ---

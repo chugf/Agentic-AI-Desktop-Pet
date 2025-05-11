@@ -92,7 +92,6 @@ graph TD
     <h3>🚨 重要提示：本地部署需 <i>1.42GB</i> 以上可用存储空间</h3>
 </div>
 
-
 ## 🌐 服务架构拓扑
 
 ```mermaid
@@ -126,6 +125,7 @@ pip install -r requirements.txt
 ```bash
 python Whisper_api.py
 ```
+
 ---
 
 ## 🗣️ 语音合成部署（GPT-SoVITS）
@@ -169,12 +169,16 @@ gsv/
 
 ### 🧠 模型推荐配置
 
-| 显存容量   | 推荐模型       | 启动命令                      |
-|--------|------------|---------------------------|
-| 4-6GB  | Qwen2-0.5B | `ollama run qwen2.5:0.5b` |
-| 6-8GB  | Qwen2-1.8B | `ollama run qwen2.5:1.8b` |
-| 8-12GB | Qwen2-7B   | `ollama run qwen2.5:7b`   |
-| 12GB+  | Qwen2-72B  | `ollama run qwen2.5:72b`  |
+> [!WARNING]
+> 所有的都需要在 `Windows PowerShell` 下打开
+
+| 显卡内存    | 推荐模型         | 安装命令                      |
+|---------|--------------|---------------------------|
+| 1-4GB   | Qwen2.5-0.5B | `ollama run qwen2.5:0.5b` |
+| 4-6GB   | Qwen2.5-1.5B | `ollama run qwen2.5:1.5b` |
+| 6-15GB  | Qwen2.5-7B   | `ollama run qwen2.5:7b`   |
+| 18-22GB | Qwen2.5-14B  | `ollama run qwen2.5:14b`  |
+| 22-26GB | Qwen2.5-32B  | `ollama run qwen2.5:32b`  |
 
 ---
 
@@ -201,7 +205,7 @@ gsv/
 | `messages`     | ✓  | 对话历史（由程序自动填充）                |
 | `Answer Index` | ✓  | 响应解析路径（示例：`message.content`） |
 | `Model`        | ✓  | 模型名称                         |
-| `API-Key`      | ✓  | API密钥                        |
+| `API-Key`      | x  | API密钥                        |
 | `tools`        | x  | 可用工具列表（JSON格式）               |
 
 ## 📜 开源协议
