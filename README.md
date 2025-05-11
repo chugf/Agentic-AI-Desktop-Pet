@@ -48,6 +48,7 @@ graph TD
 ### System Requirements
 
 #### Recommended System Requirements
+
 - Windows 10/11 x64
 - NVIDIA GPU (RTX 20 series or higher recommended)
 
@@ -186,7 +187,8 @@ gsv/
 |---------------|-------------------|---------------------------|
 | 1-4GB         | Qwen2.5-0.5B      | `ollama run qwen2.5:0.5b` |
 | 4-6GB         | Qwen2.5-1.5B      | `ollama run qwen2.5:1.5b` |
-| 6-15GB        | Qwen2.5-7B        | `ollama run qwen2.5:7b`   |
+| 6-9GB         | Qwen2.5-3B        | `ollama run qwen2.5:3b`   |
+| 9-15GB        | Qwen2.5-7B        | `ollama run qwen2.5:7b`   |
 | 18-22GB       | Qwen2.5-14B       | `ollama run qwen2.5:14b`  |
 | 22-26GB       | Qwen2.5-32B       | `ollama run qwen2.5:32b`  |
 
