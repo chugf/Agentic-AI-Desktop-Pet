@@ -49,6 +49,11 @@ graph TD
 - Windows 10/11 x64
 - NVIDIA GPU (推荐RTX 20系列以上)
 
+### 最低运行
+
+- Windows 10/11 x32
+- i5-4 代
+
 ### 安装步骤
 
 1. 从 [Releases页面](https://github.com/HeavyNotFat/Agentic-AI-Desktop-Pet/releases) 下载最新版本
