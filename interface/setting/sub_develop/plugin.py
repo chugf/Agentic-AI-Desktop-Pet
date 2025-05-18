@@ -41,7 +41,7 @@ class PluginBinding(QWidget):
         self.select_examples = ComboBox(self)
         examples = os.listdir("./interface/subscribe/examples")
         self.select_examples.addItems(examples)
-        self.select_examples.setGeometry(QRect(550, 102, 80, 30))
+        self.select_examples.setGeometry(QRect(590, 102, 40, 30))
         self.select_examples.setCurrentText("example_getattr")
         self.select_examples.currentTextChanged.connect(
             lambda: self.input_codes.setText(

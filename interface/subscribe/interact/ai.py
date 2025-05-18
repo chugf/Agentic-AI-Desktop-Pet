@@ -8,4 +8,4 @@ class LargeLanguageModel:
         :param prompt:                String   -->   用户输入的文本
         :return:                      String   -->   大语言模型的返回
         """
-        self.config['llm'](prompt)
+        return self.config['llm'](prompt)

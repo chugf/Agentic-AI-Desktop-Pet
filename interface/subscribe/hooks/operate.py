@@ -10,3 +10,10 @@ class Operate:
 
     def GetConversationInterface(self) -> QWidget:
         return self.config['conversation']
+
+    def GetHookCloseProgram(self) -> list[callable]:
+        try:
+            attr_list = self.config['close_program']
+        except (SystemError, AttributeError, IndexError, EOFError, KeyError):
+            attr_list = []
+        return attr_list

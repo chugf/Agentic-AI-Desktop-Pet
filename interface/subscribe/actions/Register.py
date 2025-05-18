@@ -92,6 +92,13 @@ class Register:
         """
         self.config.register("ai_output", func)
 
+    def SetRecognitionOutput(self, func: callable):
+        """
+        注册识别输出事件
+        :param func: callable  -->   可调用函数
+        """
+        self.config.register("recognition_output", func)
+
     # 注销
     def UnsetDragEnterAction(self):
         self.config.unregister("drag_enter_action")
@@ -123,6 +130,9 @@ class Register:
     def UnsetAIOutput(self):
         self.config.unregister("ai_output")
 
+    def UnsetRecognitionOutput(self):
+        self.config.unregister("recognition_output")
+
     def UnsetALL(self):
         self.UnsetDragEnterAction()
         self.UnsetDragLeaveAction()
@@ -134,3 +144,4 @@ class Register:
         self.UnsetMouseMoveAction()
         self.UnsetMouseDragAction()
         self.UnsetAIOutput()
+        self.UnsetRecognitionOutput()

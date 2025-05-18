@@ -74,15 +74,17 @@ class RunPythonPlugin(QThread):
     error = pyqtSignal(str)
     attribute = pyqtSignal(subprocess.Popen)
 
-    def __init__(self, parent: QOpenGLWidget, codes_or_file: str, global_: dict, is_python_exits: bool):
+    def __init__(self, parent: QOpenGLWidget, codes_or_file: str, global_: dict, python_path: str, is_python_exits: bool):
         super().__init__(parent)
         self.codes_or_file = codes_or_file
         self.global_ = global_
+        self.python_path = python_path
         self.is_python_exits = is_python_exits
 
     def run(self):
         if self.is_python_exits:
-            self.attribute.emit(subprocess.Popen(["python", self.codes_or_file], shell=True))
+            proc = subprocess.Popen([self.python_path, self.codes_or_file])
+            self.attribute.emit(proc)
         else:
             try:
                 exec(self.codes_or_file, self.global_)

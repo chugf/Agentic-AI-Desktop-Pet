@@ -38,7 +38,7 @@ import win32con
 from OpenGL import GL
 
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
-    QMimeData, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale
+    QDropEvent, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale
 from PyQt5.QtCore import QCoreApplication, QPoint
 from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox, QOpenGLWidget, \
     QSystemTrayIcon, QVBoxLayout
@@ -439,6 +439,14 @@ class Setting(FramelessWindow):
         self.stack_widget.currentChanged.connect(self.onCurrentInterfaceChanged)
         self.stack_widget.setCurrentIndex(point_index)
 
+        # 注册 接口
+        interface.subscribe.views.Register.register("program_self", self)
+        interface.subscribe.views.Register.register("general", self.general_page)
+        interface.subscribe.views.Register.register("intelligence", self.intelligence_page)
+        interface.subscribe.views.Register.register("binding", self.binding_page)
+        interface.subscribe.views.Register.register("dev", DeveloperOptions)
+        interface.subscribe.views.Register.register("about", self.about_page)
+
     # 自定义
     def addSubInterface(self, widget, icon, text: str, position=NavigationItemPosition.TOP, parent=None):
         self.stack_widget.addWidget(widget)
@@ -542,8 +550,7 @@ class Setting(FramelessWindow):
                         python_file: str | None = None):
         try:
             if runtime.PythonCodeExaminer(to_be_run_codes).optimize_infinite_loop:
-                interface.setting.customize.widgets.pop_warning(self, languages[157], languages[158], 5000)
-                return
+                interface.setting.customize.widgets.pop_warning(self, languages[117], languages[118], 5000)
             safety_level = configure['settings']['safety']
             if safety_level != "shut":
                 attr = getattr(runtime.PythonCodeExaminer(to_be_run_codes), f"is_{safety_level}")
@@ -570,9 +577,11 @@ class Setting(FramelessWindow):
                         execute_file = f"{os.getcwd()}/logs/plugin_cache_runner.py"
                     else:
                         execute_file = f"{python_file}"
-                thread_run = runtime.thread.RunPythonPlugin(self, execute_file, PLUGIN_GLOBAL, IS_PYTHON_EXITS)
-                thread_run.error.connect(self.exception)
-                thread_run.start()
+                    thread_run = runtime.thread.RunPythonPlugin(
+                        self, execute_file, PLUGIN_GLOBAL, configure['settings']['python'], IS_PYTHON_EXITS)
+                    thread_run.attribute.connect(subprocess_running.append)
+                    thread_run.error.connect(self.exception)
+                    thread_run.start()
             except Exception:
                 self.exception(traceback.format_exc())
 
@@ -669,6 +678,9 @@ class Conversation(QWidget):
         self.click_send.setVisible(False)
         self.click_take_photo.setVisible(False)
         self.input_answer.setVisible(False)
+
+    def duration_disappear(self, duration: int):
+        QTimer.singleShot(duration, lambda: self.hide())
 
     def pop_answer(self):
         """回复框的拉伸动画"""
@@ -981,6 +993,10 @@ class DesktopPet(shader.ADPOpenGLCanvas):
     def recognition_success(self, result: str):
         self.speech_recognition.statued()
 
+        for action_item in interface.subscribe.actions.Operate.GetRecognitionOutput():
+            if action_item(result) == interface.subscribe.standards.STOP_EXECUTING_NEXT:
+                return
+
         if self.is_continuous or (configure['name'] in result or configure_default in result):
             if result.strip():
                 self.is_continuous = True
@@ -1127,8 +1143,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         text_generate.start()
         self.continuous_conversation += 1
         current = self.continuous_conversation
-        text_generate.result.connect(lambda texts: self.conversation_display(
-            texts, current, temp_action))
+        text_generate.result.connect(lambda texts, current_index=current: self.conversation_display(
+            texts, current_index, temp_action))
 
     @staticmethod
     def clone_pet(_=None, model=None):
@@ -1313,6 +1329,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
 
         # 插件启动
         for independent_plugin_list in independent_plugin_lists:
+            if not os.path.exists(f"./plugin/{independent_plugin_list}/main.py"):
+                continue
             with open(f"./plugin/{independent_plugin_list}/main.py", "r", encoding="utf-8") as pf:
                 plugin_codes = pf.read()
                 pf.close()
@@ -1342,6 +1360,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                 content_menu.addMenu(views_item)
             elif isinstance(views_item, Action):
                 views_item.setParent(self)
+                views_item.setText("1")
                 content_menu.addAction(views_item)
 
         content_menu.addSeparator()
@@ -1666,7 +1685,6 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             for action_item in interface.subscribe.actions.Operate.GetMouseReleaseAction():
                 action_item()
         # 查看是否靠近右侧屏幕
-        print(self.x())
         if self.x() + (self.width() // 2) > self.screen_geometry.width() - 50:
             # 旋转15度吸附
             self.is_suction = True
@@ -1701,7 +1719,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             action_item()
 
     # 拖拽事件 Drag event
-    def dragEnterEvent(self, event: QMimeData):
+    def dragEnterEvent(self, event: QDropEvent):
         action = engine.actions.ActionsEngine(configure, languages, interface)
         action.analyze_action(event.mimeData().text())
         for action_item in interface.subscribe.actions.Operate.GetDragEnterAction():
@@ -1713,14 +1731,14 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             action_item(event, None)
         event.accept()
 
-    def dragMoveEvent(self, event: QMimeData):
+    def dragMoveEvent(self, event: QDropEvent):
         action = engine.actions.ActionsEngine(configure, languages, interface)
         action.analyze_action(event.mimeData().text())
         for action_item in interface.subscribe.actions.Operate.GetDragMoveAction():
             action_item(event, action.analyzed_action)
         event.accept()
 
-    def dropEvent(self, event: QMimeData):
+    def dropEvent(self, event: QDropEvent):
         action = engine.actions.ActionsEngine(configure, languages, interface)
         action.analyze_action(event.mimeData().text())
         for action_item in interface.subscribe.actions.Operate.GetDropAction():
@@ -1779,9 +1797,15 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             pass
 
     def exit_program(self):
+        for proc in subprocess_running:
+            proc.terminate()
+            proc.wait()
+        for action_item in interface.subscribe.hooks.Operate.GetHookCloseProgram():
+            action_item()
         system_tray.hide()
         architecture.live2d.dispose()
         self.close()
+
         try:
             os.remove("./logs/backup/configure.json")
         except FileNotFoundError:
@@ -1820,7 +1844,8 @@ def realtime_api_caller(calling, parameter):
 
 
 clone_pet_model: list[ClonePet] = []
-independent_plugin_lists = []
+independent_plugin_lists: list = []
+subprocess_running: list[subprocess.Popen] = []
 MouseListener = runtime.MouseListener()
 if __name__ != "__main__":
     # 前置
@@ -1860,6 +1885,8 @@ if __name__ != "__main__":
     )
     interface.subscribe.hooks.Register.HookConversationInterface(conversation)
     interface.subscribe.RegisterAttribute.SetWindow(desktop)
+    interface.subscribe.interact.Register.SetConversationInteraction(conversation)
+    interface.subscribe.views.Register.register("desktop", desktop)
     interface.subscribe.views.Register.register("setting", setting)
     interface.subscribe.views.Register.register("conversation", conversation)
     interface.subscribe.hooks.Register.HookSettingInterface(setting)

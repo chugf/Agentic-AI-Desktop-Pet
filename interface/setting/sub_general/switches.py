@@ -1,12 +1,18 @@
+import subprocess
+import os
+
 from ..customize import function, constants
 
 from PyQt5.Qt import Qt, QIcon
 from PyQt5.QtWidgets import QWidget
 
 from qfluentwidgets import SettingCardGroup, SwitchSettingCard, OptionsSettingCard, \
-    OptionsConfigItem, BoolValidator, QConfig, qconfig, OptionsValidator, ExpandLayout, \
+    OptionsConfigItem, BoolValidator, QConfig, qconfig, OptionsValidator, ExpandLayout, ComboBoxSettingCard, \
     FluentIcon, ScrollArea, InfoBar, InfoBarPosition
 
+env = os.environ.copy()
+python_path = subprocess.check_output(["where", "python"], env=env).decode().replace(
+    "\r", "").split("\n")
 
 class Config(QConfig):
     compatible = OptionsConfigItem("General", "compatible", False, BoolValidator())
@@ -26,6 +32,8 @@ class Config(QConfig):
         OptionsValidator(["shut", "l1", "l2", "l3", "l4", "l5"]), restart=True)
     audio_visualization = OptionsConfigItem("Advanced", "visualization", False, BoolValidator())
     realtime_api = OptionsConfigItem("Advanced", "realtime", False, BoolValidator())
+    local_python_path = OptionsConfigItem(
+        "Advanced", "python", python_path[0], OptionsValidator(python_path), restart=True)
 
     live2d_blink = OptionsConfigItem("Live2D", "AutoBlink", True, BoolValidator())
     live2d_breath = OptionsConfigItem("Live2D", "AutoBreath", True, BoolValidator())
@@ -212,6 +220,20 @@ class Switches(ScrollArea):
                 value.value, "Advanced.safety"
             ))
         self.advanced_group.addSettingCard(self.card_safety_examine)
+        self.local_python_path_card = ComboBoxSettingCard(
+            configItem=Config.local_python_path,
+            icon=FluentIcon.CODE,
+            title="本地Python路径",
+            content="独立插件运行Python",
+            parent=self.advanced_group,
+            texts=python_path
+        )
+        Config.local_python_path.valueChanged.connect(
+            lambda value: self.change_configure(
+                value, "settings.python",
+                value, "Advanced.python"
+            ))
+        self.advanced_group.addSettingCard(self.local_python_path_card)
 
         # Live2D 设置
         self.live2d_group = SettingCardGroup(f"Live2D {self.languages[10]}", self.scroll_widgets)

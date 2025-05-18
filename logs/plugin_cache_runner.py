@@ -1,24 +1,28 @@
-import sys
+import requests
 
-import interfaces
-
-from PyQt5.Qt import QApplication
-from qfluentwidgets import FluentWindow, FluentIcon
+from PyQt5.Qt import QThread, pyqtSignal
 
 
-class PluginManager(FluentWindow):
+class CheckHands(QThread):
+    detect = pyqtSignal(dict)
+
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("插件管理")
-        self.setGeometry(100, 100, 700, 600)
 
-        self.plugin_list_interface = interfaces.plugin_list.PluginList()
-
-        self.addSubInterface(self.plugin_list_interface, FluentIcon.HOME, "插件列表")
+    def run(self):
+        response = requests.get("http://127.0.0.1:5000/check_hands")
+        self.detect.emit(response.json())
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = PluginManager()
-    window.show()
-    sys.exit(app.exec_())
+class Processor:
+    @staticmethod
+    def detect_result(result):
+        print(result)
+
+
+Processor = Processor()
+
+# 启动单个线程
+CheckHands = CheckHands()
+CheckHands.detect.connect(Processor.detect_result)
+CheckHands.start()

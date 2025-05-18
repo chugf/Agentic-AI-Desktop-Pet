@@ -34,3 +34,6 @@ class Operate:
 
     def GetAIOutput(self) -> list:
         return self.config['ai_output']
+
+    def GetRecognitionOutput(self) -> list:
+        return self.config['recognition_output']

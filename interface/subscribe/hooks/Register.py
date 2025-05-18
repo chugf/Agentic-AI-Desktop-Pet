@@ -18,3 +18,6 @@ class Register:
         :param new_widget: QWidget -->  PyQt5.QtWidgets
         """
         self.config.register("conversation", new_widget)
+
+    def AddHookCloseProgram(self, func: callable):
+        self.config.register("close_program", func)

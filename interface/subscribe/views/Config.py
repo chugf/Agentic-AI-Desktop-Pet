@@ -11,6 +11,8 @@ class _Config:
             self._config[relative] = value
         elif isinstance(self._config[relative], list):
             self._config[relative].append(value)
+        else:
+            self._config[relative] = value
 
     def unregister(self, relative, value):
         if relative in self._config.keys():

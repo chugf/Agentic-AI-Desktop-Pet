@@ -150,6 +150,7 @@ INITIAL_CONFIGURE = {
    "adult_level": 0,
    "settings": {
       "language": "",
+      "python": "",
       "angle": 0.0,
       "size": 1.0,
       "transparency": 1.0,
