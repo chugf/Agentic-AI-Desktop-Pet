@@ -221,7 +221,7 @@ class TextGenerateThread(QThread):
         except Exception:
             file.logger(f"子应用 - AI剧情问答 调用失败\n"
                         f"   Message: {traceback.format_exc()}", logs.HISTORY_PATH)
-            self.result.emit(f"None:AI问答 调用失败 AI Answer failed to call\n{traceback.format_exc()}")
+            self.result.emit([f"AI问答 调用失败 AI Answer failed to call\n{traceback.format_exc()}", True])
             return
         file.logger(f"子应用 - AI剧情问答 调用成功\n"
                     f"   Message: {answer}", logs.HISTORY_PATH)

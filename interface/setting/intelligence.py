@@ -42,7 +42,7 @@ class Intelligence(ScrollArea):
             "",
             [self.languages[33], self.languages[34]],
             self.inference_group)
-        self.card_text_output.optionChanged.connect(lambda text: reload(text, "settings.text.way"))
+        self.card_text_output.optionChanged.connect(lambda value: reload(value.value, "settings.text.way"))
         self.inference_group.addSettingCard(self.card_text_output)
         # 语音输出 Voice Output
         self.card_voice_output = OptionsSettingCard(

@@ -331,7 +331,7 @@ class Setting(FramelessWindow):
     def __init__(self, display_x: int | None = None, display_y: int | None = None, point_index: int = 0):
         def change(value, relative):
             interface.setting.customize.function.change_configure(
-                value.value, relative, configure
+                value, relative, configure
             )
             webui.reload_data(configure['settings']['intelligence'],
                               api_config, configure['language_mapping'][configure['settings']['language']],
@@ -688,7 +688,7 @@ class Conversation(QWidget):
             nonlocal height
             # 根据icon的值增加或减少height
             if icon == "UP":
-                height += 15
+                height += 20
             elif icon == "DOWN":
                 height -= 20
             # 如果height超出范围，则停止计时器

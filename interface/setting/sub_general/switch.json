@@ -13,7 +13,8 @@
       "media": true,
       "safety": "shut",
       "visualization": false,
-      "realtime": false
+      "realtime": false,
+      "python": ""
    },
    "Live2D": {
       "AutoBlink": true,

@@ -140,6 +140,7 @@ class StartUp(QWidget):
             if self.opacity > 0:
                 self.opacity -= 0.05
             else:
+                self.deleteLater()
                 self.timer.stop()
                 self.close()
 
