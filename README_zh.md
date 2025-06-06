@@ -7,6 +7,14 @@
     <br/>
 </div>
 
+> [!CAUTION]
+> 程序内核更新中……
+> 
+> 程序内核更新包是关于插件和扩展的编程语言，编程语言将会换成自研编程语言（当然，也支持Python和其他语言），新编程语言是给普通用户使用的。
+> 
+> 支持 `中文编程`
+
+
 ![OverViewer](./github-show/overview.png)
 ![ModelDownloader](./github-show/download.png)
 

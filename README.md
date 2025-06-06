@@ -7,6 +7,17 @@
     <br/>
 </div>
 
+---
+
+> [!CAUTION]
+> The program's kernel is updating...
+> 
+> The kernel updating package is about Extension and Plugin Programming language... the programming language will change it into self-making language (still supported for Python and the other). The new programming language is used and develop by normal user that can't program but want to develop
+> 
+> Supported for `Chinese Programming`
+
+---
+
 ![OverViewer](./github-show/overview.png)
 ![ModelDownloader](./github-show/download.png)
 
