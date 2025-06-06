@@ -12,7 +12,7 @@
 > [!CAUTION]
 > The program's kernel is updating...
 > 
-> The kernel updating package is about Extension and Plugin Programming language... the programming language will change it into self-making language (still supported for Python and the other). The new programming language is used and develop by normal user that can't program but want to develop
+> The in-program kernel update package relates to the programming language for plugins and extensions. The programming language will be replaced with our self-developed one (of course, Python and other languages are still supported). This new programming language is designed for regular users.
 > 
 > Supported for `Chinese Programming`
 
