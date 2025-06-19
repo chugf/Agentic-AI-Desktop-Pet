@@ -4,11 +4,12 @@ import os
 from ..customize import function, constants
 
 from PyQt5.Qt import Qt, QIcon
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QHBoxLayout
 
 from qfluentwidgets import SettingCardGroup, SwitchSettingCard, OptionsSettingCard, \
     OptionsConfigItem, BoolValidator, QConfig, qconfig, OptionsValidator, ExpandLayout, ComboBoxSettingCard, \
-    FluentIcon, ScrollArea, InfoBar, InfoBarPosition
+    FluentIcon, ScrollArea, InfoBar, InfoBarPosition, ExpandGroupSettingCard, BodyLabel, SwitchButton, IndicatorPosition, \
+    ComboBox
 
 env = os.environ.copy()
 python_path = subprocess.check_output(["where", "python"], env=env).decode().replace(
@@ -20,7 +21,6 @@ class Config(QConfig):
     recognition = OptionsConfigItem("General", "recognition", False, BoolValidator())
     speaker = OptionsConfigItem("General", "speaker", False, BoolValidator())
     search = OptionsConfigItem("General", "search", False, BoolValidator())
-    translate = OptionsConfigItem("General", "translate", False, BoolValidator())
 
     penetration = OptionsConfigItem(
         "Advanced", "penetration", "shut",
@@ -42,6 +42,73 @@ class Config(QConfig):
     physics_switch = OptionsConfigItem("Physics", "physics", True, BoolValidator())
     physics_bounce = OptionsConfigItem("Physics", "bounce", True, BoolValidator())
     physics_dumping_motion = OptionsConfigItem("Physics", "dumping", True, BoolValidator())
+
+
+class TranslateCard(ExpandGroupSettingCard):
+    def __init__(self, parent=None):
+        super().__init__(FluentIcon.LANGUAGE, parent.languages[16], parent.languages[93], parent)
+        self.parent = parent
+        self.enable_label = BodyLabel(parent.languages[233], self)
+        self.enable_switch_button = SwitchButton("关", self, IndicatorPosition.RIGHT)
+        self.enable_switch_button.setChecked(parent.configure['settings']['enable']['trans'])
+        self.enable_switch_button.setOnText("开")
+        self.enable_switch_button.setFixedWidth(135)
+        self.enable_switch_button.checkedChanged.connect(
+            lambda value: function.change_configure(
+                value, "settings.enable.trans", parent.configure
+            ))
+        self.add(self.enable_label, self.enable_switch_button)
+
+        self.target_label = BodyLabel(parent.languages[234], self)
+        self.target_combo_box = ComboBox(self)
+        self.target_combo_box.addItems([
+            parent.languages[235],
+            parent.languages[236],
+            parent.languages[237],
+            parent.languages[238],
+        ])
+        if parent.configure['settings']['trans_lang'] == "zh-Hans":
+            self.target_combo_box.setCurrentText(parent.languages[235])
+        elif parent.configure['settings']['trans_lang'] == "en":
+            self.target_combo_box.setCurrentText(parent.languages[236])
+        elif parent.configure['settings']['trans_lang'] == "ja":
+            self.target_combo_box.setCurrentText(parent.languages[237])
+        elif parent.configure['settings']['trans_lang'] == "ko":
+            self.target_combo_box.setCurrentText(parent.languages[238])
+        self.target_combo_box.currentTextChanged.connect(self.change_language)
+        self.target_combo_box.setFixedWidth(200)
+        self.add(self.target_label, self.target_combo_box)
+
+    def change_language(self, text):
+        if text == self.parent.languages[235]:
+            function.change_configure(
+                "zh-Hans", "settings.trans_lang", self.parent.configure
+            )
+        elif text == self.parent.languages[236]:
+            function.change_configure(
+                "en", "settings.trans_lang", self.parent.configure
+            )
+        elif text == self.parent.languages[237]:
+            function.change_configure(
+                "ja", "settings.trans_lang", self.parent.configure
+            )
+        elif text == self.parent.languages[238]:
+            function.change_configure(
+                "ko", "settings.trans_lang", self.parent.configure
+            )
+
+    def add(self, label, widget):
+        w = QWidget()
+        w.setFixedHeight(60)
+
+        layout = QHBoxLayout(w)
+        layout.setContentsMargins(48, 12, 48, 12)
+
+        layout.addWidget(label)
+        layout.addStretch(1)
+        layout.addWidget(widget)
+
+        self.addGroupWidget(w)
 
 
 class Switches(ScrollArea):
@@ -121,18 +188,21 @@ class Switches(ScrollArea):
                 value, "General.search"
             ))
         self.general_group.addSettingCard(self.card_search)
-        self.card_translate = SwitchSettingCard(
-            configItem=Config.translate,
-            icon=FluentIcon.LANGUAGE,
-            title=self.languages[16],
-            content=self.languages[93],
-            parent=self.general_group
+        self.card_translate = TranslateCard(
+            self
         )
-        self.card_translate.checkedChanged.connect(
-            lambda value: self.change_configure(
-                value, "settings.enable.trans",
-                value, "General.translate"
-            ))
+        # self.card_translate = SwitchSettingCard(
+        #     configItem=Config.translate,
+        #     icon=FluentIcon.LANGUAGE,
+        #     title=self.languages[16],
+        #     content=self.languages[93],
+        #     parent=self.general_group
+        # )
+        # self.card_translate.checkedChanged.connect(
+        #     lambda value: self.change_configure(
+        #         value, "settings.enable.trans",
+        #         value, "General.translate"
+        #     ))
         self.general_group.addSettingCard(self.card_translate)
 
         # 高级设置
@@ -166,8 +236,8 @@ class Switches(ScrollArea):
         self.card_realtime_api = SwitchSettingCard(
             configItem=Config.realtime_api,
             icon=QIcon("./resources/static/realtime.png"),
-            title="开启 Realtime(实时) API 选项",
-            content="用于独立程序的API接口 (http://127.0.0.1:8210)",
+            title=self.languages[198],
+            content=self.languages[199],
             parent=self.advanced_group
         )
         self.card_realtime_api.setIconSize(18, 18)
@@ -223,8 +293,8 @@ class Switches(ScrollArea):
         self.local_python_path_card = ComboBoxSettingCard(
             configItem=Config.local_python_path,
             icon=FluentIcon.CODE,
-            title="本地Python路径",
-            content="独立插件运行Python",
+            title=self.languages[214],
+            content=self.languages[215],
             parent=self.advanced_group,
             texts=python_path
         )

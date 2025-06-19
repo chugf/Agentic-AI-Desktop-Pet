@@ -281,13 +281,22 @@ def pop_error(parent, title, content, duration=2000, orient=Qt.Horizontal):
     )
 
 
-def pop_notification(title, content, type_: Literal['error', 'warning', 'success'], duration=2500):
+def pop_notification(title, content, type_: Literal['error', 'warning', 'success', 'info'], duration=2500):
+    """
+    弹出消息
+    :param title: 标题
+    :param content: 内容（正文）
+    :param type_: 类型（错误弹窗，警告弹窗，成功弹窗）
+    :param duration: 持续时间（毫秒）
+    """
     if type_ == "error":
         func = InfoBar.error
     elif type_ == "warning":
         func = InfoBar.warning
-    else:
+    elif type_ == "success":
         func = InfoBar.success
+    else:
+        func = InfoBar.info
     func(
         title=title,
         content=content,

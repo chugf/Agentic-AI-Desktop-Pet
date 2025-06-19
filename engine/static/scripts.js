@@ -76,7 +76,7 @@ document.getElementById('send-button').addEventListener('click', async function(
 
                             // 提取图片并渲染
                             let imgMatch;
-                            while ((imgMatch = imgRegex.exec(content)) !== null) {
+                            while ((imgMatch = imgRegex.exec(content)) !== None) {
                                 const imgUrl = imgMatch[1];
                                 // 判断是否已经刷新过了
                                 if ((hasProcessed.find(value => value === imgUrl)) != undefined) {

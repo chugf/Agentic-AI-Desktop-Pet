@@ -152,9 +152,10 @@ class TextGenerator:
 
 
 class CustomGenerator:
-    def __init__(self, messages: list, is_translate):
+    def __init__(self, messages: list, is_translate, target_lang: str):
         self.messages = messages
         self.is_translate = is_translate
+        self.target_lang = target_lang
 
     def generate_text(self):
         completion = dashscope.Generation().call(
@@ -162,7 +163,7 @@ class CustomGenerator:
             messages=self.messages,
             translation_options={
                 "source_lang": "Chinese",
-                "target_lang": "Japanese"
+                "target_lang": self.target_lang
             }
         )
         try:

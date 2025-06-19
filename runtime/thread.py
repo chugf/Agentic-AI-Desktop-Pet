@@ -256,12 +256,22 @@ class VoiceGenerateThread(QThread):
                 if self.configure['settings']['enable']['trans']:
                     if "spider" in self.configure["settings"]['translate']:
                         if "bing" in self.configure["settings"]['translate']:
-                            text = intelligence.translate.machine_translate(text)
-                            language = "ja"
+                            text = intelligence.translate.machine_translate(text,
+                                                                            self.configure['settings']['trans_lang'])
+                            language = self.configure['settings']['trans_lang'].replace("-Hans", "")
                     elif "ai" in self.configure["settings"]['translate']:
                         if "tongyi" in self.configure["settings"]['translate']:
-                            text = intelligence.translate.tongyi_translate(text)
-                            language = "ja"
+                            target_lang = "Japanese"
+                            if self.configure['settings']['trans_lang'] == self.language[235]:
+                                target_lang = "Chinese"
+                            elif self.configure['settings']['trans_lang'] == self.language[236]:
+                                target_lang = "English"
+                            elif self.configure['settings']['trans_lang'] == self.language[237]:
+                                target_lang = "Japanese"
+                            elif self.configure['settings']['trans_lang'] == self.language[238]:
+                                target_lang = "Korean"
+                            text = intelligence.translate.tongyi_translate(text, target_lang)
+                            language = self.configure['settings']['trans_lang'].replace("-Hans", "")
             else:
                 language = self.language
 

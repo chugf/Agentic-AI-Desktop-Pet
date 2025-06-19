@@ -91,7 +91,7 @@ You Need to Restart to Apply Updates~
 Enable Desktop Pet to Understand Your Speech
 Make Your Desktop Pet Speak
 Desktop Pet Can Surf the Web
-Speech (AI Voice) Translated to Japanese
+Speech (AI Voice) Translated to Language that you want to translate to
 Image Processing
 iFlytek ID
 iFlytek Key
@@ -180,7 +180,7 @@ Delete
 Clone Character
 Delete this Cloning...
 Cute cloning character --- {name}
-Cue the thunder... {name}’s in the house!
+π(Pie) also can be eaten!
 Physics Simulation
 Physics Calculation
 enable physics calculation (Gravity acceleration, elastic potential energy)
@@ -212,3 +212,28 @@ Plugin Download
 Storage Manager
 Realtime API has started! Please note that you may be attacked!
 Realtime API server has been closed!
+Local Python Path
+Independent plugin Python
+Times
+Algorithm
+Sampling
+Program used space ratio in {disk}
+Program used space ratio in disk
+Restore Factory Settings
+Restore Configuration
+Restore Switch Configuration
+Restore AI Configuration
+Restore Server Script
+Sure?
+Success
+Warning
+Cancel restoring
+Failure
+This object will delete all configurations (including models, sound materials and all configurations), are you sure to continue?
+Are you sure to restore this item?
+Enable
+Target Language
+Simplified Chinese
+English (American)
+Japanese
+Korean

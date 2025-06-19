@@ -2,7 +2,7 @@
    "name": "巧克力",
    "voice_model": "巧克力",
    "default": "Chocola",
-   "watermark": "Keep@NullParameter;0.0",
+   "watermark": "Keep@NoneParameter;0.0",
    "adult_level": 0,
    "settings": {
       "language": "",
@@ -13,7 +13,8 @@
       "compatibility": false,
       "safety": "shut",
       "intelligence": "qwen-max-latest",
-      "translate": "ai.tongyi",
+      "translate": "spider.bing",
+      "trans_lang": "ja",
       "physics": {
          "total": true,
          "bounce": true,
@@ -31,7 +32,7 @@
          "tts": false,
          "media": true,
          "online": false,
-         "trans": false,
+         "trans": true,
          "rec": false,
          "locktsk": true,
          "realtimeAPI": false

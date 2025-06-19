@@ -38,7 +38,7 @@ import win32con
 from OpenGL import GL
 
 from PyQt5.Qt import QIcon, QApplication, QTimer, Qt, QRect, QTimerEvent, QCursor, QGuiApplication, \
-    QDropEvent, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale
+    QDropEvent, QColor, QLinearGradient, QPainter, QBrush, QPixmap, QFileDialog, QLocale, QFont
 from PyQt5.QtCore import QCoreApplication, QPoint
 from PyQt5.QtWidgets import QWidget, QLabel, QStackedWidget, QHBoxLayout, QMessageBox, QOpenGLWidget, \
     QSystemTrayIcon, QVBoxLayout
@@ -79,6 +79,84 @@ if os.path.exists(f"./resources/model/{configure_default}/2"):
     architecture.reload(2)
 else:
     architecture.reload(3)
+
+
+class PiFirework(QWidget):
+    """彩蛋 —— π的烟花"""
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('EasterEgg - Pi Firework')
+        screen_geometry = QApplication.desktop().screenGeometry()
+        self.setGeometry(0, 0, screen_geometry.width(), screen_geometry.height())
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+
+        self.total = 0
+        self.particles = []
+        self.center_x = self.width() // 2
+        self.center_y = self.height() // 2
+
+        self.explosion_timer = QTimer(self)
+        self.explosion_timer.timeout.connect(self.explode)
+
+        self.movement_timer = QTimer(self)
+        self.movement_timer.timeout.connect(self.move_particles)
+
+    def start(self):
+        self.total = 0
+        self.explosion_timer.start(1000)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        if not self.particles:
+            font = QFont('Arial', 72)
+            painter.setFont(font)
+            painter.setPen(QColor(255, 0, 0))
+            painter.drawText(event.rect(), Qt.AlignCenter, 'π')
+        else:
+            for particle in self.particles:
+                x, y, dx, dy, color, number = particle
+                painter.setPen(color)
+                font = QFont('Arial', 24)
+                painter.setFont(font)
+                painter.drawText(int(x), int(y), number)
+
+    def explode(self):
+        self.explosion_timer.stop()
+        colors = [QColor(255, 0, 0), QColor(0, 255, 0), QColor(0, 0, 255)]
+        numbers = list("3.1415926")
+        for _ in range(50):
+            speed = random.uniform(5, 15)
+            dx = speed * random.choice([-1, 1]) * abs(random.gauss(0, 0.5))
+            dy = speed * random.choice([-1, 1]) * abs(random.gauss(0, 0.5))
+            number = random.choice(numbers)
+            color = random.choice(colors)
+            self.particles.append([self.center_x, self.center_y, dx, dy, color, number])
+        self.update()
+
+        self.movement_timer.start(50)
+
+    def move_particles(self):
+        self.total += 1
+        for i, particle in enumerate(self.particles):
+            x, y, dx, dy, color, number = particle
+            x += dx
+            y += dy
+            dx *= 0.98
+            dy *= 0.98
+            dy += 0.1  # Gravity effect
+            if abs(dx) < 0.1 and abs(dy) < 0.1:
+                del self.particles[i]
+            else:
+                self.particles[i] = [x, y, dx, dy, color, number]
+        self.update()
+        if not self.particles:
+            self.movement_timer.stop()
+            self.close()
+        elif self.total > 200:
+            self.movement_timer.stop()
+            self.close()
 
 
 class PictureShow(QWidget):
@@ -394,7 +472,7 @@ class Setting(FramelessWindow):
             self.general_page.add_another_one,
             self.addSubInterface)
 
-        self.about_page = interface.setting.about.About(languages, runtime)
+        self.about_page = interface.setting.about.About(languages, runtime, pi_firework)
         self.record_timer = QTimer(self)
 
         self.hBoxLayout.setSpacing(0)
@@ -1237,6 +1315,7 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                     architecture.reload(2)
             else:
                 raise FileNotFoundError()
+
             self.pet_model.LoadModelJson(self.model_json_path)
         except (KeyError, FileNotFoundError):
             configure['default'] = 'kasumi2'
@@ -1765,6 +1844,9 @@ class DesktopPet(shader.ADPOpenGLCanvas):
             }})
         live2d_parameter.update({"Keep@NullParameter": {"value": 0.0, "max": 0.0, "min": 0.0, "default": 0.0}})
         interface.subscribe.RegisterAttribute.SetPet(self.pet_model)
+        interface.setting.customize.widgets.pop_notification("π 特别版",
+                                                             "当前版本是：3.14.15.9\n当我们庆祝首个著名常数版本！",
+                                                             "info", 4000)
         self.startTimer(self.fps_refresh)
 
     def on_resize(self, width, height):
@@ -1871,6 +1953,7 @@ if __name__ != "__main__":
     PLUGIN_GLOBAL['print'] = DeveloperOptions.print_
     PLUGIN_GLOBAL['input'] = DeveloperOptions.input_
 
+    pi_firework = PiFirework()
     visualization = AudioVisualization()
     desktop = DesktopPet()
     desktop.show()

@@ -86,7 +86,8 @@ class StorageManager(QWidget):
         self.configure = configure
         self.setObjectName("StorageManager")
 
-        BodyLabel(f"程序在 {current_disk_symbol} 的占用比例", self).setGeometry(QRect(0, 250, 650, 30))
+        BodyLabel(self.languages[219].format(disk=current_disk_symbol),
+                  self).setGeometry(QRect(0, 250, 650, 30))
         self.ring_current_disk = ProgressRing(self)
         self.ring_current_disk.setRange(0, total_space_in_disk)
         self.ring_current_disk.setValue(current_used)
@@ -96,7 +97,7 @@ class StorageManager(QWidget):
         self.ring_current_disk.setGeometry(QRect(10, 42, 200, 200))
         self.ring_current_disk.setFormat(f"{used_rate_current_disk} %" if used_rate_current_disk > 0.1 else "<= 0.1%")
 
-        BodyLabel(f"程序在 磁盘 的占用比例", self).setGeometry(QRect(440, 250, 650, 30))
+        BodyLabel(self.languages[220], self).setGeometry(QRect(440, 250, 650, 30))
         self.ring_total_disk = ProgressRing(self)
         self.ring_total_disk.setRange(0, storage_info["*"][0] * 100)
         self.ring_total_disk.setValue(current_used)
@@ -106,47 +107,47 @@ class StorageManager(QWidget):
         self.ring_total_disk.setGeometry(QRect(440, 42, 200, 200))
         self.ring_total_disk.setFormat(f"{used_rate_total} %" if used_rate_total > 0.1 else "<= 0.1%")
 
-        self.click_recover_all = PushButton("恢复出厂设置", self)
-        self.click_recover_all.clicked.connect(lambda: self.recovery("恢复出厂设置", "all"))
+        self.click_recover_all = PushButton(self.languages[221], self)
+        self.click_recover_all.clicked.connect(lambda: self.recovery(self.languages[221], "all"))
         self.click_recover_all.setGeometry(QRect(10, 300, 150, 30))
 
-        self.click_recover_configure = PushButton("恢复配置", self)
-        self.click_recover_configure.clicked.connect(lambda: self.recovery("恢复配置", "configure"))
+        self.click_recover_configure = PushButton(self.languages[222], self)
+        self.click_recover_configure.clicked.connect(lambda: self.recovery(self.languages[222], "configure"))
         self.click_recover_configure.setGeometry(QRect(10, 350, 150, 30))
 
-        self.click_recover_switch = PushButton("恢复开关配置", self)
-        self.click_recover_switch.clicked.connect(lambda: self.recovery("恢复开关配置", "switch"))
+        self.click_recover_switch = PushButton(self.languages[223], self)
+        self.click_recover_switch.clicked.connect(lambda: self.recovery(self.languages[223], "switch"))
         self.click_recover_switch.setGeometry(QRect(160, 350, 150, 30))
 
-        self.click_recover_intelligence = PushButton("恢复人工智能配置", self)
-        self.click_recover_intelligence.clicked.connect(lambda: self.recovery("恢复人工智能配置", "intelligence"))
+        self.click_recover_intelligence = PushButton(self.languages[224], self)
+        self.click_recover_intelligence.clicked.connect(lambda: self.recovery(self.languages[224], "intelligence"))
         self.click_recover_intelligence.setGeometry(QRect(310, 350, 150, 30))
 
-        self.click_recover_scripts = PushButton("恢复服务器脚本", self)
-        self.click_recover_scripts.clicked.connect(lambda: self.recovery("恢复服务器脚本", "scripts"))
+        self.click_recover_scripts = PushButton(self.languages[225], self)
+        self.click_recover_scripts.clicked.connect(lambda: self.recovery(self.languages[225], "scripts"))
         self.click_recover_scripts.setGeometry(QRect(460, 350, 150, 30))
 
     def recovery(self, description, type_: Literal['all', 'configure', 'switch', 'intelligence', 'scripts'] = "all"):
-        if not widgets.pop_message(self, "确定？", f"你确定恢复此项设置？({description})"):
-            widgets.pop_notification("错误", "取消了恢复操作", "error")
+        if not widgets.pop_message(self, self.languages[226], f"{self.languages[232]}({description})"):
+            widgets.pop_notification(self.languages[78], self.languages[229], "error")
             return
         if type_ == "all" and not widgets.pop_message(
-                self, "⚠️警告⚠️",
-                f"{'⚠️' * 25}\n该项目会删除所有的配置（包括模型，声音素材和所有配置），是否继续？\n{'⚠️' * 25}"):
-            widgets.pop_notification("错误", "取消了恢复操作", "error")
+                self, f"⚠️{self.languages[228]}⚠️",
+                f"{'⚠️' * 25}\n{self.languages[231]}\n{'⚠️' * 25}"):
+            widgets.pop_notification(self.languages[78], self.languages[229], "error")
             return
         if hasattr(Recovery, type_):
             getattr(Recovery, type_)()
-            widgets.pop_success(self, "成功", f"{description}成功")
+            widgets.pop_success(self, self.languages[227], f"{description}{self.languages[227]}")
         else:
-            widgets.pop_error(self, "错误", f"{description}失败")
+            widgets.pop_error(self, self.languages[78], f"{description}{self.languages[230]}")
 
 
 INITIAL_CONFIGURE = {
    "name": "巧克力",
    "voice_model": "巧克力",
    "default": "Chocola",
-   "watermark": "Keep@NullParameter;0.0",
+   "watermark": "Keep@NoneParameter;0.0",
    "adult_level": 0,
    "settings": {
       "language": "",
@@ -157,7 +158,8 @@ INITIAL_CONFIGURE = {
       "compatibility": False,
       "safety": "shut",
       "intelligence": "qwen-max-latest",
-      "translate": "ai.tongyi",
+      "translate": "spider.bing",
+      "trans_lang": "ja",
       "physics": {
          "total": True,
          "bounce": True,
@@ -175,7 +177,7 @@ INITIAL_CONFIGURE = {
          "tts": False,
          "media": True,
          "online": False,
-         "trans": False,
+         "trans": True,
          "rec": False,
          "locktsk": True,
          "realtimeAPI": False
@@ -362,8 +364,7 @@ INITIAL_SETTING_SWITCH = {
       "adult": False,
       "recognition": False,
       "speaker": False,
-      "search": False,
-      "translate": False
+      "search": False
    },
    "Advanced": {
       "penetration": "shut",
@@ -371,7 +372,8 @@ INITIAL_SETTING_SWITCH = {
       "media": True,
       "safety": "shut",
       "visualization": False,
-      "realtime": False
+      "realtime": False,
+      "python": ""
    },
    "Live2D": {
       "AutoBlink": True,

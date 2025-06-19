@@ -11,7 +11,7 @@ import websockets
 import whisper
 import pyaudio
 
-model = whisper.load_model("base")
+model = whisper.load_model("medium")
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000

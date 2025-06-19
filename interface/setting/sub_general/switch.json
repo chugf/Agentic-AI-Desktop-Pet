@@ -4,8 +4,7 @@
       "adult": false,
       "recognition": false,
       "speaker": false,
-      "search": false,
-      "translate": false
+      "search": false
    },
    "Advanced": {
       "penetration": "shut",

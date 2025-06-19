@@ -41,8 +41,8 @@ def machine_translate(words, target: typing.Literal['zh-Hans', 'en', 'ja', 'ko']
     return translated_text
 
 
-def tongyi_translate(words):
-    CustomGenerate = text.CustomGenerator([{'role': 'user', 'content': words}], True)
+def tongyi_translate(words, target: typing.Literal['Chinese', 'English', 'Japanese', 'Korean'] = "Japanese"):
+    CustomGenerate = text.CustomGenerator([{'role': 'user', 'content': words}], True, target)
     return CustomGenerate.generate_text()
 
 

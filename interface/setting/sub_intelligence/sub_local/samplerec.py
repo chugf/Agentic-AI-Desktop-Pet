@@ -14,7 +14,7 @@ class SampleRecognition(QWidget):
         self.setting_parent = setting_parent
         self.setObjectName("SampleRecognition")
 
-        BodyLabel("Sampling", self).setGeometry(QRect(10, 10, 100, 30))
+        BodyLabel(self.languages[216], self).setGeometry(QRect(10, 10, 100, 30))
         self.show_sampling = BodyLabel("50", self)
         self.show_sampling.setGeometry(QRect(500, 10, 70, 30))
         self.scale_sampling = Slider(Qt.Horizontal, self)
@@ -23,7 +23,7 @@ class SampleRecognition(QWidget):
         self.scale_sampling.valueChanged.connect(lambda: self.show_sampling.setText(str(self.scale_sampling.value())))
         self.scale_sampling.setGeometry(QRect(90, 15, 400, 30))
 
-        BodyLabel("Algorithm", self).setGeometry(QRect(10, 40, 100, 30))
+        BodyLabel(self.languages[217], self).setGeometry(QRect(10, 40, 100, 30))
         self.select_algorithm = ComboBox(self)
         self.select_algorithm.addItems([self.languages[156], self.languages[157],
                                         self.languages[158], self.languages[159]])
@@ -35,7 +35,7 @@ class SampleRecognition(QWidget):
         self.progress.setGeometry(QRect(0, 80, 400, 30))
         self.show_progress = BodyLabel("0%", self)
         self.show_progress.setGeometry(QRect(0, 80, 200, 30))
-        self.show_sampling_value = BodyLabel(f"Sampling: {self.configure['settings']['rec']['silence_threshold']}", self)
+        self.show_sampling_value = BodyLabel(f"{self.languages[218]}: {self.configure['settings']['rec']['silence_threshold']}", self)
         self.show_sampling_value.setGeometry(QRect(140, 80, 250, 30))
 
         self.click_sample = PrimaryToolButton(FluentIcon.SEND_FILL, self)
@@ -45,7 +45,7 @@ class SampleRecognition(QWidget):
     def update_progress(self, current_progress, current_value):
         self.progress.setValue(current_progress)
         self.show_progress.setText(f"{round(current_progress / self.scale_sampling.value() * 100, 2)}%")
-        self.show_sampling_value.setText(f"Sampling: {current_value}")
+        self.show_sampling_value.setText(f"{self.languages[218]}: {current_value}")
 
     def start(self):
         function.change_configure(None, "settings.setting.silence_threshold", self.configure)
