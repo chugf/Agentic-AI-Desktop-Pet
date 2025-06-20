@@ -85,7 +85,7 @@ class StartUp(QWidget):
         self.title.setStyleSheet("font-size: 17px; font-weight: bold;")
         self.title.setGeometry(QRect(20, 110, 300, 25))
 
-        self.title_name = GradientLabel("Desktop Pet Ver.π", self)
+        self.title_name = GradientLabel("Desktop Pet", self)
         self.title_name.setStyleSheet("font-size: 25px; font-weight: bold;")
         self.title_name.setGeometry(QRect(20, 135, 300, 25))
 

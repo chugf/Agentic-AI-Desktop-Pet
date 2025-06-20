@@ -36,14 +36,11 @@ class RefreshNoticeBoard(QThread):
 
 
 class About(QWidget):
-    def __init__(self, languages, runtime_module, firework):
+    def __init__(self, languages, runtime_module):
         super().__init__()
         self.languages = languages
         self.runtime_module = runtime_module
         self.setObjectName("About")
-
-        self.key_pressed = list()
-        self.firework = firework
 
         self.check_update = PushSettingCard(
             text=self.languages[102],
@@ -67,16 +64,6 @@ class About(QWidget):
         refresh_notice_board = RefreshNoticeBoard(self, self.runtime_module)
         refresh_notice_board.result.connect(self.refresh_notice_board)
         refresh_notice_board.start()
-
-    def keyPressEvent(self, event):
-        self.key_pressed.append(event.key())
-        if self.key_pressed[-3:] == [Qt.Key_3, Qt.Key_1, Qt.Key_4]:
-            self.key_pressed.clear()
-            self.firework.start()
-            self.firework.show()
-        elif len(self.key_pressed) >= 12:
-            self.key_pressed.clear()
-        super().keyPressEvent(event)
 
     def refresh_notice_board(self, text):
         self.show_notice_board.setMarkdown(text)

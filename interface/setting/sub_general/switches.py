@@ -405,6 +405,7 @@ class Switches(ScrollArea):
         self.scroll_widgets.setObjectName('ScrollWidget')
 
     def change_configure(self, value, relative, cache_value, cache_relative):
+        print(value, relative)
         function.change_configure(cache_value, cache_relative, self.cache_config, constants.CACHE_CONFIGURE_PATH)
         function.change_configure(value, relative, self.configure)
 
