@@ -1,10 +1,11 @@
 import keyword
 import builtins
-import string
 import inspect
 from typing import Literal
 
-from PyQt5.Qt import Qt, QStringListModel, QStandardItemModel, QFont, QIcon, QStandardItem, QTimer
+from . import highlight
+
+from PyQt5.Qt import Qt, QStringListModel, QStandardItemModel, QFont, QIcon, QStandardItem, QTimer, QFontDatabase
 from PyQt5.QtWidgets import QCompleter, QComboBox, QVBoxLayout
 from qfluentwidgets import TextEdit, InfoBar, InfoBarPosition, MessageBox, IconWidget, ImageLabel, \
     CaptionLabel, ElevatedCardWidget
@@ -33,6 +34,13 @@ class SimpleCard(ElevatedCardWidget):
 class CodeEdit(TextEdit):
     def __init__(self, interface, parent=None):
         super().__init__(parent)
+        font_id = QFontDatabase.addApplicationFont("./interface/setting/sub_general/JetBrainsMono-Bold.ttf")
+        font_families = QFontDatabase.applicationFontFamilies(font_id)
+        jetbrains_mono = QFont(font_families[0], 10)
+        self.setFont(jetbrains_mono)
+        self.setLineWrapMode(0)
+        self.highlighter = highlight.PythonSyntaxHighlighter(self.document())
+
         self.interface = interface
         self.completer = QCompleter()
         self.completer.setWidget(self)
@@ -43,6 +51,40 @@ class CodeEdit(TextEdit):
         self.completer.setModel(self.model)
 
         self.combo_completer = QComboBox()
+        self.combo_completer.setStyleSheet("""
+        QComboBox {
+            border: 1px solid #3f3f3f;
+            padding: 2px 4px;
+            font-size: 14px;
+            background-color: #1e1e1e;
+            color: #cccccc;
+        }
+    
+        QComboBox:focus {
+            border: 1px solid #007acc; /* VS Code focus color */
+        }
+    
+        QComboBox::drop-down {
+            border-left: 1px solid #3f3f3f;
+            width: 20px;
+        }
+    
+        QComboBox::down-arrow {
+            width: 8px;
+            height: 8px;
+        }
+    
+        QComboBox QAbstractItemView {
+            border: 1px solid #3f3f3f;
+            background-color: #1e1e1e;
+            selection-background-color: #007acc;
+            color: #cccccc;
+        }
+    
+        QComboBox QAbstractItemView:item {
+            padding: 4px 8px;
+        }
+        """)
         self.combo_completer.setFont(QFont("微软雅黑", 11))
         self.combo_completer.setEditable(False)
         self.combo_completer.setModel(self.model)
@@ -100,30 +142,10 @@ class CodeEdit(TextEdit):
     def get_keywords():
         return keyword.kwlist
 
-    def get_other(self):
-        def getter(module, text):
-            enum_list = []
-            for m in dir(module):
-                if 'standards' in text:
-                    if m.isidentifier() and m[0] in string.ascii_uppercase:
-                        enum_list.append(f"{text}.{m}")
-                attr = getattr(module, m)
-                if not callable(attr) and m.isidentifier() and m[0] in string.ascii_uppercase:
-                    for set_ in dir(attr):
-                        if set_.isidentifier() and set_[0] in string.ascii_uppercase:
-                            enum_list.append(f"{text}.{m}.{set_}()")
-            return enum_list
-
+    @staticmethod
+    def get_other():
         builtin_functions = [func for func in dir(builtins) if callable(getattr(builtins, func))]
-
-        packages = ["views", "actions", "standards"]
-        customize_functions = ["interface", "interface.subscribe"]
-        customize_functions.extend(getter(self.interface.subscribe, "interface.subscribe"))
-        for package in packages:
-            customize_functions.append(f"interface.subscribe.{package}")
-            customize_functions.extend(getter(self.interface.subscribe.views, f"interface.subscribe.{package}"))
-
-        builtin_functions.extend(customize_functions)
+        builtin_functions.append("interface")
         return builtin_functions
 
     def update_completions(self):

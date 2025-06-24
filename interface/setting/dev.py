@@ -50,9 +50,7 @@ class DeveloperOptions(QFrame):
         self.is_pressed = selected_id
 
     def print_(self, *args, end="\n"):
-        print('\n\n=========PLUGIN START==========')
         print(*args, end=end)
-        print('============PLUGIN END=======\n\n')
         self.input_logger.insertPlainText(f"[{strftime('%H:%M:%S')}]  ")
         for argument in args:
             self.input_logger.insertPlainText(str(argument))

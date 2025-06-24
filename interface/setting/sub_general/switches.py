@@ -1,5 +1,6 @@
 import subprocess
 import os
+import typing
 
 from ..customize import function, constants
 
@@ -78,6 +79,39 @@ class TranslateCard(ExpandGroupSettingCard):
         self.target_combo_box.currentTextChanged.connect(self.change_language)
         self.target_combo_box.setFixedWidth(200)
         self.add(self.target_label, self.target_combo_box)
+
+        self.engine_label = BodyLabel(parent.languages[239], self)
+        self.select_translation_engine = ComboBox(self)
+        self.select_translation_engine.addItems([parent.languages[80], parent.languages[82]])
+        self.tool_label = BodyLabel(parent.languages[4], self)
+        self.select_translation_tool = ComboBox(self)
+        if (translate := parent.configure['settings']['translate'].split('.'))[0] == "ai":
+            self.select_translation_engine.setCurrentText(parent.languages[80])
+            self.select_translation_tool.addItems([parent.languages[81]])
+        elif translate[0] == "spider":
+            self.select_translation_engine.setCurrentText(parent.languages[82])
+            self.select_translation_tool.addItems([parent.languages[83]])
+        self.select_translation_engine.currentTextChanged.connect(
+            lambda value: self.change_translation(value, "object"))
+        self.select_translation_tool.currentTextChanged.connect(
+            lambda value: self.change_translation(value, "method"))
+        self.add(self.engine_label, self.select_translation_engine)
+        self.add(self.tool_label, self.select_translation_tool)
+
+    def change_translation(self, value, type_: typing.Literal['object', 'method']):
+        if type_ == "object":
+            self.select_translation_tool.clear()
+            if value == self.parent.languages[80]:
+                self.select_translation_tool.addItems([self.parent.languages[81]])
+            elif value == self.parent.languages[82]:
+                self.select_translation_tool.addItems([self.parent.languages[83]])
+            function.change_configure(f"{value.replace(' ', '').split('-')[1]}."
+                                      f"{self.select_translation_tool.currentText().replace(' ', '').split('-')[1]}",
+                                      "settings.translate", self.parent.configure)
+        else:
+            function.change_configure(f"{self.select_translation_engine.currentText().replace(' ', '').split('-')[1]}."
+                                      f"{value.replace(' ', '').split('-')[1]}",
+                                      "settings.translate", self.parent.configure)
 
     def change_language(self, text):
         if text == self.parent.languages[235]:

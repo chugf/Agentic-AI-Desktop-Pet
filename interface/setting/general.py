@@ -44,87 +44,69 @@ class General(QFrame):
         self.input_pet_nickname.textChanged.connect(
             lambda value: function.change_configure(
                 value, "name", self.configure))
-        # 翻译引擎 Translation Engine
-        BodyLabel(self.languages[4], self).setGeometry(QRect(5, 127, 80, 35))
-        self.select_translation_engine = ComboBox(self)
-        self.select_translation_engine.addItems([self.languages[80], self.languages[82]])
-        self.select_translation_engine.setGeometry(QRect(100, 127, 230, 35))
-        # # 翻译工具 Translation Tool
-        self.select_translation_tool = ComboBox(self)
-        if (translate := self.configure['settings']['translate'].split('.'))[0] == "ai":
-            self.select_translation_engine.setCurrentText(self.languages[80])
-            self.select_translation_tool.addItems([self.languages[81]])
-        elif translate[0] == "spider":
-            self.select_translation_engine.setCurrentText(self.languages[82])
-            self.select_translation_tool.addItems([self.languages[83]])
-        self.select_translation_tool.setGeometry(QRect(340, 127, 230, 35))
-        self.select_translation_engine.currentTextChanged.connect(
-            lambda value: self.change_translation(value, "object"))
-        self.select_translation_tool.currentTextChanged.connect(
-            lambda value: self.change_translation(value, "method"))
         # 成人选择 Adult Chose
-        BodyLabel(self.languages[5], self).setGeometry(QRect(5, 167, 80, 35))
+        BodyLabel(self.languages[5], self).setGeometry(QRect(5, 127, 80, 35))
         self.select_adult_label = ComboBox(self)
         self.select_adult_label.addItems(
             list(self.configure['model'][self.configure['default']]['adult']['AdultDescribe'].values()))
         self.select_adult_label.setCurrentIndex(self.configure['adult_level'] - 1)
         if not self.configure['adult_level']:
             self.select_adult_label.setEnabled(False)
-        self.select_adult_label.setGeometry(QRect(100, 167, 230, 35))
+        self.select_adult_label.setGeometry(QRect(100, 127, 230, 35))
         self.select_adult_label.currentIndexChanged.connect(
             lambda value: function.change_configure(
                 value + 1, "adult_level", self.configure))
         # AI发声 AI Speak
-        BodyLabel(self.languages[6], self).setGeometry(QRect(5, 207, 80, 35))
+        BodyLabel(self.languages[6], self).setGeometry(QRect(5, 167, 80, 35))
         self.select_ai_speak = ComboBox(self)
         self.select_ai_speak.addItems(list(self.module_info.keys()))
         self.select_ai_speak.setCurrentText(self.configure['voice_model'])
         self.select_ai_speak.currentTextChanged.connect(self.change_reference)
-        self.select_ai_speak.setGeometry(QRect(100, 207, 230, 35))
+        self.select_ai_speak.setGeometry(QRect(100, 167, 230, 35))
         self.input_reference_text = LineEdit(self)
         self.input_reference_text.setPlaceholderText("Reference Text here")
         self.input_reference_text.setClearButtonEnabled(True)
-        self.input_reference_text.setGeometry(QRect(5, 247, 470, 35))
+        self.input_reference_text.setGeometry(QRect(5, 207, 470, 35))
         self.click_play_reference = PrimaryPushButton(self.languages[7], self)
         self.click_play_reference.clicked.connect(
             lambda: self.kwargs.get("play")(self.input_reference_text.text()))
-        self.click_play_reference.setGeometry(QRect(490, 247, 80, 35))
+        self.click_play_reference.setGeometry(QRect(490, 207, 80, 35))
         # 水印 Watermark
-        BodyLabel(self.languages[8], self).setGeometry(QRect(5, 287, 80, 35))
+        BodyLabel(self.languages[8], self).setGeometry(QRect(5, 247, 80, 35))
         self.select_watermark = ComboBox(self)
         self.select_watermark.addItems(list(self.param_dict.keys()))
         self.select_watermark.setCurrentText(self.configure['watermark'].split(";")[0])
-        self.select_watermark.setGeometry(QRect(100, 287, 230, 35))
+        self.select_watermark.setGeometry(QRect(100, 247, 230, 35))
         self.select_watermark.currentTextChanged.connect(
             lambda value: self.change_watermark(value, "name"))
         self.scale_watermark = Slider(Qt.Horizontal, self)
         self.scale_watermark.setRange(0, 100)
-        self.scale_watermark.setGeometry(QRect(340, 297, 230, 35))
+        self.scale_watermark.setGeometry(QRect(340, 257, 230, 35))
         self.scale_watermark.valueChanged.connect(
             lambda value: self.change_watermark(value, "value"))
         # 透明度 Opacity
-        BodyLabel(self.languages[9], self).setGeometry(QRect(5, 337, 80, 35))
+        BodyLabel(self.languages[9], self).setGeometry(QRect(5, 297, 80, 35))
         self.scale_opacity = Slider(Qt.Horizontal, self)
         self.scale_opacity.setRange(5, constants.OPACITY_PRECISION)
-        self.scale_opacity.setGeometry(QRect(100, 342, 230, 35))
+        self.scale_opacity.setGeometry(QRect(100, 302, 230, 35))
         self.scale_opacity.setValue(int(self.configure['settings']['transparency'] * constants.OPACITY_PRECISION))
         self.scale_opacity.valueChanged.connect(
             lambda value: function.change_configure(
                 value / constants.OPACITY_PRECISION, "settings.transparency", self.configure))
         # 大小
-        BodyLabel(self.languages[190], self).setGeometry(QRect(5, 387, 80, 35))
+        BodyLabel(self.languages[190], self).setGeometry(QRect(5, 337, 80, 35))
         self.scale_size = Slider(Qt.Horizontal, self)
         self.scale_size.setRange(20, 100)
-        self.scale_size.setGeometry(QRect(100, 392, 230, 35))
+        self.scale_size.setGeometry(QRect(100, 342, 230, 35))
         self.scale_size.setValue(int(self.configure['settings']['size'] * 100))
         self.scale_size.valueChanged.connect(
             lambda value: function.change_configure(
                 value / 100, "settings.size", self.configure))
         # 旋转角度
-        BodyLabel("旋转角度", self).setGeometry(QRect(5, 417, 80, 35))
+        BodyLabel("旋转角度", self).setGeometry(QRect(5, 377, 80, 35))
         self.scale_angle = Slider(Qt.Horizontal, self)
         self.scale_angle.setRange(0, 360)
-        self.scale_angle.setGeometry(QRect(100, 427, 360, 35))
+        self.scale_angle.setGeometry(QRect(100, 382, 360, 35))
         self.scale_angle.setValue(int(self.configure['settings']['angle']))
         self.scale_angle.valueChanged.connect(
             lambda value: function.change_configure(value, "settings.angle", self.configure))
@@ -194,21 +176,6 @@ class General(QFrame):
         self.intelligence_module.voice.change_module(
             self.configure['voice_model'], self.module_info,
             self.runtime_module.parse_local_url(self.configure['settings']['local']['gsv']))
-
-    def change_translation(self, value, type_: typing.Literal['object', 'method']):
-        if type_ == "object":
-            self.select_translation_tool.clear()
-            if value == self.languages[80]:
-                self.select_translation_tool.addItems([self.languages[81]])
-            elif value == self.languages[82]:
-                self.select_translation_tool.addItems([self.languages[83]])
-            function.change_configure(f"{value.replace(' ', '').split('-')[1]}."
-                                      f"{self.select_translation_tool.currentText().replace(' ', '').split('-')[1]}",
-                                      "settings.translate", self.configure)
-        else:
-            function.change_configure(f"{self.select_translation_engine.currentText().replace(' ', '').split('-')[1]}."
-                                      f"{value.replace(' ', '').split('-')[1]}",
-                                      "settings.translate", self.configure)
     
     def change_watermark(self, value, type_: typing.Literal['name', 'value']):
         if type_ == "name":

@@ -1,10 +1,11 @@
 import json
 import os
 import shutil
+import winreg
 
 from ..customize import function, widgets
 
-from PyQt5.Qt import QRect, QTimer
+from PyQt5.Qt import QRect, QTimer, QFileDialog
 from PyQt5.QtWidgets import QWidget
 from qfluentwidgets import BodyLabel, ComboBox, LineEdit, PrimaryPushButton
 
@@ -22,19 +23,29 @@ class AnimationBinding(QWidget):
         self.kwargs = kwargs
         self.setObjectName("AnimationBinding")
 
+        self.animation_escape_list = [
+            self.languages[-7],
+            self.languages[-6],
+            self.languages[-5],
+            self.languages[-4],
+            self.languages[-3],
+            self.languages[-2],
+        ]
+        self.special_animation_list = [
+            self.languages[-1],
+        ]
         self.motion_dict = live2d_custom.Live2DParameters(model_json_path).get_motions
         self.expression_lists = live2d_custom.Live2DParameters(model_json_path).get_expressions
 
         BodyLabel(self.languages[48], self).setGeometry(QRect(10, 52, 100, 30))
         self.select_actions = ComboBox(self)
         self.select_actions.setCurrentIndex(0)
-        self.select_actions.addItems(list(self.configure['model'][self.configure['default']]['action'].keys()))
+        self.select_actions.addItems(self.animation_escape_list)
         self.select_actions.currentTextChanged.connect(self.change_action)
         self.select_actions.setGeometry(QRect(100, 52, 200, 30))
 
         self.select_special_actions = ComboBox(self)
-        self.select_special_actions.addItems(list(self.configure['model'][self.configure['default']][
-                                                      'special_action'].keys()))
+        self.select_special_actions.addItems(self.special_animation_list)
         self.select_special_actions.setText("")
         self.select_special_actions.setCurrentIndex(-1)
         self.select_special_actions.currentTextChanged.connect(self.change_special_action)
@@ -111,9 +122,52 @@ class AnimationBinding(QWidget):
         self.select_audio_play.addItems(vl)
         self.select_audio_play.setGeometry(QRect(100, 342, 300, 30))
 
+        self.click_export_animation_configure = PrimaryPushButton(self.languages[245], self)
+        self.click_export_animation_configure.clicked.connect(self.export_animation_configure)
+        self.click_export_animation_configure.setGeometry(QRect(0, 412, 620, 30))
+        self.click_import_animation_configure = PrimaryPushButton(self.languages[246], self)
+        self.click_import_animation_configure.clicked.connect(self.import_animation_configure)
+        self.click_import_animation_configure.setGeometry(QRect(0, 452, 620, 30))
+
         self.click_save_animation = PrimaryPushButton(self.languages[44], self)
         self.click_save_animation.clicked.connect(self.save_animation)
-        self.click_save_animation.setGeometry(QRect(0, 472, 620, 30))
+        self.click_save_animation.setGeometry(QRect(0, 492, 620, 30))
+
+    def export_animation_configure(self):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders")
+            desktop_path, _ = winreg.QueryValueEx(key, "Desktop")
+            winreg.CloseKey(key)
+            desktop_path = os.path.expandvars(desktop_path)
+        except:
+            desktop_path = os.getcwd()
+        config_animation = self.configure['model'][self.configure['default']]
+        filename, _ = QFileDialog.getSaveFileName(self, "文件保存", os.path.join(desktop_path, "aniconf.json"),
+                                                                "Json Config File (*.json)",
+                                                                "Json Config File (*.json)"
+                                                         )
+        if not filename.strip():
+            widgets.pop_error(self, "Error", self.languages[248])
+            return
+
+        with open(filename, "w", encoding="utf-8") as asf:
+            asf.write(json.dumps(config_animation, indent=4, ensure_ascii=False))
+            widgets.pop_success(self, "Success", self.languages[247])
+            asf.close()
+
+    def import_animation_configure(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "文件选择", os.getcwd(),
+                                                                "Json Config File (*.json)",
+                                                                "Json Config File (*.json)"
+                                                         )
+        if not filename.strip():
+            widgets.pop_error(self, "Error", self.languages[248])
+            return
+        with open(filename, "r", encoding="utf-8") as asf:
+            function.change_configure(json.load(asf), f"model.{self.configure['default']}", self.configure)
+            asf.close()
+        widgets.pop_success(self, "Success", self.languages[247])
 
     def import_audio(self):
         audio_basename = os.path.basename(self.input_import_audio.text())
@@ -134,13 +188,16 @@ class AnimationBinding(QWidget):
     def save_animation(self):
         if self.select_actions.currentText().strip():
             key = "action"
-            action = self.select_actions.currentText()
+            action = list(self.configure['model'][self.configure['default']]['action'].keys())[
+                self.animation_escape_list.index(self.select_actions.currentText())]
+
             self.configure["model"][self.configure['default']][key][action]['position'] = [
                 int(self.input_min_x.text()), int(self.input_max_x.text()),
                 int(self.input_min_y.text()), int(self.input_max_y.text())]
         else:
             key = "special_action"
-            action = self.select_special_actions.currentText()
+            action = list(self.configure['model'][self.configure['default']]['special_action'].keys())[
+                self.special_animation_list.index(self.select_special_actions.currentText())]
         self.configure["model"][self.configure['default']][key][
             action]['motion'] = (f"{self.select_motion_group.currentText()}:"
                                  f"{self.select_motion_name.currentText()}:"
@@ -180,7 +237,9 @@ class AnimationBinding(QWidget):
         self.input_max_y.setEnabled(True)
         self.input_min_x.setEnabled(True)
 
-        temp_config = self.configure['model'][self.configure['default']]['action'][text]
+        temp_config = self.configure['model'][self.configure['default']]['action'][
+            list(self.configure['model'][self.configure['default']]['action'].keys())[
+                self.animation_escape_list.index(text)]]
         self.input_min_x.setText(str(temp_config['position'][0]))
         self.input_max_x.setText(str(temp_config['position'][1]))
         self.input_min_y.setText(str(temp_config['position'][2]))
@@ -192,7 +251,6 @@ class AnimationBinding(QWidget):
         self.select_expression_name.setCurrentText(temp_config['expression'])
         self.select_audio_play.setCurrentText(temp_config['play_type'])
         self.select_audio.setCurrentText(temp_config['play'])
-        del temp_config
 
     def change_expression_name(self, text):
         self.kwargs.get("desktop").pet_model.SetExpression(text)

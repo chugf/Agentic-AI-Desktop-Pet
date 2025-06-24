@@ -1,9 +1,9 @@
 import os
 
 from ..customize import function
-from ..customize import widgets, highlight
+from ..customize import widgets
 
-from PyQt5.Qt import QRect, QFont, QFontDatabase
+from PyQt5.Qt import QRect
 from PyQt5.QtWidgets import QWidget, QButtonGroup
 
 from qfluentwidgets import PrimaryPushButton, BodyLabel, LineEdit, ComboBox, RadioButton, FluentIcon
@@ -26,17 +26,12 @@ class PluginBinding(QWidget):
         self.click_select_folder.setGeometry(QRect(530, 52, 100, 35))
         self.click_select_folder.clicked.connect(self.fill_plugin_information)
 
-        font_id = QFontDatabase.addApplicationFont("./interface/setting/sub_general/JetBrainsMono-Bold.ttf")
-        font_families = QFontDatabase.applicationFontFamilies(font_id)
-        jetbrains_mono = QFont(font_families[0], 10)
+
         self.input_codes = widgets.CodeEdit(interface_module, self)
-        self.input_codes.setFont(jetbrains_mono)
-        self.input_codes.setLineWrapMode(0)
         self.input_codes.setText(open("./interface/subscribe/examples/example_getattr",
                                       "r", encoding="utf-8").read())
         self.input_codes.setPlaceholderText("Emm. The developer is slacking off again")
         self.input_codes.setGeometry(QRect(10, 102, 620, 320))
-        self.highlighter = highlight.PythonSyntaxHighlighter(self.input_codes.document())
 
         self.select_examples = ComboBox(self)
         examples = os.listdir("./interface/subscribe/examples")

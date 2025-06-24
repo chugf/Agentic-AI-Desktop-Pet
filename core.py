@@ -385,7 +385,7 @@ class Setting(FramelessWindow):
         self.rule_binding_page = interface.setting.sub_binding.rule.RuleBinding(
             languages, configure, rules, desktop.model_json_path, architecture.addon, runtime)
         self.tools_binding_page = interface.setting.sub_develop.tools.ToolsBinding(
-            languages, configure, live2d_parameter)
+            languages, configure, runtime, interface)
         self.plugin_binding_page = interface.setting.sub_develop.plugin.PluginBinding(
             interface, self.run_code_for_plugin, languages, configure, compile_plugin=self.compile)
 
