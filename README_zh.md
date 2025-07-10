@@ -16,7 +16,7 @@
 
 ---
 
-> [!CAUTION]
+> [!IMPORTANT]
 > **本程序二次开发唯二协议：**
 > 
 > 1、二次开发即Fork分支不得使用 官方 模型/插件 下载API（`https://api.nekcode.top/model/*` 和 `https://api.nekocode.top/plugin/*` ） 其余 API 下载更新，公告等分支均可使用！
