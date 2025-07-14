@@ -15,6 +15,8 @@
 > The in-program kernel update package relates to the programming language for plugins and extensions. The programming language will be replaced with our self-developed one (of course, Python and other languages are still supported). This new programming language is designed for regular users.
 > 
 > Supported for `Chinese Programming`
+>
+> This project developmenmt has been paused
 
 ---
 
