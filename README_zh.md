@@ -275,4 +275,5 @@ gsv/
 <div align="center">
     <p>📧 联系开发者: 2953911716@qq.com</p>
     <p>🌐 官方社区: https://github.com/HeavyNotFat/Agentic-AI-Desktop-Pet/discussions</p>
+    <p>此项目正在出售，如果您想够忙，请联系 <kbd>2953911716@qq.com</kbd> 或 <kbd>+86 18623086912</kbd></p>
 </div>
