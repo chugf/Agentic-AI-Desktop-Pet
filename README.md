@@ -286,4 +286,5 @@ For commercial use, contact the author to obtain a commercial license.
 <div align="center">
     <p>📧 Contact Developer: 2953911716@qq.com</p>
     <p>🌐 Official Community: https://github.com/HeavyNotFat/Agentic-AI-Desktop-Pet/discussions</p>
+    <p>The project is selling, if you what to buy, please contect <kbd>2953911716@qq.com</kbd><kbd> or `+86` <kbd> 18623086912</kbd></p>
 </div>
