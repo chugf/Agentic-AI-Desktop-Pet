@@ -1,0 +1,7 @@
+{
+   "plugin_manager": {
+      "icon": "./plugin/plugin_manager/logo.png",
+      "name": "插件管理",
+      "attr": -3
+   }
+}

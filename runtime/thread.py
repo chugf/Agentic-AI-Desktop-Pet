@@ -1,3 +1,4 @@
+import os.path
 import random
 import time
 import traceback
@@ -82,11 +83,14 @@ class RunPythonPlugin(QThread):
         self.is_python_exits = is_python_exits
 
     def run(self):
-        if self.is_python_exits:
+        if self.is_python_exits and self.python_path.strip():
             proc = subprocess.Popen([self.python_path, self.codes_or_file])
             self.attribute.emit(proc)
         else:
             try:
+                if os.path.exists(self.codes_or_file):
+                    self.error.emit("pythonnotfound")
+                    return
                 exec(self.codes_or_file, self.global_)
             except Exception:
                 self.error.emit(f"{traceback.format_exc()}")

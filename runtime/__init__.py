@@ -24,6 +24,7 @@ class PassedNoneContent(object):
     pass
 
 
+api_source = None
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
 HEADERS = {
     "User-Agent": USER_AGENT,
@@ -394,7 +395,7 @@ def capture() -> str:
 
 def check_update() -> bool | None:
     try:
-        latest_version = requests.post("https://adp.nekocode.top/update/version.php",
+        latest_version = requests.post(f"https://{api_source}/update/version.php",
                                        headers=HEADERS).json()['version']
     except:
         return None
@@ -407,7 +408,7 @@ def check_update() -> bool | None:
 def get_notice_board() -> str:
     request = ""
     try:
-        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get.php",
+        request = '\n'.join(requests.get(f"https://{api_source}/notice/get.php",
                                          headers=HEADERS).json(),)
     except:
         pass
@@ -417,7 +418,7 @@ def get_notice_board() -> str:
 def get_policy() -> str:
     request = ""
     try:
-        request = '\n'.join(requests.get("https://adp.nekocode.top/notice/get_policy.php",
+        request = '\n'.join(requests.get(f"https://{api_source}/notice/get_policy.php",
                                          headers=HEADERS).json())
     except:
         pass
@@ -426,7 +427,7 @@ def get_policy() -> str:
 
 def user_register(email) -> dict:
     try:
-        register_response = requests.post("https://adp.nekocode.top/account/register.php", json={'to': email},
+        register_response = requests.post(f"https://{api_source}/account/register.php", json={'to': email},
                                           headers=HEADERS)
         if register_response.json().get('error'):
             return {"status": False, "message": register_response.json()['error']}
@@ -438,7 +439,7 @@ def user_register(email) -> dict:
 
 def user_vertify(email, code, password) -> dict:
     try:
-        vertify_response = requests.post("https://adp.nekocode.top/account/vertify.php",
+        vertify_response = requests.post(f"https://{api_source}/account/vertify.php",
                                          json={'email': email, 'code': code, 'password': password},
                                          headers=HEADERS)
         if vertify_response.json().get('error'):
@@ -451,7 +452,7 @@ def user_vertify(email, code, password) -> dict:
 
 def user_login(email, password, auto_login: bool = False, session: str = "") -> dict:
     try:
-        login_response = requests.post("https://adp.nekocode.top/account/login.php",
+        login_response = requests.post(f"https://{api_source}/account/login.php",
                                        json={'email': email, 'password': password,
                                              "auto_login": auto_login, "session": session},
                                        headers=HEADERS)
@@ -470,7 +471,7 @@ def user_login(email, password, auto_login: bool = False, session: str = "") -> 
 
 def get_shop_model() -> dict:
     try:
-        model_lists = requests.get("https://adp.nekocode.top/model/get_model.php").json()
+        model_lists = requests.get(f"https://{api_source}/model/get_model.php").json()
         return {"name": list(map(lambda v: ".".join(v.split(".")[:-1]), model_lists['archives'])),
                 "list": model_lists['archives'],
                 "url": model_lists['urls'],
@@ -489,7 +490,7 @@ def get_shop_model() -> dict:
 
 def get_plugin() -> dict:
     try:
-        model_lists = requests.get("https://adp.nekocode.top/plugin/get_plugin.php").json()
+        model_lists = requests.get(f"https://{api_source}/plugin/get_plugin.php").json()
         return {"name": list(map(lambda v: ".".join(v.split(".")[:-1]), model_lists['archives'])),
                 "list": model_lists['archives'],
                 "url": model_lists['urls'],
@@ -557,7 +558,7 @@ def get_program_used_storage() -> int:
     total_size_gb = round(total_size / (1024 ** 2), 2)
     return total_size_gb
 
-def calculate_rms(data) -> float:
+def calculate_rms(data: bytes) -> float:
     """计算RMS音量标准"""
     length = len(data) / 2
     shorts = struct.unpack("%dh" % length, data)

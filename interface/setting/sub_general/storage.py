@@ -355,39 +355,19 @@ INITIAL_CONFIGURE = {
          -1
       ],
       "enable_position": False
-   }
+   },
+   "api_source": "adp.nekocode.top"
 }
 
-INITIAL_SETTING_SWITCH = {
-   "General": {
-      "compatible": False,
-      "adult": False,
-      "recognition": False,
-      "speaker": False,
-      "search": False
-   },
+SWITCHES = {
    "Advanced": {
       "penetration": "shut",
-      "locktsk": True,
-      "media": True,
       "safety": "shut",
-      "visualization": False,
-      "realtime": False,
       "python": ""
-   },
-   "Live2D": {
-      "AutoBlink": True,
-      "AutoBreath": True,
-      "AutoDrag": True
    },
    "QFluentWidgets": {
       "ThemeColor": "#ff009faa",
       "ThemeMode": "Light"
-   },
-   "Physics": {
-      "switch": True,
-      "bounce": True,
-      "dumping": True
    }
 }
 

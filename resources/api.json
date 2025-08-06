@@ -4,7 +4,7 @@
       "api-key": "heavynotfat",
       "messages": "messages",
       "model": "model",
-      "model-name": "qwen3:0.6b",
+      "model-name": "qwen2.5:7b",
       "tools": "",
       "endpoint": "message.content"
    }

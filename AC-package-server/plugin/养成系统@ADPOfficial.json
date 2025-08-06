@@ -1,0 +1,7 @@
+{
+  "cultivation_system": {
+    "icon": "./plugin/cultivation_system/logo.png",
+    "name": "养成系统",
+    "attr": -2
+  }
+}

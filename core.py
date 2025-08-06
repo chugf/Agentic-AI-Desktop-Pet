@@ -74,6 +74,7 @@ webui.reload_data(configure['settings']['intelligence'],
                           api_config, configure['language_mapping'][configure['settings']['language']],
                           runtime.parse_local_url(configure['settings']['local']['text'])
                           if configure['settings']['text']['way'] == "local" else None)
+runtime.api_source = configure['api_source']
 # 判断架构支持并重载
 if os.path.exists(f"./resources/model/{configure_default}/2"):
     architecture.reload(2)
@@ -543,6 +544,9 @@ class Setting(FramelessWindow):
             self.record_timer.start(50)
 
     def exception(self, e_msg):
+        if e_msg == "pythonnotfound":
+            interface.setting.customize.widgets.pop_error(self, languages[78], languages[249].replace("\\n", "\n"), 12000, Qt.Vertical)
+            return
         print(e_msg)
         interface.setting.customize.widgets.pop_error(self, "TraceBack", e_msg, 5000, Qt.Vertical)
 
@@ -554,8 +558,8 @@ class Setting(FramelessWindow):
             safety_level = configure['settings']['safety']
             if safety_level != "shut":
                 attr = getattr(runtime.PythonCodeExaminer(to_be_run_codes), f"is_{safety_level}")
-                if list(attr)[-1] or list(attr)[0]:
-                    interface.setting.customize.widgets.pop_warning(self, languages[157], languages[159], 5000)
+                if attr:
+                    interface.setting.customize.widgets.pop_warning(self, languages[125], languages[119], 5000)
                     return
 
         except Exception:
@@ -1441,7 +1445,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
         if configure['settings']['live2d']['enable']['AutoDrag']:
             self.pet_model.Drag(local_x, local_y)
         # 检查是否开启全局鼠标穿透
-        if switches_configure['Advanced']['penetration'] != "shut":
+        if False:
+        # if switches_configure['Advanced']['penetration'] != "shut":
             self.setCanvasOpacity(0.4)
             self.set_mouse_transparent(True)
             self.is_penetration = True
@@ -1462,8 +1467,8 @@ class DesktopPet(shader.ADPOpenGLCanvas):
                         self.height() > local_y > (self.height() - 80) * configure['settings']['size']:
                     MouseListener.stop_listening()
                     self.vsave_change()
-        elif switches_configure['Advanced']['penetration'] == "shut" and self.amount == 0:
-            self.save_change()
+        # elif switches_configure['Advanced']['penetration'] == "shut" and self.amount == 0:
+        #     self.save_change()
 
         # 检查是否开启音频可视化
         if configure['settings']['enable']['visualization']:

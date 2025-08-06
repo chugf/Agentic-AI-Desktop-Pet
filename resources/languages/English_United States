@@ -245,6 +245,9 @@ List
 Description
 Export Animation Configure
 Import Animation Configure
+Export successfully
+Export failed
+This is indepent plugin, please check whether Python is installed or whether the Python path is selected to use\nPlease note that this plugin has a README and installation document and detailed explanations\nPython official website: https://python.org
 
 
 Pet the head

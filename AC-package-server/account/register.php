@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 80;
 
-            $mail->setFrom('nekocode@nekocode.top', 'AI Desktop Pet');
+            $mail->setFrom('', 'AI Desktop Pet');
             $mail->addAddress($to);
 
             $mail->isHTML(true);
