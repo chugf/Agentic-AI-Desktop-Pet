@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     http_response_code(200);
-    $response = ["version" => "3.15.1"];
+    $response = ["version" => "3.15.9"];
     echo json_encode($response);
 } else {
     http_response_code(405);

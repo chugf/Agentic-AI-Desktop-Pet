@@ -15,42 +15,6 @@
 > The in-program kernel update package relates to the programming language for plugins and extensions. The programming language will be replaced with our self-developed one (of course, Python and other languages are still supported). This new programming language is designed for regular users.
 > 
 > Supported for `Chinese Programming`
->
-> This project developmenmt has been paused
-
----
-
-> [!IMPORTANT]
-> **本程序二次开发唯二协议：**
-> 
-> 1、二次开发即Fork分支不得使用 官方 模型/插件 下载API（`https://api.nekcode.top/model/*` 和 `https://api.nekocode.top/plugin/*` ） 其余 API 下载更新，公告等分支均可使用！
-> 
-> 2、二次开发即Fork分支需提及本项目
-> 
-> **The only two protocols for secondary development of this program:**
-> 
-> 1. Forked branches resulting from secondary development must not use the official model/plugin download APIs (`https://api.nekcode.top/model/*` and `https://api.nekocode.top/plugin/*`). All other APIs, including those for downloading updates and announcements, may be used freely.
-> 2. Forked branches resulting from secondary development must mention this project.
-> 
-> **本プログラムの二次開発に関する唯二の規約：**
-> 
-> 1. 二次開発によりフォークされたブランチは、「公式」モデル／プラグインのダウンロード用API（`https://api.nekcode.top/model/*` および `https://api.nekocode.top/plugin/*`）を使用してはなりません。その他のAPI（アップデートやお知らせなど）については自由に使用可能です。
-> 2. 二次開発によるフォークされたブランチは、本プロジェクトを明記する必要があります。
-> 
-> **Le uniche due regole per lo sviluppo secondario di questo programma:**
-> 
-> 1. Le ramificazioni (fork) derivanti da sviluppi secondari non devono utilizzare le API ufficiali per il download di modelli/plugin (`https://api.nekcode.top/model/*` e `https://api.nekocode.top/plugin/*`). Tutte le altre API, incluse quelle per scaricare aggiornamenti e annunci, possono essere utilizzate liberamente.
-> 2. Le ramificazioni derivanti da sviluppi secondari devono menzionare esplicitamente questo progetto.
-> 
-> **Les deux seules règles pour le développement secondaire de ce programme :**
-> 
-> 1. Les forks issus d'un développement secondaire ne doivent pas utiliser les API officielles de téléchargement des modèles/plugins (`https://api.nekcode.top/model/*` et `https://api.nekocode.top/plugin/*`). Toutes les autres API, y compris celles pour télécharger des mises à jour ou des annonces, peuvent être utilisées librement.
-> 2. Les forks issus du développement secondaire doivent faire mention de ce projet.
-> 
-> **Die einzigen beiden Regeln für die sekundäre Entwicklung dieses Programms:**
-> 
-> 1. Bei der sekundären Entwicklung entstandene Forks dürfen die offiziellen Model-/Plugin-Download-APIs (`https://api.nekcode.top/model/*` und `https://api.nekocode.top/plugin/*`) nicht verwenden. Alle anderen APIs, einschließlich solcher zum Herunterladen von Updates oder Ankündigungen, können frei verwendet werden.
-> 2. Bei der sekundären Entwicklung entstandene Forks müssen dieses Projekt erwähnen.
 
 ---
 
@@ -286,5 +250,4 @@ For commercial use, contact the author to obtain a commercial license.
 <div align="center">
     <p>📧 Contact Developer: 2953911716@qq.com</p>
     <p>🌐 Official Community: https://github.com/HeavyNotFat/Agentic-AI-Desktop-Pet/discussions</p>
-    <p>The project is selling, if you what to buy, please contect <kbd>2953911716@qq.com</kbd> or <kbd>+86 18623086912</kbd></p>
 </div>

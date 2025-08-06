@@ -7,7 +7,7 @@
   },
   {
    "optionDest": "filenames",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/main.py"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/main.py"
   },
   {
    "optionDest": "onefile",
@@ -19,7 +19,7 @@
   },
   {
    "optionDest": "icon_file",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/logo.ico"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/logo.ico"
   },
   {
    "optionDest": "name",
@@ -43,7 +43,7 @@
   },
   {
    "optionDest": "version_file",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/file_version_info.txt"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/file_version_info.txt"
   },
   {
    "optionDest": "uac_admin",
@@ -63,55 +63,55 @@
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/intelligence/__init__.py;intelligence/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/intelligence/__init__.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/intelligence/recognition.py;intelligence/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/intelligence/recognition.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/intelligence/text.py;intelligence/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/intelligence/text.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/intelligence/translate.py;intelligence/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/intelligence/translate.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/intelligence/voice.py;intelligence/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/intelligence/voice.py;intelligence/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/logs/__init__.py;logs/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/logs/__init__.py;logs/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/runtime;runtime/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/runtime;runtime/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject//AI DesktopPet_v3/shader;shader/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/shader;shader/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/intelligence/external;intelligence/external/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/intelligence/external;intelligence/external/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/interface;interface/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/interface;interface/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/engine;engine/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/engine;engine/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/architecture;architecture/"
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/architecture;architecture/"
   },
   {
    "optionDest": "datas",
-   "value": "D:/Users/Desktop/PycharmProject/AI DesktopPet_v3/core.py;."
+   "value": "D:/Users/Desktop/PycharmProject/Projects/AI DesktopPet_v3/core.py;."
   }
  ],
  "nonPyinstallerOptions": {

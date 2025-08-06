@@ -36,7 +36,7 @@ SENSITIVE_CONTENT = [
 ]
 major = "3"
 minor = "15"
-patch = "1"
+patch = "9"
 
 
 class ExtractFunctionDocstring(ast.NodeVisitor):
