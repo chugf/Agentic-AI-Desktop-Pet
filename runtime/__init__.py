@@ -4,6 +4,7 @@ from . import file
 from . import reg
 
 import os
+import base64
 import tempfile
 import ast
 import threading
@@ -35,8 +36,8 @@ SENSITIVE_CONTENT = [
     PassedNoneContent(),  # 占位符
 ]
 major = "3"
-minor = "15"
-patch = "9"
+minor = "16"
+patch = "2"
 
 
 class ExtractFunctionDocstring(ast.NodeVisitor):
@@ -437,15 +438,15 @@ def user_register(email) -> dict:
         return {"status": False, "message": "发送邮件错误！"}
 
 
-def user_vertify(email, code, password) -> dict:
+def user_verify(email, code, password) -> dict:
     try:
-        vertify_response = requests.post(f"https://{api_source}/account/vertify.php",
+        verify_response = requests.post(f"https://{api_source}/account/verify.php",
                                          json={'email': email, 'code': code, 'password': password},
                                          headers=HEADERS)
-        if vertify_response.json().get('error'):
-            return {"status": False, "message": vertify_response.json()['error']}
+        if verify_response.json().get('error'):
+            return {"status": False, "message": verify_response.json()['error']}
         else:
-            return {"status": True, "message": vertify_response.json()['success']}
+            return {"status": True, "message": verify_response.json()['success']}
     except:
         return {"status": False, "message": "验证错误！"}
 
@@ -465,7 +466,7 @@ def user_login(email, password, auto_login: bool = False, session: str = "") -> 
                 t = login_response.json()['session']
             return {"status": True, "token": t, "role": login_response.json()['role'],
                     "message": login_response.json()['success']}
-    except:
+    except Exception as e:
         return {"status": False, "message": "登录错误！"}
 
 
@@ -507,6 +508,22 @@ def get_plugin() -> dict:
             "config": [],
             "description": [],
         }
+
+
+def upload_file(filepath: list, type_: str, token: str) -> tuple[bool, str]:
+    filename = []
+    file_base64 = []
+    for image_path in filepath:
+        with open(image_path, "rb") as image_file:
+            filename.append(os.path.basename(image_path))
+            file_base64.append(base64.b64encode(image_file.read()).decode('utf-8'))
+            image_file.close()
+    try:
+        r = requests.post(f"https://{api_source}/community/upload.php",
+                          json={"type": type_, "token": token, "filename": filename, "fileb64": file_base64})
+        return r.json()['status'], r.json()['msg']
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
 
 
 def find_internal_recording_device(p) -> int:

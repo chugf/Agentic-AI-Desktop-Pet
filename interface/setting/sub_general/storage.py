@@ -70,6 +70,9 @@ class Recovery:
             if file in EXPECTED_FILE_NAMES:
                 continue
             os.remove(f"./intelligence/rules/{file}")
+        # 删除社区
+        for file in os.listdir("./resources/community"):
+            shutil.rmtree(f"./resources/community/{file}")
 
 
 class StorageManager(QWidget):
@@ -529,6 +532,17 @@ function addMessage(text, sender) {
     chatWindow.appendChild(messageElement);
     chatWindow.scrollTop = chatWindow.scrollHeight;
 }"""
+INITIAL_SETTING_SWITCH = {
+   "Advanced": {
+      "penetration": "shut",
+      "safety": "shut",
+      "python": ""
+   },
+   "QFluentWidgets": {
+      "ThemeColor": "#ff009faa",
+      "ThemeMode": "Light"
+   }
+}
 EXPECTED_FILE_NAMES = ("kasumi2", "Chocola", "kasumi2.json", "Chocola.json")
 
 Recovery = Recovery()

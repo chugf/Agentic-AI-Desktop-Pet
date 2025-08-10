@@ -261,9 +261,11 @@ class CompileProgress(QWidget):
 
         # 信息展示
         self.input_icon_show = LineEdit(self)
+        self.input_icon_show.setPlaceholderText("Select Icon or Input")
         self.input_icon_show.setGeometry(360, 130, 200, 30)
         self.input_icon_show.textChanged.connect(lambda: self.fill_information(self.input_icon_show.text(), 0))
         self.input_name_show = LineEdit(self)
+        self.input_name_show.setPlaceholderText("Input show name")
         self.input_name_show.setGeometry(360, 165, 200, 30)
 
         self.desc_show = TextEdit(self)
@@ -390,8 +392,7 @@ class Setting(FramelessWindow):
         self.plugin_binding_page = interface.setting.sub_develop.plugin.PluginBinding(
             interface, self.run_code_for_plugin, languages, configure, compile_plugin=self.compile)
 
-        self.cloud_support_page = interface.setting.cloud.CloudDownload(
-            languages, configure, runtime,
+        self.cloud_support_page = interface.setting.cloud.CloudDownload(languages, configure, runtime,
             self.general_page.add_another_one,
             self.addSubInterface)
 

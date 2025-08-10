@@ -303,6 +303,18 @@ def pop_error(parent, title, content, duration=2000, orient=Qt.Horizontal):
     )
 
 
+def pop_info(parent, title, content, duration=2000, orient=Qt.Horizontal):
+    InfoBar.info(
+        title=title,
+        content=content,
+        orient=orient,
+        isClosable=True,
+        position=InfoBarPosition.TOP,
+        duration=duration,
+        parent=parent
+    )
+
+
 def pop_notification(title, content, type_: Literal['error', 'warning', 'success', 'info'], duration=2500):
     """
     弹出消息

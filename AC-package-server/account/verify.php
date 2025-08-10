@@ -1,10 +1,6 @@
 <?php
 header('Content-Type: application/json');
-
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "";
+require "../configPHP/config.php";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 

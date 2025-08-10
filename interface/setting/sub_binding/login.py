@@ -5,7 +5,7 @@ from ..customize import widgets
 
 from PyQt5.Qt import QRect, QWidget, QThread, pyqtSignal
 from qfluentwidgets import LineEdit, PasswordLineEdit, BodyLabel, TextEdit, PrimaryPushButton, \
-    FluentIcon, CheckBox, NavigationItemPosition
+    FluentIcon, CheckBox
 
 
 with open("./resources/token/token.aes", "r", encoding="utf-8") as rf:
@@ -42,6 +42,7 @@ class Loading(QThread):
 class Login(QWidget):
     def __init__(self, languages, configure, runtime_module, addSubInterface):
         super().__init__()
+        self.token = token
         self.runtime = runtime_module
         self.languages = languages
         self.configure = configure
@@ -72,13 +73,14 @@ class Login(QWidget):
         self.click_login.setGeometry(QRect(0, 380, 620, 35))
         self.click_login.clicked.connect(self.login)
         if token:
-            policy_thread = Loading(self, self.runtime, 'auto_login')
+            policy_thread = Loading(self, self.runtime, 'auto-login')
             policy_thread.result.connect(self.wrapper)
             policy_thread.start()
 
     def wrapper(self, result):
-        widgets.pop_message(self, self.languages[148], result['message'])
-        if result['status']:
+        widgets.pop_info(self, self.languages[148], result['message'])
+        if result['token'] and result['status']: self.token = result['token']
+        if (not token.strip() or self.click_next_auto_login.isChecked()) and result['status']:
             with open("./resources/token/token.aes", "w", encoding="utf-8") as f:
                 f.write(result['token'])
                 f.close()

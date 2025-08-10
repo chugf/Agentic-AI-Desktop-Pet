@@ -3,7 +3,7 @@ import hashlib
 
 from ..customize import widgets
 
-from PyQt5.Qt import QRect, QWidget, QThread, pyqtSignal
+from PyQt5.Qt import QRect, QWidget, QThread, pyqtSignal, QTimer
 from qfluentwidgets import BodyLabel, LineEdit, PasswordLineEdit, PrimaryPushButton, \
     FluentIcon, TextEdit
 
@@ -12,7 +12,7 @@ class Loading(QThread):
     result = pyqtSignal(dict)
 
     def __init__(self, parent: QWidget,
-                 runtime_module, type_: typing.Literal['sms', 'policy', 'vertify']):
+                 runtime_module, type_: typing.Literal['sms', 'policy', 'verify']):
         self.runtime = runtime_module
         self.type_ = type_
         super().__init__(parent)
@@ -22,15 +22,16 @@ class Loading(QThread):
             self.result.emit(self.runtime.user_register(self.parent().input_email.text()))
         elif self.type_ == 'policy':
             self.result.emit({'message': self.runtime.get_policy()})
-        elif self.type_ == 'vertify':
-            self.result.emit(self.runtime.user_vertify(
-                self.parent().input_email.text(), self.parent().input_vertify_code.text(),
+        elif self.type_ == 'verify':
+            self.result.emit(self.runtime.user_verify(
+                self.parent().input_email.text(), self.parent().input_verify_code.text(),
                 hashlib.md5(str(self.parent().input_password.text()).encode("utf-8")).hexdigest()))
 
 
 class Register(QWidget):
     def __init__(self, languages, configure, runtime_module):
         super().__init__()
+        self.timeout = 60
         self.runtime = runtime_module
         self.languages = languages
         self.configure = configure
@@ -42,12 +43,12 @@ class Register(QWidget):
         self.input_email.setGeometry(QRect(110, 5, 400, 35))
 
         BodyLabel(languages[150], self).setGeometry(QRect(5, 45, 100, 35))
-        self.input_vertify_code = LineEdit(self)
-        self.input_vertify_code.setClearButtonEnabled(True)
-        self.input_vertify_code.setGeometry(QRect(110, 45, 270, 35))
-        self.click_vertify_code = PrimaryPushButton(languages[151], self)
-        self.click_vertify_code.setGeometry(QRect(380, 45, 120, 35))
-        self.click_vertify_code.clicked.connect(self.get_vertify_code)
+        self.input_verify_code = LineEdit(self)
+        self.input_verify_code.setClearButtonEnabled(True)
+        self.input_verify_code.setGeometry(QRect(110, 45, 270, 35))
+        self.click_verify_code = PrimaryPushButton(languages[151], self)
+        self.click_verify_code.setGeometry(QRect(380, 45, 120, 35))
+        self.click_verify_code.clicked.connect(self.get_verify_code)
 
         BodyLabel(languages[147], self).setGeometry(QRect(5, 80, 100, 35))
         self.input_password = PasswordLineEdit(self)
@@ -64,6 +65,18 @@ class Register(QWidget):
         self.click_register = PrimaryPushButton(FluentIcon.SEND, languages[149], self)
         self.click_register.setGeometry(QRect(0, 345, 620, 35))
         self.click_register.clicked.connect(self.register)
+        self.timeout_timer = QTimer(self)
+        self.timeout_timer.timeout.connect(self._timeout_unlock)
+
+    def _timeout_unlock(self):
+        if self.timeout <= 0:
+            self.timeout_timer.stop()
+            self.click_verify_code.setText(self.languages[151])
+            self.click_verify_code.setDisabled(False)
+            self.timeout = 60
+        else:
+            self.click_verify_code.setText(str(self.timeout) + "s")
+        self.timeout -= 1
 
     def pop(self, message: dict):
         if message['status']:
@@ -72,11 +85,13 @@ class Register(QWidget):
             widgets.pop_error(self, self.languages[149], message['message'])
 
     def register(self):
-        vertify = Loading(self, self.runtime, 'vertify')
-        vertify.result.connect(self.pop)
-        vertify.start()
+        verify = Loading(self, self.runtime, 'verify')
+        verify.result.connect(self.pop)
+        verify.start()
 
-    def get_vertify_code(self):
+    def get_verify_code(self):
+        self.timeout_timer.start(1000)
+        self.click_verify_code.setDisabled(True)
         sms = Loading(self, self.runtime, 'sms')
         sms.result.connect(self.pop)
         sms.start()
