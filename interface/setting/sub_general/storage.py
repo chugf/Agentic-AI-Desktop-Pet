@@ -359,7 +359,7 @@ INITIAL_CONFIGURE = {
       ],
       "enable_position": False
    },
-   "api_source": "adp.nekocode.top"
+   "api_source": "https://api.nekocode.top/api/adp"
 }
 
 SWITCHES = {

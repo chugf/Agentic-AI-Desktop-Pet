@@ -5,7 +5,7 @@
    "watermark": "Keep@NoneParameter;0.0",
    "adult_level": 0,
    "settings": {
-      "language": "",
+      "language": "Chinese (Simplified)_China",
       "python": "",
       "angle": 0.0,
       "size": 1.0,
@@ -211,5 +211,5 @@
       ],
       "enable_position": false
    },
-   "api_source": "adp.nekocode.top"
+   "api_source": "https://api.nekocode.top/api/adp"
 }
